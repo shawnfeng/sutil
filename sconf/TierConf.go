@@ -19,6 +19,10 @@ func NewTierConf() *TierConf {
 	}
 }
 
+func (m *TierConf) GetConf() map[string]map[string]string {
+	return m.res
+}
+
 func (m *TierConf) Load(cfg []byte) error {
 	file, err := ini.Load(bytes.NewReader(cfg))
 

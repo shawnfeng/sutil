@@ -104,6 +104,8 @@ LogLevel = TRACE
 
 	fmt.Println(tf)
 
+	fmt.Println(tf.GetConf())
+
 
 
 }
