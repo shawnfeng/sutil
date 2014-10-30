@@ -1,0 +1,167 @@
+package snetutil
+
+import (
+	"net"
+	"time"
+	"encoding/binary"
+	"strings"
+	"errors"
+)
+
+
+
+
+func GetInterIp() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+
+	for _, addr := range addrs {
+		//fmt.Printf("Inter %v\n", addr)
+		ip := addr.String()
+		if "10." == ip[:3] {
+			return strings.Split(ip, "/")[0], nil
+		} else if "172." == ip[:4] {
+			return strings.Split(ip, "/")[0], nil
+		} else if "196." == ip[:4] {
+			return strings.Split(ip, "/")[0], nil
+		}
+
+
+
+	}
+
+	return "", errors.New("no inter ip")
+}
+
+
+func GetExterIp() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+
+	for _, addr := range addrs {
+		//fmt.Printf("Inter %v\n", addr)
+		ip := addr.String()
+		if "10." != ip[:3] && "172." != ip[:4] && "196." != ip[:4] && "127." != ip[:4] {
+			return strings.Split(ip, "/")[0], nil
+		}
+
+	}
+
+	return "", errors.New("no exter ip")
+}
+
+
+// Request.RemoteAddress contains port, which we want to remove i.e.:
+// "[::1]:58292" => "[::1]"
+func IpAddrFromRemoteAddr(s string) string {
+	idx := strings.LastIndex(s, ":")
+	if idx == -1 {
+		return s
+	}
+	return s[:idx]
+}
+
+
+
+func PackdataPad(data []byte, pad byte) []byte {
+	sendbuff := make([]byte, 0)
+	// no pad
+	var pacLen uint64 = uint64(len(data))
+	buff := make([]byte, 20)
+	rv := binary.PutUvarint(buff, pacLen)
+
+	sendbuff = append(sendbuff, buff[:rv]...) // len
+	sendbuff = append(sendbuff, data...) //data
+	sendbuff = append(sendbuff, pad) //pad
+
+	return sendbuff
+
+}
+
+func Packdata(data []byte) []byte {
+	return PackdataPad(data, 0)
+}
+
+
+// 最小的消息长度、最大消息长度，数据流，包回调
+// 正常返回解析剩余的数据，nil
+// 否则返回错误
+func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)) ([]byte, error) {
+	for {
+
+		// n == 0: buf too small
+		// n  < 0: value larger than 64 bits (overflow)
+        //     and -n is the number of bytes read
+		pacLen, sz := binary.Uvarint(packBuff)
+		if sz < 0 {
+			return nil, errors.New("package head error")
+		} else if sz == 0 {
+			return packBuff, nil
+		}
+
+		// sz > 0
+
+		// must < lenmax
+		if pacLen > uint64(lenmax) {
+			return nil, errors.New("package too long")
+		} else if pacLen < uint64(lenmin) {
+			return nil, errors.New("package too short")
+		}
+
+		apacLen := uint64(sz)+pacLen+1
+		if uint64(len(packBuff)) >= apacLen {
+			pad := packBuff[apacLen-1]
+			if pad != 0 {
+				return nil, errors.New("package pad error")
+			}
+
+			readCall(packBuff[sz:apacLen-1])
+			packBuff = packBuff[apacLen:]
+		} else {
+			return packBuff, nil
+		}
+
+
+	}
+
+
+	return nil, errors.New("unknown err")
+
+
+}
+
+
+
+func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, error) {
+	buffer := make([]byte, 2048)
+	packBuff := make([]byte, 0)
+
+	for {
+		conn.SetReadDeadline(time.Now().Add(time.Duration(readtimeout) * time.Second))
+		bytesRead, error := conn.Read(buffer)
+		if error != nil {
+			return true, error
+		}
+
+
+
+		packBuff = append(packBuff, buffer[:bytesRead]...)
+
+		packBuff, error = UnPackdata(1, 1024*5, packBuff, readCall)
+
+		if error != nil {
+			return false, error
+		}
+
+
+	}
+
+	return false, errors.New("fuck err")
+
+}
