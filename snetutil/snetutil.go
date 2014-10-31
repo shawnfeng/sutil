@@ -129,7 +129,7 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
         //     and -n is the number of bytes read
 		pacLen, sz := binary.Uvarint(packBuff)
 		if sz < 0 {
-			return nil, errors.New("package head error")
+			return packBuff, errors.New("package head error")
 		} else if sz == 0 {
 			return packBuff, nil
 		}
@@ -138,16 +138,16 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 
 		// must < lenmax
 		if pacLen > uint64(lenmax) {
-			return nil, errors.New("package too long")
+			return packBuff, errors.New("package too long")
 		} else if pacLen < uint64(lenmin) {
-			return nil, errors.New("package too short")
+			return packBuff, errors.New("package too short")
 		}
 
 		apacLen := uint64(sz)+pacLen+1
 		if uint64(len(packBuff)) >= apacLen {
 			pad := packBuff[apacLen-1]
 			if pad != 0 {
-				return nil, errors.New("package pad error")
+				return packBuff, errors.New("package pad error")
 			}
 
 			readCall(packBuff[sz:apacLen-1])
@@ -167,7 +167,7 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 
 
 
-func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, error) {
+func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, []byte, error) {
 	buffer := make([]byte, 2048)
 	packBuff := make([]byte, 0)
 
@@ -175,7 +175,7 @@ func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, 
 		conn.SetReadDeadline(time.Now().Add(time.Duration(readtimeout) * time.Second))
 		bytesRead, error := conn.Read(buffer)
 		if error != nil {
-			return true, error
+			return true, nil, error
 		}
 
 
@@ -185,12 +185,12 @@ func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, 
 		packBuff, error = UnPackdata(1, 1024*5, packBuff, readCall)
 
 		if error != nil {
-			return false, error
+			return false, packBuff, error
 		}
 
 
 	}
 
-	return false, errors.New("fuck err")
+	return false, nil, errors.New("fuck err")
 
 }
