@@ -143,6 +143,11 @@ func Init(logdir string, logpref string, level string) {
 
     lg = &logger{logpref: logfile, logfp: nil, per: nil}
 
+
+}
+
+func init() {
+	Init("", "", "TRACE")
 }
 
 
