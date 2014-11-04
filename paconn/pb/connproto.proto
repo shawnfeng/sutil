@@ -1,0 +1,21 @@
+package connproto;
+
+message ConnProto {
+	enum ProType {
+	     CALL = 1;
+	     ACK = 2;
+         HEART = 3;
+	}
+
+
+	required ProType Type = 1;       // 所有协议必须字段
+	optional fixed64 Msgid =  2;       // msg id
+	optional fixed64 Ackmsgid =  3;    // ack msg id
+
+	optional bytes Bussdata =  100;  // 调用数据
+
+
+
+}
+
+// protoc --go_out=. connproto.proto

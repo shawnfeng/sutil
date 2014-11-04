@@ -68,6 +68,15 @@ func IpAddrFromRemoteAddr(s string) string {
 	return s[:idx]
 }
 
+func IpAddrPort(s string) string {
+	idx := strings.LastIndex(s, ":")
+	if idx == -1 {
+		return ""
+	}
+	return s[idx+1:]
+}
+
+
 // 获取http请求的client的地址
 func IpAddressHttpClient(r *http.Request) string {
 	hdr := r.Header
