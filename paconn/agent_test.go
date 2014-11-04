@@ -10,7 +10,7 @@ import (
 	"sutil/slog"
 )
 
-var addrPort string
+var usetestaddrPort string
 
 func serverNotify(a *Agent, data []byte) []byte {
 
@@ -35,14 +35,6 @@ func serverNotifyOneway(a *Agent, data []byte) {
 
 	fun := "serverNotifyOneway"
 	slog.Infof("%s %s %v %s", fun, a, data, data)
-
-	if "NT" == string(data) {
-		slog.Infof("%s use not timeout", fun)
-	} else {
-		slog.Infof("%s use timeout", fun)
-		time.Sleep(time.Second * time.Duration(1))
-	}
-
 
 
 }
@@ -83,7 +75,7 @@ func WaitLink(t *testing.T) {
 	slog.Infoln(port)
 
 
-	addrPort = fmt.Sprintf("%s:%s", "127.0.0.1", port)
+	usetestaddrPort = fmt.Sprintf("%s:%s", "127.0.0.1", port)
 	for {
 		//slog.Infof("%s Waiting for clients", fun)
 		conn, error := netListen.Accept()
@@ -135,19 +127,19 @@ func clientClose(a *Agent, data []byte, err error) {
 func clientAgent(t *testing.T) {
 
 	fun := "clientAgent"
-	conn, err := net.Dial("tcp", addrPort)
-	if err != nil {
-		t.Errorf("%s Dial err:%s", fun, err)
-	}
 
-	id, ag := NewAgent(
-		conn,
+	id, ag, err := NewAgentFromAddr(
+		usetestaddrPort,
 		1000 * 5,
 		clientNotifyOneway,
 		clientNotify,
 		clientClose,
-		
 	)
+
+	if err != nil {
+		t.Errorf("%s Dial err:%s", fun, err)
+	}
+
 
 	slog.Infoln(id, ag)
 
@@ -178,6 +170,6 @@ func TestAgent(t *testing.T) {
 
 	clientAgent(t)
 
-	time.Sleep(time.Second * time.Duration(100))
+	time.Sleep(time.Second * time.Duration(5))
 }
 

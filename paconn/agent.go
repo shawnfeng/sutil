@@ -142,27 +142,33 @@ func (m *Agent) recvACK(pb *connproto.ConnProto) {
 func (m *Agent) recvCALL(pb *connproto.ConnProto) {
 	fun := "Agent.recvCALL"
 	data := pb.GetBussdata()
-	if m.cbTwowaynotify != nil {
-		msgid := pb.GetMsgid()
-		if msgid != 0 {
-			res := m.cbTwowaynotify(m, data)
-			// 需要回执
-			ack := &connproto.ConnProto {
-				Type: connproto.ConnProto_ACK.Enum(),
-				Ackmsgid: proto.Uint64(msgid),
-				Bussdata: res,
-			}
+	msgid := pb.GetMsgid()
+	if msgid != 0 {
+		res := make([]byte, 0)
+		if m.cbTwowaynotify != nil {
+			res = m.cbTwowaynotify(m, data)
+		}
 
-			sdata, _ := proto.Marshal(ack)
-			err := m.send(sdata, 200)
-			if err != nil {
-				slog.Warnf("%s agent:%s ack error:%s", fun, m, err)
-			}
+		// 需要回执
+		ack := &connproto.ConnProto {
+			Type: connproto.ConnProto_ACK.Enum(),
+			Ackmsgid: proto.Uint64(msgid),
+			Bussdata: res,
+		}
 
-		} else {
+		sdata, _ := proto.Marshal(ack)
+		err := m.send(sdata, 200)
+		if err != nil {
+			slog.Warnf("%s agent:%s ack error:%s", fun, m, err)
+		}
+
+	} else {
+		if m.cbOnewaynotify != nil {
 			m.cbOnewaynotify(m, data)
 		}
+
 	}
+
 
 }
 
@@ -294,6 +300,8 @@ func NewAgent(c net.Conn,
 	twonotify func(*Agent, []byte) []byte,
 	close func(*Agent, []byte, error),
 ) (string, *Agent) {
+	fun := "NewAgent"
+
 	uuidgen := uuid.NewUUID()
 	aid := uuidgen.String()
 
@@ -315,7 +323,33 @@ func NewAgent(c net.Conn,
 	go a.recv()
 	go a.heart()
 
+	slog.Infof("%s a:%s", fun, a)
+
 	return aid, a
 }
 
-// 是否开启心跳
+func NewAgentFromAddr(addr string,
+	heart int64,
+	onenotify func(*Agent, []byte),
+	twonotify func(*Agent, []byte) []byte,
+	close func(*Agent, []byte, error),
+) (string, *Agent, error) {
+
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return "", nil, err
+	}
+
+
+	aid, a := NewAgent(
+		conn,
+		heart,
+		onenotify,
+		twonotify,
+		close,
+	)
+
+	return aid, a, nil
+
+}
+
