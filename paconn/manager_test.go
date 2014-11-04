@@ -25,6 +25,8 @@ func TestMan(t *testing.T) {
 
 	agm, err := NewAgentManager(
 		":",
+		1000 * 60 * 5 * 3,
+		0,
 		newagentcb,
 		serverNotifyOneway,
 		serverNotify,
@@ -35,8 +37,9 @@ func TestMan(t *testing.T) {
 
 	slog.Infof("%s %s %v", fun, agm.Listenport(), err)
 
-	id, ag, err := NewAgentFromAddr(
+	ag, err := NewAgentFromAddr(
 		fmt.Sprintf("127.0.0.1:%s", agm.Listenport()),
+		1000 * 60 * 5 * 3,
 		1000 * 5,
 		clientNotifyOneway,
 		clientNotify,
@@ -48,7 +51,7 @@ func TestMan(t *testing.T) {
 	}
 
 
-	slog.Infoln(id, ag)
+	slog.Infoln(ag)
 
 
 	err = ag.Oneway([]byte("NT"), 100)

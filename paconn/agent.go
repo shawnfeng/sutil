@@ -46,6 +46,7 @@ type Agent struct {
 	conn net.Conn
 	tuple4 string
 	callmsg  map[uint64] chan *ackNotify
+	readTimeout int64
 	heartIntv int64
 	isConn bool
 
@@ -59,6 +60,11 @@ type Agent struct {
 func (m *Agent) String() string {
 	return fmt.Sprintf("%s@%s", m.id, m.tuple4)
 }
+
+func (m *Agent) Id() string {
+	return m.id
+}
+
 
 func (m *Agent) Close() {
 	m.conn.Close()
@@ -281,7 +287,7 @@ func (m *Agent) heart() {
 func (m *Agent) recv() {
 
 	// 是否是read返回错误socket已经关闭，返回时候没有处理的数据，错误信息
-	isclose, data, err := snetutil.PackageSplit(m.conn, 300 * 3, m.proto)
+	isclose, data, err := snetutil.PackageSplit(m.conn, int(m.readTimeout/1000), m.proto)
 
 	if !isclose {
 		m.Close()
@@ -295,13 +301,20 @@ func (m *Agent) recv() {
 }
 
 
-func NewAgent(c net.Conn,
+func NewAgent(
+	c net.Conn,
+	readto int64,
 	heart int64,
 	onenotify func(*Agent, []byte),
 	twonotify func(*Agent, []byte) []byte,
 	close func(*Agent, []byte, error),
-) (string, *Agent) {
+) *Agent {
 	fun := "NewAgent"
+
+	if readto <= 0 {
+		// 15分
+		readto = (1000*60*5) * 3
+	}
 
 	uuidgen := uuid.NewUUID()
 	aid := uuidgen.String()
@@ -314,6 +327,7 @@ func NewAgent(c net.Conn,
 		conn: c,
 		tuple4: fmt.Sprintf("%s-%s", c.LocalAddr().String(), c.RemoteAddr().String()),
 		callmsg: make(map[uint64] chan *ackNotify),
+		readTimeout: readto,
 		heartIntv: heart,
 		isConn: true,
 		cbOnewaynotify: onenotify,
@@ -326,31 +340,33 @@ func NewAgent(c net.Conn,
 
 	slog.Infof("%s a:%s", fun, a)
 
-	return aid, a
+	return a
 }
 
 func NewAgentFromAddr(addr string,
+	readtimeout int64,
 	heart int64,
 	onenotify func(*Agent, []byte),
 	twonotify func(*Agent, []byte) []byte,
 	close func(*Agent, []byte, error),
-) (string, *Agent, error) {
+) (*Agent, error) {
 
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 
-	aid, a := NewAgent(
+	a := NewAgent(
 		conn,
+		readtimeout,
 		heart,
 		onenotify,
 		twonotify,
 		close,
 	)
 
-	return aid, a, nil
+	return a, nil
 
 }
 

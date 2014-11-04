@@ -83,8 +83,9 @@ func WaitLink(t *testing.T) {
 			slog.Warnf("%s Agent error: ", fun, error)
 		} else {
 
-			id, ag := NewAgent(
+			ag := NewAgent(
 				conn,
+				1000 * 60 * 5 * 3,
 				0,
 				serverNotifyOneway,
 				serverNotify,
@@ -92,7 +93,7 @@ func WaitLink(t *testing.T) {
 		
 			)
 
-			slog.Infoln("S:", id, ag)
+			slog.Infoln("S:", ag)
 
 		}
 	}
@@ -128,8 +129,9 @@ func clientAgent(t *testing.T) {
 
 	fun := "clientAgent"
 
-	id, ag, err := NewAgentFromAddr(
+	ag, err := NewAgentFromAddr(
 		usetestaddrPort,
+		1000 * 60 * 5 * 3,
 		1000 * 5,
 		clientNotifyOneway,
 		clientNotify,
@@ -141,7 +143,7 @@ func clientAgent(t *testing.T) {
 	}
 
 
-	slog.Infoln(id, ag)
+	slog.Infoln(ag)
 
 
 	err = ag.Oneway([]byte("NT"), 100)

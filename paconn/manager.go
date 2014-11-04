@@ -48,8 +48,8 @@ func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
 	slog.Infof("%s close:%s pack:%v", fun, a, pack)
 
 
-	if _, ok := m.agents[a.id]; ok {
-		delete(m.agents, a.id)
+	if _, ok := m.agents[a.Id()]; ok {
+		delete(m.agents, a.Id())
 		if m.cbClose != nil {
 			m.cbClose(a, pack, err)
 		}
@@ -82,7 +82,14 @@ func (m *AgentManager) Twoway(aid string, data []byte, timeout int64) ([]byte, e
 
 
 
-func (m *AgentManager) accept(done chan error, tcpAddr net.Addr) {
+func (m *AgentManager) accept(
+	done chan error,
+	tcpAddr net.Addr,
+
+	readto int64,
+	heart int64,
+
+) {
 	fun := "AgentManager.accept"
 
 	netListen, error := net.Listen(tcpAddr.Network(), tcpAddr.String())
@@ -102,15 +109,16 @@ func (m *AgentManager) accept(done chan error, tcpAddr net.Addr) {
 		if error != nil {
 			slog.Warnf("%s Agent error: ", fun, error)
 		} else {
-			id, ag := NewAgent(
+			ag := NewAgent(
 				conn,
-				0,
+				readto,
+				heart,
 				m.callbackOneway,
 				m.callbackTwoway,
 				m.callbackClose,
 
 			)
-			m.agents[id] = ag
+			m.agents[ag.Id()] = ag
 
 			if m.cbNewagent != nil {
 				m.cbNewagent(ag)
@@ -123,6 +131,11 @@ func (m *AgentManager) accept(done chan error, tcpAddr net.Addr) {
 
 func NewAgentManager(
 	addr string,
+
+	readtimeout int64,
+	heart int64,
+
+
 	newagent func(*Agent),
 	onenotify func(*Agent, []byte),
 	twonotify func(*Agent, []byte) []byte,
@@ -146,7 +159,7 @@ func NewAgentManager(
 
 	done := make(chan error)
 
-	go agm.accept(done, tcpAddr)
+	go agm.accept(done, tcpAddr, readtimeout, heart)
 	err = <-done
 	if err != nil {
 		return nil, err
