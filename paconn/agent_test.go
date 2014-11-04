@@ -6,8 +6,8 @@ import (
 	"time"
 	"testing"
 
-	"sutil/snetutil"
-	"sutil/slog"
+	"github.com/shawnfeng/sutil/snetutil"
+	"github.com/shawnfeng/sutil/slog"
 )
 
 var usetestaddrPort string

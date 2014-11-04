@@ -13,12 +13,13 @@ import (
 	"github.com/sdming/gosnow"
 	"code.google.com/p/goprotobuf/proto"
 
-	"sutil/slog"
-	"sutil/stime"
-	"sutil/snetutil"
+
+	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/stime"
+	"github.com/shawnfeng/sutil/snetutil"
 
 
-	"sutil/paconn/pb"
+	"github.com/shawnfeng/sutil/paconn/pb"
 )
 
 var msgidgen *gosnow.SnowFlake
