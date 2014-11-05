@@ -7,17 +7,19 @@ import (
 
 type BackOffCtrl struct {
 	// 退避的最大值
-	ceil int32
-	// 退避累计
-	cn uint32
+	ceil time.Duration
+	// 退避的起始值
+	step time.Duration
+	backtime time.Duration
 
 	reset chan bool
 }
 
-func NewBackOffCtrl(ceil int32) *BackOffCtrl {
+func NewBackOffCtrl(step time.Duration, ceil time.Duration) *BackOffCtrl {
 	return &BackOffCtrl {
 		ceil: ceil,
-		cn: 0,
+		step: step,
+		backtime: 0,
 		reset: make(chan bool),
 	}
 
@@ -26,24 +28,26 @@ func NewBackOffCtrl(ceil int32) *BackOffCtrl {
 // 执行退避，会发生阻塞
 func (m *BackOffCtrl) BackOff() {
 
-	backtime := int32(1 << m.cn)
-	if 1 << m.cn > m.ceil {
-		backtime = m.ceil
-	} else {
-		m.cn++
-	}
-
 	select {
 	case <-m.reset:
-	case <-time.After(time.Second * time.Duration(backtime)):
-	}
+	case <-time.After(m.backtime):
+		if m.backtime <= 0 {
+			m.backtime = m.step
+		} else {
+			m.backtime = m.backtime * 2
+		}
 
+		if m.backtime >= m.ceil {
+			m.backtime = m.ceil
+		}
+
+	}
 
 }
 
 // 终止退避过程，reset退避状态
 func (m *BackOffCtrl) Reset() {
-	m.cn = 0
+	m.backtime = 0
 	select {
 	case m.reset <-true:
 	default:
