@@ -121,6 +121,7 @@ func (m *Agent) Twoway(data []byte, timeout int64) ([]byte, error) {
 	case v := <-done:
 		return v.result, v.err
 	case <-time.After(time.Millisecond * time.Duration(timeout-senduse)):
+		m.Close()
 		return nil, errors.New("call ack timetout")
 	}
 
