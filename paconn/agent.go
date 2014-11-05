@@ -46,8 +46,8 @@ type Agent struct {
 	conn net.Conn
 	tuple4 string
 	callmsg  map[uint64] chan *ackNotify
-	readTimeout int64
-	heartIntv int64
+	readTimeout time.Duration
+	heartIntv time.Duration
 	isConn bool
 
 
@@ -269,7 +269,7 @@ func (m *Agent) heart() {
 	if m.heartIntv > 0 {
 		// 主动心跳
 		slog.Infof("%s agent:%s heart:%d ms", fun, m, m.heartIntv)
-		ticker := time.NewTicker(time.Millisecond * time.Duration(m.heartIntv))
+		ticker := time.NewTicker(m.heartIntv)
 		for {
 			select {
 			case <-ticker.C:
@@ -288,7 +288,7 @@ func (m *Agent) heart() {
 func (m *Agent) recv() {
 
 	// 是否是read返回错误socket已经关闭，返回时候没有处理的数据，错误信息
-	isclose, data, err := snetutil.PackageSplit(m.conn, int(m.readTimeout/1000), m.proto)
+	isclose, data, err := snetutil.PackageSplit(m.conn, m.readTimeout, m.proto)
 
 	if !isclose {
 		m.Close()
@@ -304,8 +304,8 @@ func (m *Agent) recv() {
 
 func NewAgent(
 	c net.Conn,
-	readto int64,
-	heart int64,
+	readto time.Duration,
+	heart time.Duration,
 	onenotify func(*Agent, []byte),
 	twonotify func(*Agent, []byte) []byte,
 	close func(*Agent, []byte, error),
@@ -345,8 +345,8 @@ func NewAgent(
 }
 
 func NewAgentFromAddr(addr string,
-	readtimeout int64,
-	heart int64,
+	readtimeout time.Duration,
+	heart time.Duration,
 	onenotify func(*Agent, []byte),
 	twonotify func(*Agent, []byte) []byte,
 	close func(*Agent, []byte, error),

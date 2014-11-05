@@ -176,12 +176,12 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 
 
 
-func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, []byte, error) {
+func PackageSplit(conn net.Conn, readtimeout time.Duration, readCall func([]byte)) (bool, []byte, error) {
 	buffer := make([]byte, 2048)
 	packBuff := make([]byte, 0)
 
 	for {
-		conn.SetReadDeadline(time.Now().Add(time.Duration(readtimeout) * time.Second))
+		conn.SetReadDeadline(time.Now().Add(readtimeout))
 		bytesRead, error := conn.Read(buffer)
 		if error != nil {
 			return true, nil, error

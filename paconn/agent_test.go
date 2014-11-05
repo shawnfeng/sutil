@@ -85,7 +85,7 @@ func WaitLink(t *testing.T) {
 
 			ag := NewAgent(
 				conn,
-				1000 * 60 * 5 * 3,
+				time.Second * 60 * 15,
 				0,
 				serverNotifyOneway,
 				serverNotify,
@@ -131,8 +131,8 @@ func clientAgent(t *testing.T) {
 
 	ag, err := NewAgentFromAddr(
 		usetestaddrPort,
-		1000 * 60 * 5 * 3,
-		1000 * 5,
+		time.Second * 60 * 15,
+		time.Second * 5,
 		clientNotifyOneway,
 		clientNotify,
 		clientClose,

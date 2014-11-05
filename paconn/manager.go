@@ -2,6 +2,7 @@ package paconn
 
 import (
 	"net"
+	"time"
 	"errors"
 
 	"github.com/shawnfeng/sutil/snetutil"
@@ -86,8 +87,8 @@ func (m *AgentManager) accept(
 	done chan error,
 	tcpAddr net.Addr,
 
-	readto int64,
-	heart int64,
+	readto time.Duration,
+	heart time.Duration,
 
 ) {
 	fun := "AgentManager.accept"
@@ -132,8 +133,8 @@ func (m *AgentManager) accept(
 func NewAgentManager(
 	addr string,
 
-	readtimeout int64,
-	heart int64,
+	readtimeout time.Duration,
+	heart time.Duration,
 
 
 	newagent func(*Agent),

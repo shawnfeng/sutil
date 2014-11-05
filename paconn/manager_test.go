@@ -25,7 +25,7 @@ func TestMan(t *testing.T) {
 
 	agm, err := NewAgentManager(
 		":",
-		1000 * 60 * 5 * 3,
+		time.Second * 60 *15,
 		0,
 		newagentcb,
 		serverNotifyOneway,
@@ -39,8 +39,8 @@ func TestMan(t *testing.T) {
 
 	ag, err := NewAgentFromAddr(
 		fmt.Sprintf("127.0.0.1:%s", agm.Listenport()),
-		1000 * 60 * 5 * 3,
-		1000 * 5,
+		time.Second * 60 *15,
+		time.Second * 5,
 		clientNotifyOneway,
 		clientNotify,
 		clientClose,
