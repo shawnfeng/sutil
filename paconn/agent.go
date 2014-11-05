@@ -268,7 +268,7 @@ func (m *Agent) heart() {
 	fun := "Agent.heart"
 	if m.heartIntv > 0 {
 		// 主动心跳
-		slog.Infof("%s agent:%s heart:%d ms", fun, m, m.heartIntv)
+		slog.Infof("%s agent:%s heart:%d", fun, m, m.heartIntv)
 		ticker := time.NewTicker(m.heartIntv)
 		for {
 			select {

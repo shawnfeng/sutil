@@ -23,6 +23,10 @@ type AgentManager struct {
 
 }
 
+func (m *AgentManager) Agents () map[string]*Agent {
+	return m.agents
+}
+
 func (m *AgentManager) Listenport () string {
 	return snetutil.IpAddrPort(m.addrListen.String())
 }
