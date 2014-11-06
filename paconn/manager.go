@@ -65,7 +65,7 @@ func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
 }
 
 
-func (m *AgentManager) Oneway(aid string, data []byte, timeout int64) error {
+func (m *AgentManager) Oneway(aid string, data []byte, timeout time.Duration) error {
 
 	if a, ok := m.agents[aid]; ok {
 		return a.Oneway(data, timeout)
@@ -76,7 +76,7 @@ func (m *AgentManager) Oneway(aid string, data []byte, timeout int64) error {
 }
 
 
-func (m *AgentManager) Twoway(aid string, data []byte, timeout int64) ([]byte, error) {
+func (m *AgentManager) Twoway(aid string, data []byte, timeout time.Duration) ([]byte, error) {
 	if a, ok := m.agents[aid]; ok {
 		return a.Twoway(data, timeout)
 	} else {

@@ -20,11 +20,11 @@ func Timestamp2014() uint64 {
 
 type runTimeStat struct {
 	logkey string
-	stamp int64
+	since time.Time
 }
 
 func (m *runTimeStat) StatLog() string {
-	return fmt.Sprintf("%s RUNTIME:%d", m.logkey, m.Nanosecond())
+	return fmt.Sprintf("%s RUNTIME:%d", m.logkey, m.Duration())
 }
 
 func (m *runTimeStat) Millisecond() int64 {
@@ -32,20 +32,28 @@ func (m *runTimeStat) Millisecond() int64 {
 }
 
 func (m *runTimeStat) Microsecond() int64 {
-	return m.Nanosecond() / 1000
+	return m.Duration().Nanoseconds() / 1000
 
 }
 
 func (m *runTimeStat) Nanosecond() int64 {
-	return time.Now().UnixNano()-m.stamp
+	return m.Duration().Nanoseconds()
 }
 
+func (m *runTimeStat) Duration() time.Duration {
+	return time.Since(m.since)
+}
+
+
+func (m *runTimeStat) Reset() {
+	m.since = time.Now()
+}
 
 
 
 func NewTimeStat(key string) *runTimeStat {
 	return &runTimeStat {
 		logkey: key,
-		stamp: time.Now().UnixNano(),
+		since: time.Now(),
 	}
 }

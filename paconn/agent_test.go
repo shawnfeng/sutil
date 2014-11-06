@@ -18,7 +18,7 @@ func serverNotify(a *Agent, data []byte) []byte {
 	slog.Infof("%s %s %v %s", fun, a, data, data)
 
 	if "NT" == string(data) {
-		slog.Infof("%s use not timeout", fun)
+		slog.Infof(">>>>%s use not timeout", fun)
 		return []byte("OK")
 	} else {
 		slog.Infof("%s use timeout", fun)
@@ -146,14 +146,14 @@ func clientAgent(t *testing.T) {
 	slog.Infoln(ag)
 
 
-	err = ag.Oneway([]byte("NT"), 100)
+	err = ag.Oneway([]byte("NT"), time.Millisecond*100)
 	if err != nil {
 		slog.Infoln(err)
 		t.Errorf("%s oneway %s", fun, err)
 	}
 
 	slog.Infof("%s ^^^^^^^^^^^^^^^^ oneway", fun)
-	res, err := ag.Twoway([]byte("NT"), 100)
+	res, err := ag.Twoway([]byte("NT"), time.Millisecond*100)
 	if err != nil {
 		slog.Warnln(err)
 		t.Errorf("%s twoway %s", fun, err)

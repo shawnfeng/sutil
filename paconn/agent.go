@@ -24,6 +24,10 @@ import (
 
 var msgidgen *gosnow.SnowFlake
 
+const (
+	DEFAULT_SEND_TIMEOUT time.Duration = time.Millisecond*200
+)
+
 
 func init() {
 	gosnow.Since = stime.Since2014 / 1000
@@ -67,12 +71,19 @@ func (m *Agent) Id() string {
 
 
 func (m *Agent) Close() {
+	// 不管错误，即使关闭了，也再关一次，修改isConn状态
 	m.conn.Close()
+	//err := m.conn.Close()
+	//if err != nil {
+	//	slog.Warnf("Agent.Close Close err:%s", err)
+	//}
+
+
 	m.isConn = false
 
 }
 
-func (m *Agent) Oneway(data []byte, timeout int64) error {
+func (m *Agent) Oneway(data []byte, timeout time.Duration) error {
 	pb := &connproto.ConnProto {
 		Type: connproto.ConnProto_CALL.Enum(),
 		Bussdata: data,
@@ -85,7 +96,7 @@ func (m *Agent) Oneway(data []byte, timeout int64) error {
 }
 
 
-func (m *Agent) Twoway(data []byte, timeout int64) ([]byte, error) {
+func (m *Agent) Twoway(data []byte, timeout time.Duration) ([]byte, error) {
 	fun := "Agent.Twoway"
 
 	msgid, _ := msgidgen.Next()
@@ -110,7 +121,7 @@ func (m *Agent) Twoway(data []byte, timeout int64) ([]byte, error) {
 		return nil, err
 	}
 
-	senduse := st.Millisecond()
+	senduse := st.Duration()
 
 	if senduse >= timeout {
 		return nil, errors.New(fmt.Sprintf("call send timetout:%d", senduse))
@@ -120,7 +131,7 @@ func (m *Agent) Twoway(data []byte, timeout int64) ([]byte, error) {
 	select {
 	case v := <-done:
 		return v.result, v.err
-	case <-time.After(time.Millisecond * time.Duration(timeout-senduse)):
+	case <-time.After(timeout-senduse):
 		m.Close()
 		return nil, errors.New("call ack timetout")
 	}
@@ -165,7 +176,7 @@ func (m *Agent) recvCALL(pb *connproto.ConnProto) {
 		}
 
 		sdata, _ := proto.Marshal(ack)
-		err := m.send(sdata, 200)
+		err := m.send(sdata, DEFAULT_SEND_TIMEOUT)
 		if err != nil {
 			slog.Warnf("%s agent:%s ack error:%s", fun, m, err)
 		}
@@ -208,7 +219,7 @@ func (m *Agent) proto(data []byte) {
 
 }
 
-func (m *Agent) send(data []byte, timeout int64) error {
+func (m *Agent) send(data []byte, timeout time.Duration) error {
 	if !m.isConn {
 		return errors.New("connection is not ok")
 
@@ -218,8 +229,7 @@ func (m *Agent) send(data []byte, timeout int64) error {
 
 	m.sendLock.Lock()
 	defer m.sendLock.Unlock()
-
-	m.conn.SetWriteDeadline(time.Now().Add(time.Duration(timeout) * time.Millisecond))
+	m.conn.SetWriteDeadline(time.Now().Add(timeout))
 	a, err := m.conn.Write(s)
 	//slog.Infof("%s agent:%s Send Write %d rv %d", fun, m, len(s), a)
 
@@ -245,7 +255,7 @@ func (m *Agent) sendHEART() {
 	//slog.Debugf("%s agent:%s msg:%s", fun, m, heart)
 
 	data, _ := proto.Marshal(heart)
-	err := m.send(data, 200)
+	err := m.send(data, DEFAULT_SEND_TIMEOUT)
 
 	if err != nil {
 		slog.Warnf("%s agent:%s error:%s", fun, m, err)
