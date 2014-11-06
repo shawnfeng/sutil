@@ -182,19 +182,19 @@ func PackageSplit(conn net.Conn, readtimeout time.Duration, readCall func([]byte
 
 	for {
 		conn.SetReadDeadline(time.Now().Add(readtimeout))
-		bytesRead, error := conn.Read(buffer)
-		if error != nil {
-			return true, nil, error
+		bytesRead, err := conn.Read(buffer)
+		if err != nil {
+			return true, nil, err
 		}
 
 
 
 		packBuff = append(packBuff, buffer[:bytesRead]...)
 
-		packBuff, error = UnPackdata(1, 1024*5, packBuff, readCall)
+		packBuff, err = UnPackdata(1, 1024*5, packBuff, readCall)
 
-		if error != nil {
-			return false, packBuff, error
+		if err != nil {
+			return false, packBuff, err
 		}
 
 
