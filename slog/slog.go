@@ -106,6 +106,22 @@ const (
 
 
 var (
+	headTrace string
+	headDebug string
+	headInfo string
+	headWarn string
+	headError string
+	headFatal string
+	headPanic string
+
+	headFmtTrace string
+	headFmtDebug string
+	headFmtInfo string
+	headFmtWarn string
+	headFmtError string
+	headFmtFatal string
+	headFmtPanic string
+
 	log_level int
 	lg *logger
 )
@@ -147,71 +163,89 @@ func Init(logdir string, logpref string, level string) {
 }
 
 func init() {
+	pid := os.Getpid()
+	headTrace = fmt.Sprintf("[TRACE] [%d]", pid)
+	headDebug = fmt.Sprintf("[DEBUG] [%d]", pid)
+	headInfo = fmt.Sprintf("[INFO] [%d]", pid)
+	headWarn = fmt.Sprintf("[WARN] [%d]", pid)
+	headError = fmt.Sprintf("[ERROR] [%d]", pid)
+	headFatal = fmt.Sprintf("[FATAL] [%d]", pid)
+	headPanic = fmt.Sprintf("[PANIC] [%d]", pid)
+
+	headFmtTrace = fmt.Sprintf("%s ", headTrace)
+	headFmtDebug = fmt.Sprintf("%s ", headDebug)
+	headFmtInfo = fmt.Sprintf("%s ", headInfo)
+	headFmtWarn = fmt.Sprintf("%s ", headWarn)
+	headFmtError = fmt.Sprintf("%s ", headError)
+	headFmtFatal = fmt.Sprintf("%s ", headFatal)
+	headFmtPanic = fmt.Sprintf("%s ", headPanic)
+
+
 	Init("", "", "TRACE")
 }
 
 
 func Tracef(format string, v ...interface{}) {
 	if LV_TRACE >= log_level {
-		lg.Printf("[TRACE] "+format, v...)
+		lg.Printf(headFmtTrace+format, v...)
 	}
 }
 
 func Traceln(v ...interface{}) {
 	if LV_TRACE >= log_level {
-		lg.Println(append([]interface{}{"[TRACE]"}, v...)...)
+		lg.Println(append([]interface{}{headTrace}, v...)...)
 	}
 }
 
 
 func Debugf(format string, v ...interface{}) {
 	if LV_DEBUG >= log_level {
-		lg.Printf("[DEBUG] "+format, v...)
+		lg.Printf(headFmtDebug+format, v...)
 	}
 }
 
 func Debugln(v ...interface{}) {
 	if LV_DEBUG >= log_level {
-		lg.Println(append([]interface{}{"[DEBUG]"}, v...)...)
+		lg.Println(append([]interface{}{headDebug}, v...)...)
 	}
 }
 
 
 func Infof(format string, v ...interface{}) {
 	if LV_INFO >= log_level {
-		lg.Printf("[INFO] "+format, v...)
+		lg.Printf(headFmtInfo+format, v...)
 	}
 }
 
 func Infoln(v ...interface{}) {
 	if LV_INFO >= log_level {
-		lg.Println(append([]interface{}{"[INFO]"}, v...)...)
+		lg.Println(append([]interface{}{headInfo}, v...)...)
 	}
 }
 
 
 func Warnf(format string, v ...interface{}) {
 	if LV_WARN >= log_level {
-		lg.Printf("[WARN] "+format, v...)
+		lg.Printf(headFmtWarn+format, v...)
 	}
 }
 
 func Warnln(v ...interface{}) {
 	if LV_WARN >= log_level {
-		lg.Println(append([]interface{}{"[WARN]"}, v...)...)
+		lg.Println(append([]interface{}{headWarn}, v...)...)
 	}
 }
 
 
 func Errorf(format string, v ...interface{}) {
 	if LV_ERROR >= log_level {
-		lg.Printf("[ERROR] "+format, v...)
+		lg.Printf(headFmtError+format, v...)
 	}
 }
 
 func Errorln(v ...interface{}) {
 	if LV_ERROR >= log_level {
-		lg.Println(append([]interface{}{"[ERROR]"}, v...)...)
+		lg.Println(append([]interface{}{headError}, v...)...)
 	}
 }
 
@@ -219,27 +253,27 @@ func Errorln(v ...interface{}) {
 
 func Fatalf(format string, v ...interface{}) {
 	if LV_FATAL >= log_level {
-		lg.Printf("[FATAL] "+format, v...)
+		lg.Printf(headFmtFatal+format, v...)
 	}
 }
 
 
 func Fatalln(v ...interface{}) {
 	if LV_FATAL >= log_level {
-		lg.Println(append([]interface{}{"[FATAL]"}, v...)...)
+		lg.Println(append([]interface{}{headFatal}, v...)...)
 	}
 }
 
 
 func Panicf(format string, v ...interface{}) {
 	if LV_PANIC >= log_level {
-		lg.Panicf("[PANIC] "+format, v...)
+		lg.Panicf(headFmtPanic+format, v...)
 	}
 }
 
 
 func Panicln(v ...interface{}) {
 	if LV_PANIC >= log_level {
-		lg.Panicln(append([]interface{}{"[PANIC]"}, v...)...)
+		lg.Panicln(append([]interface{}{headPanic}, v...)...)
 	}
 }

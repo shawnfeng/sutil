@@ -9,6 +9,26 @@ func TestShowLog(t *testing.T) {
 
 
 func t0(t *testing.T) {
+
+	Tracef("Tracef %s", "TT")
+	Debugf("Debugf %s", "TT")
+	Infof("Infof %s", "TT")
+	Warnf("Warnf %s", "TT")
+	Errorf("Errorf %s", "TT")
+	Fatalf("Fatalf %s", "TT")
+	//Panicf("Panicf %s", "TT")
+
+
+	Traceln("Trace %s", "TT")
+	Debugln("Debug %s", "TT")
+	Infoln("Info %s", "TT")
+	Warnln("Warn %s", "TT")
+	Errorln("Error", "TT")
+	Fatalln("Fatal", "TT")
+	//Panicln("Panic %s", "TT")
+
+
+	Infoln("FF")
 	Infoln("FF")
 
 }
