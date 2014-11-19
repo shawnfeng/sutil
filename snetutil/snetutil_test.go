@@ -3,6 +3,7 @@ package snetutil
 import (
 	"testing"
 	"fmt"
+	"net"
 )
 
 func cmpbyte(a []byte, b []byte) bool {
@@ -34,6 +35,17 @@ func TestGetInterIp(t *testing.T) {
 
 func TestGetExterIp(t *testing.T) {
 	//t.Errorf()
+	// SplitHostPort splits a network address of the form "host:port", "[host]:port" or "[ipv6-host%zone]:port" into host or ipv6-host%zone and port. A literal address or host name for IPv6 must be enclosed in square brackets, as in "[::1]:80", "[ipv6-host]:http" or "[ipv6-host%zone]:80".
+	host, port, err := net.SplitHostPort("127.0.0.1:333")
+	fmt.Printf("SplitHostPort: %s-%s-%v\n", host, port, err)
+	host, port, err = net.SplitHostPort("[::1]:80")
+	fmt.Printf("SplitHostPort: %s-%s-%v\n", host, port, err)
+
+	addrs, err := net.InterfaceAddrs()
+	for _, addr := range addrs {
+		fmt.Println(addr.Network(), addr.String())
+	}
+
 
 	ip, err := GetExterIp()
 	fmt.Printf("GetExterIp:%s %v\n", ip, err)

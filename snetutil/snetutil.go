@@ -37,7 +37,7 @@ func GetInterIp() (string, error) {
 	return "", errors.New("no inter ip")
 }
 
-
+// 获取首个外网ip v4
 func GetExterIp() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -47,9 +47,25 @@ func GetExterIp() (string, error) {
 
 	for _, addr := range addrs {
 		//fmt.Printf("Inter %v\n", addr)
-		ip := addr.String()
+		ips := addr.String()
+		idx := strings.LastIndex(ips, "/")
+		if idx == -1 {
+                        continue
+		}
+		ipv := net.ParseIP(ips[:idx])
+		if ipv == nil {
+                        continue
+		}
+
+		ipv4 := ipv.To4()
+		if ipv4 == nil {
+                        // ipv6
+                        continue
+		}
+		ip := ipv4.String()
+
 		if "10." != ip[:3] && "172." != ip[:4] && "196." != ip[:4] && "127." != ip[:4] {
-			return strings.Split(ip, "/")[0], nil
+			return ip, nil
 		}
 
 	}
