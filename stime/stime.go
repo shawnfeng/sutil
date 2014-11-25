@@ -2,7 +2,7 @@ package stime
 
 import (
 	"time"
-	"fmt"
+//	"fmt"
 
 )
 
@@ -19,13 +19,13 @@ func Timestamp2014() uint64 {
 
 
 type runTimeStat struct {
-	logkey string
+	//logkey string
 	since time.Time
 }
 
-func (m *runTimeStat) StatLog() string {
-	return fmt.Sprintf("%s RUNTIME:%d", m.logkey, m.Duration())
-}
+//func (m *runTimeStat) StatLog() string {
+//	return fmt.Sprintf("%s RUNTIME:%d", m.logkey, m.Duration())
+//}
 
 func (m *runTimeStat) Millisecond() int64 {
 	return m.Microsecond() / 1000
@@ -51,9 +51,10 @@ func (m *runTimeStat) Reset() {
 
 
 
-func NewTimeStat(key string) *runTimeStat {
+//func NewTimeStat(key string) *runTimeStat {
+func NewTimeStat() *runTimeStat {
 	return &runTimeStat {
-		logkey: key,
+		//logkey: key,
 		since: time.Now(),
 	}
 }

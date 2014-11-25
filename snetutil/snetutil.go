@@ -28,6 +28,8 @@ func GetInterIp() (string, error) {
 			return strings.Split(ip, "/")[0], nil
 		} else if "196." == ip[:4] {
 			return strings.Split(ip, "/")[0], nil
+		} else if "192." == ip[:4] {
+			return strings.Split(ip, "/")[0], nil
 		}
 
 
