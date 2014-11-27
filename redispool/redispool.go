@@ -3,6 +3,8 @@ package redispool
 import (
 	"fmt"
 	"errors"
+	"io/ioutil"
+	"crypto/sha1"
 
 //	"os"
 	"time"
@@ -47,10 +49,17 @@ func (self *RedisEntry) close() {
 
 }
 
+type luaScript struct {
+	sha1 string
+	data []byte
+}
 
 type RedisPool struct {
 	mu sync.Mutex
 	clipool map[string][]*RedisEntry
+
+	muLua sync.Mutex
+	luas map[string]*luaScript
 }
 
 
@@ -94,7 +103,7 @@ func (self *RedisPool) getCache(addr string) *RedisEntry {
 	//slog.Traceln(fun, "call", addr, self)
 
 	self.mu.Lock()
-	self.mu.Unlock()
+	defer self.mu.Unlock()
 	rs, ok := self.clipool[addr]
 	if ok {
 		if self.rmTimeout(&rs) {
@@ -132,7 +141,7 @@ func (self *RedisPool) payback(addr string, re *RedisEntry) {
 	//slog.Traceln(fun, "call", addr, self)
 
 	self.mu.Lock()
-	self.mu.Unlock()
+	defer self.mu.Unlock()
 
 
 	if rs, ok := self.clipool[addr]; ok {
@@ -199,6 +208,80 @@ func (self *RedisPool) CmdSingle(addr string, cmd []interface{}) *redis.Reply {
 
 }
 
+func (self *RedisPool) sha1Lua(key string) (string, error) {
+	self.muLua.Lock()
+	defer self.muLua.Unlock()
+	if v, ok := self.luas[key]; ok {
+		return v.sha1, nil
+	} else {
+		return "", errors.New("lua not find")
+	}
+
+}
+
+func (self *RedisPool) dataLua(key string) ([]byte, error) {
+	self.muLua.Lock()
+	defer self.muLua.Unlock()
+
+	if v, ok := self.luas[key]; ok {
+		return v.data, nil
+	} else {
+		return []byte{}, errors.New("lua not find")
+	}
+
+
+}
+
+
+func (self *RedisPool) LoadLuaFile(key, file string) error {
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return err
+	}
+
+	h := sha1.Sum(data)
+	hex := fmt.Sprintf("%x", h)
+
+	slog.Infof("RedisPool.loadLuaFile key:%s sha1:%s file:%s", key, hex, file)
+
+	self.muLua.Lock()
+	defer self.muLua.Unlock()
+
+	self.luas[key] = &luaScript {
+		sha1: hex,
+		data: data,
+
+	}
+
+	return nil
+
+
+}
+
+
+// lua 脚本执行的快捷命令
+func (self *RedisPool) EvalSingle(addr string, key string, cmd_args []interface{}) *redis.Reply {
+	fun := "RedisPool.EvalSingle"
+	sha1, err := self.sha1Lua(key)
+	if err != nil {
+		es := fmt.Sprintf("get lua sha1 add:%s key:%s err:%s", addr, key, err)
+		return &redis.Reply{Type: redis.ErrorReply, Err:errors.New(es)}
+	}
+
+	cmd := append([]interface{}{"evalsha", sha1,}, cmd_args...)
+	rp := self.CmdSingle(addr, cmd)
+	if rp.Type == redis.ErrorReply && rp.String() == "NOSCRIPT No matching script. Please use EVAL." {
+		slog.Infoln(fun, "load lua", addr)
+		cmd[0] = "eval"
+		cmd[1], _ = self.dataLua(key)
+		rp = self.CmdSingle(addr, cmd)
+	}
+
+
+	return rp
+}
+
+
 func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redis.Reply {
 	rv := make(map[string]*redis.Reply)
 	for k, v := range multi_args {
@@ -212,6 +295,7 @@ func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redi
 func NewRedisPool() *RedisPool {
 	return &RedisPool{
 		clipool: make(map[string][]*RedisEntry),
+		luas: make(map[string]*luaScript),
 	}
 }
 

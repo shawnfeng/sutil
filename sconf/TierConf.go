@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"io/ioutil"
 	"github.com/vaughan0/go-ini"
 )
 
@@ -35,6 +36,17 @@ func (m *TierConf) LoadFromConf(cfg map[string]map[string]string) {
 		for k, v := range section {
 			m.conf[name][k] = v
 		}
+	}
+
+
+}
+
+func (m *TierConf) LoadFromFile(conf string) error {
+	data, err := ioutil.ReadFile(conf)
+	if err != nil {
+		return err
+	} else {
+		return m.Load(data)
 	}
 
 
