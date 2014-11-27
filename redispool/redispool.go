@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"crypto/sha1"
+	"hash/fnv"
 
 //	"os"
 	"time"
@@ -289,6 +290,15 @@ func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redi
 	}
 
 	return rv
+
+}
+
+func HashRedis(addrs []string, key string) string {
+    h := fnv.New32a()
+    h.Write([]byte(key))
+    hv := h.Sum32()
+
+	return addrs[hv % uint32(len(addrs))]
 
 }
 
