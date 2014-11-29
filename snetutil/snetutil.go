@@ -3,6 +3,9 @@ package snetutil
 import (
 	"net"
 	"time"
+	"fmt"
+	"bytes"
+	"io/ioutil"
 	"encoding/binary"
 	"strings"
 	"errors"
@@ -191,6 +194,44 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 
 
 }
+
+func HttpReqPostOk(url string, data []byte, timeout time.Duration) ([]byte, error) {
+	body, status, err := HttpReqPost(url, data, timeout)
+	if err != nil {
+		return nil, err
+	}
+	if status != 200 {
+		return nil, errors.New(fmt.Sprintf("status:%d err:%s", status, body))
+
+	} else {
+		return body, nil
+	}
+
+}
+
+func HttpReqPost(url string, data []byte, timeout time.Duration) ([]byte, int, error) {
+	client := &http.Client{Timeout: timeout}
+
+	reqest, err := http.NewRequest("POST", url, bytes.NewReader(data))
+	if err != nil {
+		return nil, 0, err
+	}
+	reqest.Header.Set("Connection","Keep-Alive")
+
+	response, err := client.Do(reqest)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return body, response.StatusCode, nil
+
+}
+
 
 
 
