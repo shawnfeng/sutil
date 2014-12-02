@@ -79,7 +79,7 @@ func (m *TierConf) ToSection(section string) (map[string]string, error) {
 	if s, ok := m.conf[section]; ok {
 		return s, nil
 	} else {
-		return nil, errors.New("section empty")
+		return nil, errors.New("section empty:"+section)
 	}
 
 
@@ -95,7 +95,7 @@ func (m *TierConf) ToString(section string, property string) (string, error) {
 		if p, ok := s[property]; ok {
 			return p, nil
 		} else {
-			return "", errors.New("property empty")
+			return "", errors.New("property empty:"+property)
 		}
 
 
