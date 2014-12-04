@@ -126,6 +126,92 @@ func (m *TierConf) ToInt(section string, property string) (int, error) {
 
 }
 
+func (m *TierConf) ToInt32(section string, property string) (int32, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return 0, err
+	} else {
+		i, err := strconv.ParseInt(v, 10, 32)
+		return int32(i), err
+	}
+
+}
+
+func (m *TierConf) ToInt64(section string, property string) (int64, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return 0, err
+	} else {
+		i, err := strconv.ParseInt(v, 10, 64)
+		return i, err
+	}
+
+}
+
+func (m *TierConf) ToUint64(section string, property string) (uint64, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return 0, err
+	} else {
+		i, err := strconv.ParseUint(v, 10, 64)
+		return i, err
+	}
+
+}
+
+func (m *TierConf) ToUint32(section string, property string) (uint32, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return 0, err
+	} else {
+		i, err := strconv.ParseUint(v, 10, 32)
+		return uint32(i), err
+	}
+
+}
+
+func (m *TierConf) ToFloat64(section string, property string) (float64, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return 0, err
+	} else {
+		i, err := strconv.ParseFloat(v, 64)
+		return i, err
+	}
+
+}
+
+func (m *TierConf) ToFloat32(section string, property string) (float32, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return 0, err
+	} else {
+		i, err := strconv.ParseFloat(v, 32)
+		return float32(i), err
+	}
+
+}
+
+
+func (m *TierConf) ToBool(section string, property string) (bool, error) {
+	v, err := m.ToString(section, property)
+
+	if err != nil {
+		return false, err
+	} else {
+		return strconv.ParseBool(v)
+	}
+
+}
+
+
+
 func (m *TierConf) ToIntWithDefault(section string, property string, deft int) int {
 	v, err := m.ToInt(section, property)
 	if err != nil {
