@@ -195,6 +195,30 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 
 }
 
+func HttpReqGetOk(url string, timeout time.Duration) ([]byte, error) {
+
+	client := &http.Client{Timeout: timeout}
+	response, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != 200 {
+		return nil, fmt.Errorf("statuscode:%d body:%s", response.StatusCode, body)
+
+	} else {
+		return body, nil
+	}
+
+
+}
+
 func HttpReqPostOk(url string, data []byte, timeout time.Duration) ([]byte, error) {
 	body, status, err := HttpReqPost(url, data, timeout)
 	if err != nil {

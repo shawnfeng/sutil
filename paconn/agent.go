@@ -97,7 +97,7 @@ func (m *Agent) Oneway(data []byte, timeout time.Duration) error {
 
 
 func (m *Agent) Twoway(data []byte, timeout time.Duration) ([]byte, error) {
-	fun := "Agent.Twoway"
+	//fun := "Agent.Twoway"
 
 	msgid, _ := msgidgen.Next()
 	pb := &connproto.ConnProto {
@@ -115,7 +115,7 @@ func (m *Agent) Twoway(data []byte, timeout time.Duration) ([]byte, error) {
 
 	defer delete(m.callmsg, msgid)
 
-	st := stime.NewTimeStat(fun)
+	st := stime.NewTimeStat()
 	err := m.send(spb, timeout)
 	if err != nil {
 		return nil, err
