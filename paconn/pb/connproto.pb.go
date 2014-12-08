@@ -40,6 +40,9 @@ func (x ConnProto_ProType) Enum() *ConnProto_ProType {
 func (x ConnProto_ProType) String() string {
 	return proto.EnumName(ConnProto_ProType_name, int32(x))
 }
+func (x ConnProto_ProType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(x.String())
+}
 func (x *ConnProto_ProType) UnmarshalJSON(data []byte) error {
 	value, err := proto.UnmarshalJSONEnum(ConnProto_ProType_value, data, "ConnProto_ProType")
 	if err != nil {
@@ -53,7 +56,8 @@ type ConnProto struct {
 	Type             *ConnProto_ProType `protobuf:"varint,1,req,enum=connproto.ConnProto_ProType" json:"Type,omitempty"`
 	Msgid            *uint64            `protobuf:"fixed64,2,opt" json:"Msgid,omitempty"`
 	Ackmsgid         *uint64            `protobuf:"fixed64,3,opt" json:"Ackmsgid,omitempty"`
-	Bussdata         []byte             `protobuf:"bytes,100,opt" json:"Bussdata,omitempty"`
+	Busstype         *int32             `protobuf:"varint,100,opt" json:"Busstype,omitempty"`
+	Bussdata         []byte             `protobuf:"bytes,101,opt" json:"Bussdata,omitempty"`
 	XXX_unrecognized []byte             `json:"-"`
 }
 
@@ -65,7 +69,7 @@ func (m *ConnProto) GetType() ConnProto_ProType {
 	if m != nil && m.Type != nil {
 		return *m.Type
 	}
-	return ConnProto_CALL
+	return 0
 }
 
 func (m *ConnProto) GetMsgid() uint64 {
@@ -78,6 +82,13 @@ func (m *ConnProto) GetMsgid() uint64 {
 func (m *ConnProto) GetAckmsgid() uint64 {
 	if m != nil && m.Ackmsgid != nil {
 		return *m.Ackmsgid
+	}
+	return 0
+}
+
+func (m *ConnProto) GetBusstype() int32 {
+	if m != nil && m.Busstype != nil {
+		return *m.Busstype
 	}
 	return 0
 }

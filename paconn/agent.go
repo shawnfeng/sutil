@@ -41,23 +41,32 @@ func init() {
 
 type ackNotify struct {
 	err error
+	busstype int32
 	result []byte
 }
+
+type FunAgOnewaynotify func(*Agent, int32, []byte)
+type FunAgTwowaynotify func(*Agent, int32, []byte) (int32, []byte)
+type FunAgClose func(*Agent, []byte, error)
+
 
 type Agent struct {
 	id string
 	sendLock sync.Mutex
 	conn net.Conn
 	tuple4 string
+
+	callmsgLock sync.Mutex
 	callmsg  map[uint64] chan *ackNotify
+
 	readTimeout time.Duration
 	heartIntv time.Duration
 	isConn bool
 
 
-	cbOnewaynotify func(*Agent, []byte)
-	cbTwowaynotify func(*Agent, []byte) []byte
-	cbClose func(*Agent, []byte, error)
+	cbOnewaynotify FunAgOnewaynotify
+	cbTwowaynotify FunAgTwowaynotify
+	cbClose FunAgClose
 
 }
 
@@ -83,10 +92,12 @@ func (m *Agent) Close() {
 
 }
 
-func (m *Agent) Oneway(data []byte, timeout time.Duration) error {
+func (m *Agent) Oneway(btype int32, data []byte, timeout time.Duration) error {
 	pb := &connproto.ConnProto {
 		Type: connproto.ConnProto_CALL.Enum(),
+		Busstype: proto.Int32(btype),
 		Bussdata: data,
+
 	}
 
 
@@ -96,13 +107,14 @@ func (m *Agent) Oneway(data []byte, timeout time.Duration) error {
 }
 
 
-func (m *Agent) Twoway(data []byte, timeout time.Duration) ([]byte, error) {
+func (m *Agent) Twoway(btype int32, data []byte, timeout time.Duration) (int32, []byte, error) {
 	//fun := "Agent.Twoway"
 
 	msgid, _ := msgidgen.Next()
 	pb := &connproto.ConnProto {
 		Type: connproto.ConnProto_CALL.Enum(),
 		Msgid: proto.Uint64(msgid),
+		Busstype: proto.Int32(btype),
 		Bussdata: data,
 	}
 
@@ -111,29 +123,37 @@ func (m *Agent) Twoway(data []byte, timeout time.Duration) ([]byte, error) {
 	
 	done := make(chan *ackNotify)
 
-	m.callmsg[msgid] = done
+	func () {
+		m.callmsgLock.Lock()
+		defer m.callmsgLock.Unlock()
+		m.callmsg[msgid] = done
+	}()
 
-	defer delete(m.callmsg, msgid)
+	defer func () {
+		m.callmsgLock.Lock()
+		defer m.callmsgLock.Unlock()
+		delete(m.callmsg, msgid)
+	}()
 
 	st := stime.NewTimeStat()
 	err := m.send(spb, timeout)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 
 	senduse := st.Duration()
 
 	if senduse >= timeout {
-		return nil, errors.New(fmt.Sprintf("call send timetout:%d", senduse))
+		return 0, nil, errors.New(fmt.Sprintf("call send timetout:%d", senduse))
 	}
 
 
 	select {
 	case v := <-done:
-		return v.result, v.err
+		return v.busstype, v.result, v.err
 	case <-time.After(timeout-senduse):
 		m.Close()
-		return nil, errors.New("call ack timetout")
+		return 0, nil, errors.New("call ack timetout")
 	}
 
 }
@@ -141,10 +161,21 @@ func (m *Agent) Twoway(data []byte, timeout time.Duration) ([]byte, error) {
 func (m *Agent) recvACK(pb *connproto.ConnProto) {
 	fun := "Agent.recvACK"
 	msgid := pb.GetAckmsgid()
+	btype := pb.GetBusstype()
 
-	if c, ok := m.callmsg[msgid]; ok {
+
+	c, ok := func() (chan *ackNotify, bool) {
+		m.callmsgLock.Lock()
+		defer m.callmsgLock.Unlock()
+		cc, o := m.callmsg[msgid]
+		return cc, o
+	}()
+
+
+	if ok {
 		an := &ackNotify {
 			err: nil,
+			busstype: btype,
 			result: pb.GetBussdata(),
 		}
 		select {
@@ -161,17 +192,21 @@ func (m *Agent) recvACK(pb *connproto.ConnProto) {
 func (m *Agent) recvCALL(pb *connproto.ConnProto) {
 	fun := "Agent.recvCALL"
 	data := pb.GetBussdata()
+	btype := pb.GetBusstype()
 	msgid := pb.GetMsgid()
+
 	if msgid != 0 {
 		res := make([]byte, 0)
+		var rbtype int32 = 0
 		if m.cbTwowaynotify != nil {
-			res = m.cbTwowaynotify(m, data)
+			rbtype, res = m.cbTwowaynotify(m, btype, data)
 		}
 
 		// 需要回执
 		ack := &connproto.ConnProto {
 			Type: connproto.ConnProto_ACK.Enum(),
 			Ackmsgid: proto.Uint64(msgid),
+			Busstype: proto.Int32(rbtype),
 			Bussdata: res,
 		}
 
@@ -183,7 +218,7 @@ func (m *Agent) recvCALL(pb *connproto.ConnProto) {
 
 	} else {
 		if m.cbOnewaynotify != nil {
-			m.cbOnewaynotify(m, data)
+			m.cbOnewaynotify(m, btype, data)
 		}
 
 	}
@@ -311,14 +346,13 @@ func (m *Agent) recv() {
 
 }
 
-
 func NewAgent(
 	c net.Conn,
 	readto time.Duration,
 	heart time.Duration,
-	onenotify func(*Agent, []byte),
-	twonotify func(*Agent, []byte) []byte,
-	close func(*Agent, []byte, error),
+	onenotify FunAgOnewaynotify,
+	twonotify FunAgTwowaynotify,
+	close FunAgClose,
 ) *Agent {
 	fun := "NewAgent"
 
@@ -357,9 +391,9 @@ func NewAgent(
 func NewAgentFromAddr(addr string,
 	readtimeout time.Duration,
 	heart time.Duration,
-	onenotify func(*Agent, []byte),
-	twonotify func(*Agent, []byte) []byte,
-	close func(*Agent, []byte, error),
+	onenotify FunAgOnewaynotify,
+	twonotify FunAgTwowaynotify,
+	close FunAgClose,
 ) (*Agent, error) {
 
 	conn, err := net.Dial("tcp", addr)

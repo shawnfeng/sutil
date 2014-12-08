@@ -14,9 +14,9 @@ type AgentManager struct {
 
 	cbNewagent func(*Agent)
 
-	cbOnewaynotify func(*Agent, []byte)
-	cbTwowaynotify func(*Agent, []byte) []byte
-	cbClose func(*Agent, []byte, error)
+	cbOnewaynotify FunAgOnewaynotify
+	cbTwowaynotify FunAgTwowaynotify
+	cbClose FunAgClose
 	
 
 	addrListen net.Addr
@@ -31,20 +31,20 @@ func (m *AgentManager) Listenport () string {
 	return snetutil.IpAddrPort(m.addrListen.String())
 }
 
-func (m *AgentManager) callbackOneway (a *Agent, recv []byte) {
+func (m *AgentManager) callbackOneway (a *Agent, btype int32, recv []byte) {
 
 	if m.cbOnewaynotify != nil {
-		m.cbOnewaynotify(a, recv)
+		m.cbOnewaynotify(a, btype, recv)
 	}
 
 }
 
-func (m *AgentManager) callbackTwoway (a *Agent, recv []byte) []byte {
+func (m *AgentManager) callbackTwoway (a *Agent, btype int32, recv []byte) (int32, []byte) {
 	if m.cbTwowaynotify != nil {
-		return m.cbTwowaynotify(a, recv)
+		return m.cbTwowaynotify(a, btype, recv)
 	}
 
-	return nil
+	return 0, nil
 }
 
 func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
@@ -65,10 +65,10 @@ func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
 }
 
 
-func (m *AgentManager) Oneway(aid string, data []byte, timeout time.Duration) error {
+func (m *AgentManager) Oneway(aid string, btype int32, data []byte, timeout time.Duration) error {
 
 	if a, ok := m.agents[aid]; ok {
-		return a.Oneway(data, timeout)
+		return a.Oneway(btype, data, timeout)
 	} else {
 		return errors.New("agent id not found");
 	}
@@ -76,11 +76,11 @@ func (m *AgentManager) Oneway(aid string, data []byte, timeout time.Duration) er
 }
 
 
-func (m *AgentManager) Twoway(aid string, data []byte, timeout time.Duration) ([]byte, error) {
+func (m *AgentManager) Twoway(aid string, btype int32, data []byte, timeout time.Duration) (int32, []byte, error) {
 	if a, ok := m.agents[aid]; ok {
-		return a.Twoway(data, timeout)
+		return a.Twoway(btype, data, timeout)
 	} else {
-		return nil, errors.New("agent id not found");
+		return 0, nil, errors.New("agent id not found");
 	}
 
 }
@@ -142,9 +142,10 @@ func NewAgentManager(
 
 
 	newagent func(*Agent),
-	onenotify func(*Agent, []byte),
-	twonotify func(*Agent, []byte) []byte,
-	close func(*Agent, []byte, error),
+	onenotify FunAgOnewaynotify,
+	twonotify FunAgTwowaynotify,
+	close FunAgClose,
+
 ) (*AgentManager, error) {
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)

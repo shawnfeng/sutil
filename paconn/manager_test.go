@@ -13,7 +13,7 @@ func newagentcb(ag *Agent) {
 
 	slog.Infof("%s ag:%s", fun, ag)
 
-	err := ag.Oneway([]byte("Hello Fuck You"), time.Millisecond*100)
+	err := ag.Oneway(0, []byte("Hello Fuck You"), time.Millisecond*100)
 	if err != nil {
 		slog.Errorln(err)
 	}
@@ -54,20 +54,25 @@ func TestMan(t *testing.T) {
 	slog.Infoln(ag)
 
 
-	err = ag.Oneway([]byte("NT"), time.Millisecond*100)
+	err = ag.Oneway(0, []byte("NT"), time.Millisecond*100)
 	if err != nil {
 		slog.Infoln(err)
 		t.Errorf("%s oneway %s", fun, err)
 	}
 
 	slog.Infof("%s ^^^^^^^^^^^^^^^^ oneway", fun)
-	res, err := ag.Twoway([]byte("NT"), time.Millisecond*100)
+	btype, res, err := ag.Twoway(2, []byte("NT"), time.Millisecond*100)
 	if err != nil {
 		slog.Warnln(err)
 		t.Errorf("%s twoway %s", fun, err)
 	}
 
-	slog.Infof("%s twoway res:%s", fun, res)
+	if btype != 3 {
+		t.Errorf("%s twoway rv btype", fun)
+	}
+
+
+	slog.Infof("%s twoway btype:%d res:%s", fun, btype, res)
 
 	ag.Close()
 

@@ -12,18 +12,18 @@ import (
 
 var usetestaddrPort string
 
-func serverNotify(a *Agent, data []byte) []byte {
+func serverNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 
 	fun := "serverNotify"
-	slog.Infof("%s %s %v %s", fun, a, data, data)
+	slog.Infof("%s %s %d %v %s", fun, a, btype, data, data)
 
 	if "NT" == string(data) {
 		slog.Infof(">>>>%s use not timeout", fun)
-		return []byte("OK")
+		return btype+1, []byte("OK")
 	} else {
 		slog.Infof("%s use timeout", fun)
 		time.Sleep(time.Second * time.Duration(1))
-		return []byte("TIMEOUT")
+		return btype+1, []byte("TIMEOUT")
 	}
 
 
@@ -31,7 +31,7 @@ func serverNotify(a *Agent, data []byte) []byte {
 }
 
 
-func serverNotifyOneway(a *Agent, data []byte) {
+func serverNotifyOneway(a *Agent, btype int32, data []byte) {
 
 	fun := "serverNotifyOneway"
 	slog.Infof("%s %s %v %s", fun, a, data, data)
@@ -100,20 +100,20 @@ func WaitLink(t *testing.T) {
 
 }
 
-func clientNotifyOneway(a *Agent, data []byte) {
+func clientNotifyOneway(a *Agent, btype int32, data []byte) {
 
 	fun := "clientNotifyOneway"
-	slog.Infof("%s %s %v %s", fun, a, data, data)
+	slog.Infof("%s %s %d %v %s", fun, a, btype, data, data)
 
 }
 
 
-func clientNotify(a *Agent, data []byte) []byte {
+func clientNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 
 	fun := "clientNotify"
-	slog.Infof("%s %s %v %s", fun, a, data, data)
+	slog.Infof("%s %s %d %v %s", fun, a, btype, data, data)
 
-	return []byte("OK")
+	return btype+1, []byte("OK")
 
 }
 
@@ -146,20 +146,24 @@ func clientAgent(t *testing.T) {
 	slog.Infoln(ag)
 
 
-	err = ag.Oneway([]byte("NT"), time.Millisecond*100)
+	err = ag.Oneway(1, []byte("NT"), time.Millisecond*100)
 	if err != nil {
 		slog.Infoln(err)
 		t.Errorf("%s oneway %s", fun, err)
 	}
 
 	slog.Infof("%s ^^^^^^^^^^^^^^^^ oneway", fun)
-	res, err := ag.Twoway([]byte("NT"), time.Millisecond*100)
+	btype, res, err := ag.Twoway(2, []byte("NT"), time.Millisecond*100)
 	if err != nil {
 		slog.Warnln(err)
 		t.Errorf("%s twoway %s", fun, err)
 	}
 
-	slog.Infof("%s twoway res:%s", fun, res)
+	if btype != 3 {
+		t.Errorf("%s twoway rv btype:%d ", fun, btype)
+	}
+
+	slog.Infof("%s twoway btype:%d res:%s", fun, btype, res)
 
 	ag.Close()
 

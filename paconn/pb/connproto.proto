@@ -12,7 +12,8 @@ message ConnProto {
 	optional fixed64 Msgid =  2;       // msg id
 	optional fixed64 Ackmsgid =  3;    // ack msg id
 
-	optional bytes Bussdata =  100;  // 调用数据
+    optional int32 Busstype =  100;
+	optional bytes Bussdata =  101;  // 调用数据
 
 
 
