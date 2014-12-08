@@ -42,6 +42,20 @@ func (m *TierConf) LoadFromConf(cfg map[string]map[string]string) {
 }
 
 func (m *TierConf) LoadFromFile(conf string) error {
+	configs := strings.Split(conf, ",")
+
+	for _, c := range configs {
+		if err := m.LoadFromOneFile(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
+
+func (m *TierConf) LoadFromOneFile(conf string) error {
 	data, err := ioutil.ReadFile(conf)
 	if err != nil {
 		return err
