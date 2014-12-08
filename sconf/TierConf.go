@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 	"io/ioutil"
+	"sort"
 	"github.com/vaughan0/go-ini"
 )
 
@@ -25,6 +26,35 @@ func NewTierConf() *TierConf {
 
 	}
 }
+
+func (m *TierConf) StringCheck() (string, error) {
+	keys := make([]string, 0)
+	for s, _ := range m.conf {
+		keys = append(keys, s)
+	}
+	sort.Strings(keys)
+	rv := ""
+	for _, s := range keys {
+		rv += fmt.Sprintf("[%s]\n", s)
+
+		ps := make([]string, 0)
+		for s, _ := range m.conf[s] {
+			ps = append(ps, s)
+		}
+		sort.Strings(ps)
+
+		for _, p := range ps {
+			v, err := m.ToString(s, p)
+			if err != nil {
+				return "", err
+			}
+			rv += fmt.Sprintf("%s=%s\n", p, v)
+		}
+	}
+
+	return rv, nil
+}
+
 
 func (m *TierConf) GetConf() map[string]map[string]string {
 	return m.conf

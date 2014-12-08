@@ -47,7 +47,17 @@ ConnPort = 00
 		t.Errorf("log cfg err")
 	}
 
+	sp, err := tf.StringCheck()
+	if err != nil {
+		t.Errorf("log cfg err")
+	}
+
+
 	fmt.Println(tf)
+
+	fmt.Println("TestTierConf:", sp)
+
+
 
 
 }
