@@ -2,6 +2,7 @@ package sconf
 
 import (
 	"testing"
+	"strings"
 
 	"fmt"
 )
@@ -40,14 +41,14 @@ func TestToInt(t *testing.T) {
 
 	v, err := ef.ToInt("nsection", "aa")
 	fmt.Println(v, err)
-	if err.Error() != "section empty" {
+	if strings.Index(err.Error(), "section empty") == -1 {
 		t.Errorf("section")
 	}
 
 
 	v, err = ef.ToInt("s0", "npro")
 	fmt.Println(v, err)
-	if err.Error() != "property empty" {
+	if strings.Index(err.Error(), "property empty") == -1 {
 		t.Errorf("property")
 	}
 
@@ -73,7 +74,7 @@ func TestToInt(t *testing.T) {
 
 	s, err := ef.ToString("nsection", "aa")
 	fmt.Println(s, err)
-	if err.Error() != "section empty" {
+	if strings.Index(err.Error(), "section empty") == -1 {
 		t.Errorf("section")
 	}
 
@@ -89,7 +90,7 @@ func TestToInt(t *testing.T) {
 
 	ss, err := ef.ToSliceString("nsecion", "aa", ",")
 	fmt.Println(ss, err)
-	if err.Error() != "section empty" {
+	if strings.Index(err.Error(), "section empty") == -1 {
 		t.Errorf("section")
 	}
 
@@ -111,7 +112,7 @@ func TestToInt(t *testing.T) {
 
 	is, err := ef.ToSliceInt("nsecion", "aa", ",")
 	fmt.Println(is, err)
-	if err.Error() != "section empty" {
+	if strings.Index(err.Error(), "section empty") == -1 {
 		t.Errorf("section")
 	}
 

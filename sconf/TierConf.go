@@ -2,8 +2,9 @@ package sconf
 
 import (
 	"bytes"
-	"errors"
+	"fmt"
 	"strconv"
+	"regexp"
 	"strings"
 	"io/ioutil"
 	"github.com/vaughan0/go-ini"
@@ -11,6 +12,7 @@ import (
 
 
 type TierConf struct {
+	reg *regexp.Regexp
 	conf map[string]map[string]string
 
 }
@@ -19,6 +21,7 @@ func NewTierConf() *TierConf {
 
 	return &TierConf{
 		conf: make(map[string]map[string]string),
+		reg: regexp.MustCompile("\\$\\{.*?\\}"),
 
 	}
 }
@@ -88,18 +91,7 @@ func (m *TierConf) Load(cfg []byte) error {
 
 }
 
-
-func (m *TierConf) ToSection(section string) (map[string]string, error) {
-	if s, ok := m.conf[section]; ok {
-		return s, nil
-	} else {
-		return nil, errors.New("section empty:"+section)
-	}
-
-
-}
-
-func (m *TierConf) ToString(section string, property string) (string, error) {
+func (m *TierConf) toString(history []string, section string, property string) (string, error) {
 	s, err := m.ToSection(section)
 
 	if err != nil {
@@ -107,13 +99,87 @@ func (m *TierConf) ToString(section string, property string) (string, error) {
 
 	} else {
 		if p, ok := s[property]; ok {
-			return p, nil
+			v, perr := m.parseVar(history, p)
+			if perr != nil {
+				return "", perr
+			} else {
+				return v, nil
+			}
 		} else {
-			return "", errors.New("property empty:"+property)
+			return "", fmt.Errorf("property empty:%s.%s", section, property)
 		}
 
 
 	}
+
+}
+
+
+
+func (m *TierConf) parseVar(history []string, value string) (string, error) {
+
+	ids := m.reg.FindAllStringIndex(value, -1)
+
+	var rv string = ""
+
+	lastpos := 0
+	for _, index := range(ids) {
+		rv += value[lastpos:index[0]]
+		pv := value[index[0]:index[1]]
+		v := strings.Trim(pv, " \t${}")
+
+		tmp := strings.Index(v, ".")
+
+		if tmp == -1 {
+			rv += pv
+		} else {
+			trims := strings.Trim(v[:tmp], " \t")
+			trimp := strings.Trim(v[tmp+1:], " \t")
+			// 检查循环引用
+			newhis := fmt.Sprintf("%s.%s", trims, trimp)
+			for _, his := range history {
+				if newhis == his {
+					return "", fmt.Errorf("cyclic reference:${%s}", his)
+				}
+			}
+			history = append(history, newhis)
+			newval, err := m.toString(history, trims, trimp)
+			history = history[:len(history)-1]
+			if err != nil {
+				if strings.Index(err.Error(), "cyclic reference") != -1 {
+					return "", err
+				} else {
+					newval = pv
+				}
+			}
+
+			rv += newval
+
+			//fmt.Println(v[:tmp], v[tmp:], pv, ids, history)
+		}
+
+		lastpos = index[1]
+	}
+
+	rv += value[lastpos:]
+
+	return rv, nil
+
+}
+
+
+func (m *TierConf) ToSection(section string) (map[string]string, error) {
+	if s, ok := m.conf[section]; ok {
+		return s, nil
+	} else {
+		return nil, fmt.Errorf("section empty:%s", section)
+	}
+
+
+}
+
+func (m *TierConf) ToString(section string, property string) (string, error) {
+	return m.toString(nil, section, property)
 
 }
 
@@ -220,6 +286,18 @@ func (m *TierConf) ToBool(section string, property string) (bool, error) {
 		return false, err
 	} else {
 		return strconv.ParseBool(v)
+	}
+
+}
+
+
+func (m *TierConf) ToBoolWithDefault(section string, property string, deft bool) bool {
+	v, err := m.ToBool(section, property)
+
+	if err != nil {
+		return deft
+	} else {
+		return v
 	}
 
 }
