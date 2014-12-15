@@ -42,7 +42,7 @@ func t1(t *testing.T) {
 	Infoln("log file")
 
 
-	Init("./log", "tt2", "WARN")
+	Init("./log", "tt2", "TRACE")
 
 
 	Infoln("log file2")

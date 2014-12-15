@@ -8,45 +8,61 @@ import (
 	"os"
 	"time"
 	"fmt"
-
+	"sync"
 )
 
 type logger struct {
+	hourUse int64
+
 	logpref string
 
-	loghour string
 	logfp *os.File
 	per *log.Logger
 
 }
 
-func (self *logger) setOutput() {
-	hour := time.Now().Format("2006-01-02-15")
-	//log.Println("setoutput", hour)
-	if self.logpref == "" && self.loghour == "" {
-		self.per = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-		self.loghour = hour
-		//log.Println("setoutput", "std", hour)
+func (self *logger) resetOutput(logpref string) {
+	self.logpref = logpref
+	now := time.Now()
+	self.hourOutput(&now)
+
+}
+
+func (self *logger) hourOutput(now *time.Time) {
+	if self.logfp != nil {
+		self.logfp.Close()
+		self.logfp = nil
 	}
 
-	if self.logpref != "" && self.loghour != hour {
+	nx := now.Unix() + 3600
+	self.hourUse = time.Unix(nx - nx%3600, 0).Unix()
+
+	if self.logpref == "" {
+		self.per = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+
+	} else {
+		hour := now.Format("2006-01-02-15")
 		logFile := fmt.Sprintf("%s.%s.log", self.logpref, hour)
+
 		logf, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 		if err != nil {
 			log.Println(err)
 			return
 		}
 
-		//log.Println("setoutput", "pref", self.logpref, hour)
-
 		self.per = log.New(logf, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-		if self.logfp != nil {
-			self.logfp.Close()
-		}
 		self.logfp = logf
-		self.loghour = hour
+
+
 	}
 
+}
+
+func (self *logger) setOutput() {
+	now := time.Now()
+	if now.Unix() >= self.hourUse {
+		self.hourOutput(&now)
+	}
 
 }
 
@@ -122,11 +138,17 @@ var (
 	headFmtFatal string
 	headFmtPanic string
 
+
+	slogMutex sync.Mutex
 	log_level int
 	lg *logger
 )
 
 func Init(logdir string, logpref string, level string) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
+
 	if level == "TRACE" {
 		log_level = LV_TRACE
 	} else if level == "DEBUG" {
@@ -157,7 +179,11 @@ func Init(logdir string, logpref string, level string) {
 		logfile = logdir+"/"+logpref
 	}
 
-    lg = &logger{logpref: logfile, logfp: nil, per: nil}
+	if lg == nil {
+		lg = &logger{logpref: logfile, logfp: nil, per: nil}
+	} else {
+		lg.resetOutput(logfile)
+	}
 
 
 }
@@ -185,13 +211,21 @@ func init() {
 }
 
 
+
+
 func Tracef(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_TRACE >= log_level {
 		lg.Printf(headFmtTrace+format, v...)
 	}
 }
 
 func Traceln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_TRACE >= log_level {
 		lg.Println(append([]interface{}{headTrace}, v...)...)
 	}
@@ -199,12 +233,18 @@ func Traceln(v ...interface{}) {
 
 
 func Debugf(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_DEBUG >= log_level {
 		lg.Printf(headFmtDebug+format, v...)
 	}
 }
 
 func Debugln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_DEBUG >= log_level {
 		lg.Println(append([]interface{}{headDebug}, v...)...)
 	}
@@ -212,12 +252,18 @@ func Debugln(v ...interface{}) {
 
 
 func Infof(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_INFO >= log_level {
 		lg.Printf(headFmtInfo+format, v...)
 	}
 }
 
 func Infoln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_INFO >= log_level {
 		lg.Println(append([]interface{}{headInfo}, v...)...)
 	}
@@ -225,12 +271,18 @@ func Infoln(v ...interface{}) {
 
 
 func Warnf(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_WARN >= log_level {
 		lg.Printf(headFmtWarn+format, v...)
 	}
 }
 
 func Warnln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_WARN >= log_level {
 		lg.Println(append([]interface{}{headWarn}, v...)...)
 	}
@@ -238,12 +290,18 @@ func Warnln(v ...interface{}) {
 
 
 func Errorf(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_ERROR >= log_level {
 		lg.Printf(headFmtError+format, v...)
 	}
 }
 
 func Errorln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_ERROR >= log_level {
 		lg.Println(append([]interface{}{headError}, v...)...)
 	}
@@ -252,6 +310,9 @@ func Errorln(v ...interface{}) {
 
 
 func Fatalf(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_FATAL >= log_level {
 		lg.Printf(headFmtFatal+format, v...)
 	}
@@ -259,6 +320,9 @@ func Fatalf(format string, v ...interface{}) {
 
 
 func Fatalln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_FATAL >= log_level {
 		lg.Println(append([]interface{}{headFatal}, v...)...)
 	}
@@ -266,6 +330,9 @@ func Fatalln(v ...interface{}) {
 
 
 func Panicf(format string, v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_PANIC >= log_level {
 		lg.Panicf(headFmtPanic+format, v...)
 	}
@@ -273,6 +340,9 @@ func Panicf(format string, v ...interface{}) {
 
 
 func Panicln(v ...interface{}) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
 	if LV_PANIC >= log_level {
 		lg.Panicln(append([]interface{}{headPanic}, v...)...)
 	}
