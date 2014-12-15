@@ -50,6 +50,7 @@ func (m *TierConf) StringCheck() (string, error) {
 			}
 			rv += fmt.Sprintf("%s=%s\n", p, v)
 		}
+		rv += fmt.Sprintf("\n")
 	}
 
 	return rv, nil
