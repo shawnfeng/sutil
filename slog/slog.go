@@ -1,7 +1,5 @@
 package slog
 
-// 暂时没有加锁，注意只能在GOPROC == 1的情况下使用
-
 import (
 	"log"
 //	"io"
