@@ -5,15 +5,16 @@ import (
 	"net"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 	"errors"
-	"crypto/md5"
 
-	"code.google.com/p/go-uuid/uuid"
+
 	"github.com/sdming/gosnow"
 	"code.google.com/p/goprotobuf/proto"
 
 
+	"github.com/shawnfeng/sutil"
 	"github.com/shawnfeng/sutil/slog"
 	"github.com/shawnfeng/sutil/stime"
 	"github.com/shawnfeng/sutil/snetutil"
@@ -61,7 +62,7 @@ type Agent struct {
 
 	readTimeout time.Duration
 	heartIntv time.Duration
-	isConn bool
+	isConn int32
 
 
 	cbOnewaynotify FunAgOnewaynotify
@@ -87,9 +88,7 @@ func (m *Agent) Close() {
 	//	slog.Warnf("Agent.Close Close err:%s", err)
 	//}
 
-
-	m.isConn = false
-
+	atomic.StoreInt32(&m.isConn, 0)
 }
 
 func (m *Agent) Oneway(btype int32, data []byte, timeout time.Duration) error {
@@ -255,7 +254,7 @@ func (m *Agent) proto(data []byte) {
 }
 
 func (m *Agent) send(data []byte, timeout time.Duration) error {
-	if !m.isConn {
+	if atomic.LoadInt32(&m.isConn) == 0 {
 		return errors.New("connection is not ok")
 
 	}
@@ -318,7 +317,7 @@ func (m *Agent) heart() {
 		for {
 			select {
 			case <-ticker.C:
-				if m.isConn {
+				if atomic.LoadInt32(&m.isConn) != 0 {
 					m.sendHEART();
 				}
 			}
@@ -361,11 +360,7 @@ func NewAgent(
 		readto = (1000*60*5) * 3
 	}
 
-	uuidgen := uuid.NewUUID()
-	aid := uuidgen.String()
-
-	h := md5.Sum([]byte(aid))
-	aid = fmt.Sprintf("%x", h)
+	aid := sutil.GetUniqueMd5()
 
 	a := &Agent {
 		id: aid,
@@ -374,7 +369,7 @@ func NewAgent(
 		callmsg: make(map[uint64] chan *ackNotify),
 		readTimeout: readto,
 		heartIntv: heart,
-		isConn: true,
+		isConn: 1,
 		cbOnewaynotify: onenotify,
 		cbTwowaynotify: twonotify,
 		cbClose:close,

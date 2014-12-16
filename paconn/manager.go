@@ -4,12 +4,15 @@ import (
 	"net"
 	"time"
 	"errors"
+	"sync"
 
 	"github.com/shawnfeng/sutil/snetutil"
 	"github.com/shawnfeng/sutil/slog"
 )
 
 type AgentManager struct {
+
+	agentMu sync.Mutex
 	agents map[string]*Agent
 
 	cbNewagent func(*Agent)
@@ -24,8 +27,18 @@ type AgentManager struct {
 }
 
 func (m *AgentManager) Agents () map[string]*Agent {
-	return m.agents
+	m.agentMu.Lock()
+	defer m.agentMu.Unlock()
+
+	rv := make(map[string]*Agent)
+
+	for k, v := range m.agents {
+		rv[k] = v
+	}
+
+	return rv
 }
+
 
 func (m *AgentManager) Listenport () string {
 	return snetutil.IpAddrPort(m.addrListen.String())
@@ -52,22 +65,44 @@ func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
 
 	slog.Infof("%s close:%s pack:%v", fun, a, pack)
 
-
-	if _, ok := m.agents[a.Id()]; ok {
-		delete(m.agents, a.Id())
-		if m.cbClose != nil {
-			m.cbClose(a, pack, err)
+	ok := func() bool {
+		m.agentMu.Lock()
+		defer m.agentMu.Unlock()
+		_, o := m.agents[a.Id()]
+		if o {
+			delete(m.agents, a.Id())
 		}
+		return o
+	}()
+
+
+	if ok && m.cbClose != nil {
+		m.cbClose(a, pack, err)
+
 	} else {
 		slog.Errorf("%s delete not find:%s", fun, a)
 	}
 
 }
 
+func (m *AgentManager) getAgent(aid string) (*Agent, bool) {
+	m.agentMu.Lock()
+	defer m.agentMu.Unlock()
+	a, ok := m.agents[aid]
+	return a, ok
+}
+
+func (m *AgentManager) addAgent(a *Agent) {
+	m.agentMu.Lock()
+	defer m.agentMu.Unlock()
+	m.agents[a.Id()] = a
+}
+
+
 
 func (m *AgentManager) Oneway(aid string, btype int32, data []byte, timeout time.Duration) error {
 
-	if a, ok := m.agents[aid]; ok {
+	if a, ok := m.getAgent(aid); ok {
 		return a.Oneway(btype, data, timeout)
 	} else {
 		return errors.New("agent id not found");
@@ -77,7 +112,7 @@ func (m *AgentManager) Oneway(aid string, btype int32, data []byte, timeout time
 
 
 func (m *AgentManager) Twoway(aid string, btype int32, data []byte, timeout time.Duration) (int32, []byte, error) {
-	if a, ok := m.agents[aid]; ok {
+	if a, ok := m.getAgent(aid); ok {
 		return a.Twoway(btype, data, timeout)
 	} else {
 		return 0, nil, errors.New("agent id not found");
@@ -123,7 +158,7 @@ func (m *AgentManager) accept(
 				m.callbackClose,
 
 			)
-			m.agents[ag.Id()] = ag
+			m.addAgent(ag)
 
 			if m.cbNewagent != nil {
 				m.cbNewagent(ag)

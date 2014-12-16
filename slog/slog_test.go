@@ -37,6 +37,8 @@ func t0(t *testing.T) {
 func t1(t *testing.T) {
 
 	Init("./log", "tt", "TRACE")
+	Init("./log", "tt", "TRACE")
+	Init("./log", "tt", "TRACE")
 
 
 	Infoln("log file")
@@ -46,5 +48,10 @@ func t1(t *testing.T) {
 
 
 	Infoln("log file2")
+
+
+	Init("", "", "TRACE")
+
+	Infoln("std out")
 
 }

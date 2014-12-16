@@ -10,7 +10,6 @@ import (
 	"github.com/shawnfeng/sutil/slog"
 )
 
-var usetestaddrPort string
 
 func serverNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 
@@ -46,7 +45,7 @@ func serverClose(a *Agent, data []byte, err error) {
 	slog.Infof("%s %s %v %s %s", fun, a, data, data, err)
 }
 
-func WaitLink(t *testing.T) {
+func WaitLink(t *testing.T) string {
 	fun := "WaitLink"
 	addr := fmt.Sprintf(":%d", 0)
 	//addr := ":0"
@@ -67,7 +66,7 @@ func WaitLink(t *testing.T) {
 		slog.Panicf("%s Error: Could not Listen %s", fun, error)
 
 	}
-	defer netListen.Close()
+
 
 	addr = netListen.Addr().String()
 
@@ -75,12 +74,16 @@ func WaitLink(t *testing.T) {
 	slog.Infoln(port)
 
 
-	usetestaddrPort = fmt.Sprintf("%s:%s", "127.0.0.1", port)
+	usetestaddrPort := fmt.Sprintf("%s:%s", "127.0.0.1", port)
+	go func() {
+		defer netListen.Close()
 	for {
 		//slog.Infof("%s Waiting for clients", fun)
 		conn, error := netListen.Accept()
 		if error != nil {
-			slog.Warnf("%s Agent error: ", fun, error)
+			slog.Warnf("%s Agent error: %s", fun, error)
+			t.Errorf("%s", error)
+			return
 		} else {
 
 			ag := NewAgent(
@@ -97,6 +100,9 @@ func WaitLink(t *testing.T) {
 
 		}
 	}
+	}()
+
+	return usetestaddrPort
 
 }
 
@@ -125,12 +131,12 @@ func clientClose(a *Agent, data []byte, err error) {
 }
 
 
-func clientAgent(t *testing.T) {
+func clientAgent(t *testing.T, addrport string) {
 
 	fun := "clientAgent"
 
 	ag, err := NewAgentFromAddr(
-		usetestaddrPort,
+		addrport,
 		time.Second * 60 * 15,
 		time.Second * 5,
 		clientNotifyOneway,
@@ -139,7 +145,8 @@ func clientAgent(t *testing.T) {
 	)
 
 	if err != nil {
-		t.Errorf("%s Dial err:%s", fun, err)
+		t.Errorf("%s Dial err:%s ag:%s", fun, err, ag)
+		return
 	}
 
 
@@ -171,10 +178,10 @@ func clientAgent(t *testing.T) {
 
 func TestAgent(t *testing.T) {
 
-	go WaitLink(t)
+	addrport := WaitLink(t)
 	time.Sleep(time.Millisecond * time.Duration(100))
 
-	clientAgent(t)
+	clientAgent(t, addrport)
 
 	time.Sleep(time.Second * time.Duration(5))
 }
