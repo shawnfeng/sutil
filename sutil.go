@@ -2,7 +2,10 @@ package sutil
 
 import (
 	"hash/fnv"
+	"io/ioutil"
 	"fmt"
+	"strings"
+	"os"
 	"encoding/json"
 	"unicode/utf8"
 	"crypto/md5"
@@ -55,4 +58,20 @@ func GetUniqueMd5() string {
 	u := GetUUID()
 	h := md5.Sum([]byte(u))
 	return fmt.Sprintf("%x", h)
+}
+
+
+// 文件输出，目录不存在自动创建
+func WriteFile(path string, data []byte, perm os.FileMode) error {
+
+	idx := strings.LastIndex(path, "/")
+	if idx != -1 {
+		logdir := path[:idx]
+		err := os.MkdirAll(logdir, 0777)
+		if err != nil {
+			return err
+		}
+	}
+
+	return ioutil.WriteFile(path, data, perm)
 }
