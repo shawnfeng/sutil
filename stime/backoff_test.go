@@ -28,18 +28,29 @@ func TestBackoffReset(t *testing.T) {
 	}()
 
 	time.Sleep(time.Second * time.Duration(4))
+
+
+	log.Printf("breset %v", bo)
 	bo.Reset()
 
+	log.Printf("areset %v", bo)
 	bg := time.Now().Unix()
 	bo.BackOff() // 02
+	log.Printf("BackOffRest b1 %d", time.Now().Unix() - bg)
 	bo.BackOff() // 1s
+	log.Printf("BackOffRest b2 %d", time.Now().Unix() - bg)
 
-	if time.Now().Unix() - bg != 1 {
-		t.Errorf("BackOffRest reset Continue err")
+	ttt := time.Now().Unix() - bg
+	if ttt != 1 {
+		t.Errorf("BackOffRest reset Continue err:%d", ttt)
 	} else {
 		log.Println("BackOffRest OK Reset Continue")
 	}
 
+
+	log.Printf("set before reset %v", bo)
+	bo.SetCtrl(time.Second * 2, time.Second*5)
+	log.Printf("set end areset %v", bo)
 
 }
 

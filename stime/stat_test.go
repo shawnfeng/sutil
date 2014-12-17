@@ -8,9 +8,7 @@ import (
 )
 
 func TestStat(t *testing.T) {
-	st := NewTimeStat("Test")
-
-	log.Println(st.StatLog())
+	st := NewTimeStat()
 
 	log.Println(st.Millisecond())
 	log.Println(st.Microsecond())
@@ -28,7 +26,7 @@ func TestStat(t *testing.T) {
 
 
 func TestStat2(t *testing.T) {
-	st := NewTimeStat("Test")
+	st := NewTimeStat()
 
 	time.Sleep(time.Millisecond * time.Duration(2))
 
