@@ -43,7 +43,9 @@ func (m *Email) rmdup(addrs []string) []string {
 
 	ck := make(map[string]bool)
 	for _, a := range addrs {
-		ck[a] = true
+		if len(a) > 0 {
+			ck[a] = true
+		}
 	}
 
 	rv := make([]string, 0)
