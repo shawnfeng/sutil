@@ -2,9 +2,17 @@ package stime
 
 import (
 	"time"
-//	"fmt"
+	//"fmt"
 
 )
+
+func DayBeginStamp(now int64) int64 {
+
+	_, offset := time.Now().Zone()
+	//fmt.Println(zone, offset)
+	return now - now % int64(3600 * 24) - int64(offset)
+
+}
 
 
 var (

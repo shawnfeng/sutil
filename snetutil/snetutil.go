@@ -202,7 +202,7 @@ func HttpReqGetOk(url string, timeout time.Duration) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
@@ -246,6 +246,8 @@ func HttpReqPost(url string, data []byte, timeout time.Duration) ([]byte, int, e
 	if err != nil {
 		return nil, 0, err
 	}
+
+	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {

@@ -150,4 +150,17 @@ func TestVersion(t *testing.T) {
 	}
 
 
+
+}
+
+
+
+func TestVersion2(t *testing.T) {
+	v := NewVersionCmp("1.3.4D")
+	fmt.Printf("%v\n", v)
+
+
+	v2 := NewVersionCmp("1.3.5")
+	fmt.Printf("%v\n", v2)
+
 }

@@ -6,6 +6,15 @@ import (
 	"log"
 )
 
+func TestDayBeginStamp(t *testing.T) {
+
+	now := time.Now().Unix()
+
+	begin := DayBeginStamp(now)
+	log.Println("begin:", begin)
+
+}
+
 func TestBackoffReset(t *testing.T) {
 	log.Println("BackOffRest Begin")
 	bo := NewBackOffCtrl(time.Second * 1, time.Second*10)
