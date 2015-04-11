@@ -4,14 +4,38 @@ import (
 	"testing"
 	"time"
 	"log"
+	"fmt"
 )
 
 func TestDayBeginStamp(t *testing.T) {
 
-	now := time.Now().Unix()
+	zone, offset := time.Now().Zone()
+	fmt.Println(zone, offset)
 
-	begin := DayBeginStamp(now)
-	log.Println("begin:", begin)
+
+	//now := time.Now().Unix()
+
+	// CST 2015-04-11
+	tmbegin := int64(1428681600)
+	log.Println(time.Unix(tmbegin, 0).Format("2006-01-02/15:04:05"))
+	for i := 0; i < 3600*24*5; i++ {
+		tm := int64(tmbegin+int64(i))
+		stmd := time.Unix(tm, 0).Format("2006-01-02")
+		stm := fmt.Sprintf("%s/00:00:00", stmd)
+
+
+
+		begin := DayBeginStamp(tm)
+
+		sbegin := time.Unix(begin, 0).Format("2006-01-02/15:04:05")
+
+		if sbegin != stm {
+			t.Errorf("error %d %s", tm, sbegin)
+		}
+
+		//log.Println(time.Unix(tm, 0).Format("2006-01-02/15:04:05"), stm, begin, sbegin)
+	}
+
 
 }
 
