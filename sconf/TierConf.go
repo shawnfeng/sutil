@@ -8,6 +8,8 @@ import (
 	"strings"
 	"io/ioutil"
 	"sort"
+	"reflect"
+
 	"github.com/vaughan0/go-ini"
 )
 
@@ -120,6 +122,222 @@ func (m *TierConf) Load(cfg []byte) error {
 
 	return nil
 
+}
+
+func (m *TierConf) unmarshalSliceSet(ss []string, v reflect.Value) error {
+	lens := len(ss)
+	sv := reflect.MakeSlice(v.Type(), lens, lens)
+	for i := 0; i < lens; i++ {
+		e := sv.Index(i)
+		err := m.unmarshalSinSet(ss[i], e)
+		if err != nil {
+			return err
+		}
+		v.Set(sv)
+	}
+
+	return nil
+
+}
+
+func (m *TierConf) unmarshalSinSet(s string, v reflect.Value) error {
+	switch v.Kind() {
+	// 不支持[]byte
+	case reflect.String:
+		v.SetString(s)
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		i, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return err
+		}
+		v.SetInt(i)
+
+	case reflect.Uint, reflect.Uintptr, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		i, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return err
+		}
+		v.SetUint(i)
+
+
+	case reflect.Float32, reflect.Float64:
+		i, err := strconv.ParseFloat(s, 32)
+		if err != nil {
+			return err
+		}
+		v.SetFloat(i)
+
+
+	case reflect.Bool:
+		i, err := strconv.ParseBool(s)
+		if err != nil {
+			return err
+		}
+		v.SetBool(i)
+
+
+	default:
+		return fmt.Errorf("not support:%s", v.Kind())
+
+	}
+
+
+	return nil
+
+}
+
+func (m *TierConf) unmarshalSet(tag reflect.StructTag, s string, v reflect.Value) error {
+
+	switch v.Kind() {
+
+	case reflect.Slice:
+		sep := tag.Get("sep")
+		if len(sep) == 0 {
+			sep = ","
+		}
+		err := m.unmarshalSliceSet(strings.Split(s, sep), v)
+		if err != nil {
+			return err
+		}
+
+
+	default:
+		err := m.unmarshalSinSet(s, v)
+		if err != nil {
+			return err
+		}
+
+
+	}
+
+	return nil
+
+}
+
+func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
+
+	tvf := vf.Type()
+	// 类型判断
+	if tvf.Kind() != reflect.Struct && tvf.Kind() != reflect.Ptr {
+		return fmt.Errorf("field cannot struct or ptr")
+	}
+
+	// vf.Elem().Kind() != reflect.Struct  nil时候是Invalid
+	if tvf.Kind() == reflect.Ptr && tvf.Elem().Kind() != reflect.Struct {
+		return fmt.Errorf("field ptr no point to struct")
+	}
+
+	var vstruct reflect.Value
+	if tvf.Kind() == reflect.Ptr {
+		if vf.IsNil() {
+			vf.Set(reflect.New(tvf.Elem()))
+		}
+
+		vstruct = vf.Elem()
+	} else {
+		vstruct = vf
+	}
+
+
+	tstruct := vstruct.Type()
+	for sk, sv := range cfg {
+		for i := 0; i < tstruct.NumField(); i++ {
+			f := tstruct.Field(i)
+
+			tag := f.Tag.Get("sconf")
+			if len(tag) == 0 {
+				tag = f.Name
+			}
+			if !strings.EqualFold(sk, tag) {
+				//fmt.Println("not equal", sk, tag, f.Name)
+				continue
+			}
+			//fmt.Println("field struct equal", f, sk, tag, f.Name)
+
+			vf := vstruct.Field(i)
+
+			if !vf.CanSet() {
+				return fmt.Errorf("field cannot set:%s", f.Name)
+			}
+
+			if err := m.unmarshalSet(f.Tag, sv, vf); err != nil {
+				return err
+			}
+
+		}
+	}
+
+	//fmt.Println("[[", vf.Interface(), "]]")
+
+	return nil
+
+}
+
+
+
+
+
+func (m *TierConf) Unmarshal(v interface{}) error {
+	cfg := m.conf
+	value := reflect.ValueOf(v)
+	k := value.Kind()
+	if reflect.Ptr != k {
+		return fmt.Errorf("unmarshal to obj isn't ptr:%s", k)
+	}
+
+	vstruct := value.Elem()
+
+	k = vstruct.Kind()
+	if reflect.Struct != k {
+		return fmt.Errorf("unmarshal to obj elem isn't struct:%s", k)
+	}
+
+	// ===============================
+	tstruct := value.Type().Elem()
+
+	for sk, sv := range cfg {
+		for i := 0; i < tstruct.NumField(); i++ {
+			f := tstruct.Field(i)
+
+			tag := f.Tag.Get("sconf")
+			if len(tag) == 0 {
+				tag = f.Name
+			}
+			if !strings.EqualFold(sk, tag) {
+				//fmt.Println("not equal", sk, tag, f.Name)
+				continue
+			}
+			//fmt.Println("equal", f, sk, tag, f.Name)
+
+			vf := vstruct.Field(i)
+
+			if !vf.CanSet() {
+				return fmt.Errorf("field cannot set:%s", f.Name)
+			}
+
+			if err := m.unmarshalMap(sv, vf); err != nil {
+				return err
+			}
+
+			//fmt.Println("MMMM", vf.Interface())
+
+		}
+
+	}
+
+	/*
+
+
+	f, ok := tstruct.FieldByNameFunc(func(fieldName string) bool {
+		fmt.Println("FieldByNameFunc", fieldName)
+		return true
+	})
+	fmt.Println("FieldByNameFunc result", f, ok)
+	*/
+
+
+	return nil
 }
 
 func (m *TierConf) toString(history []string, section string, property string) (string, error) {
