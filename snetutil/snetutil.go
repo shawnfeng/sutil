@@ -78,6 +78,54 @@ func GetExterIp() (string, error) {
 	return "", errors.New("no exter ip")
 }
 
+func GetServAddr(a net.Addr) (string, error) {
+	addr := a.String()
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", err
+	}
+
+	ip := net.ParseIP(host)
+
+	if ip == nil {
+		return "", fmt.Errorf("ParseIP error:%s", host)
+	}
+	/*
+	slog.Infoln("ADDR TYPE", ip,
+		"IsGlobalUnicast",
+		ip.IsGlobalUnicast(),
+		"IsInterfaceLocalMulticast",
+		ip.IsInterfaceLocalMulticast(),
+		"IsLinkLocalMulticast",
+		ip.IsLinkLocalMulticast(),
+		"IsLinkLocalUnicast",
+		ip.IsLinkLocalUnicast(),
+		"IsLoopback",
+		ip.IsLoopback(),
+		"IsMulticast",
+		ip.IsMulticast(),
+		"IsUnspecified",
+		ip.IsUnspecified(),
+	)
+    */
+
+	raddr := addr
+	if ip.IsUnspecified() {
+		// 没有指定ip的情况下，使用内网地址
+		inerip, err := GetInterIp()
+		if err != nil {
+			return "", err
+		}
+
+		raddr = net.JoinHostPort(inerip, port)
+	}
+
+	//slog.Tracef("ServAddr --> addr:[%s] ip:[%s] host:[%s] port:[%s] raddr[%s]", addr, ip, host, port, raddr)
+
+	return raddr, nil
+}
+
+
 
 // Request.RemoteAddress contains port, which we want to remove i.e.:
 // "[::1]:58292" => "[::1]"
