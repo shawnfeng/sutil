@@ -215,6 +215,78 @@ func (m *TierConf) unmarshalSet(tag reflect.StructTag, s string, v reflect.Value
 
 }
 
+func (m *TierConf) unmarshalStructField(sk string, vstruct reflect.Value, setcb func(reflect.StructTag, reflect.Value) error) error {
+	tstruct := vstruct.Type()
+	for i := 0; i < tstruct.NumField(); i++ {
+		f := tstruct.Field(i)
+
+		tag := f.Tag.Get("sconf")
+		if len(tag) == 0 {
+			tag = f.Name
+		}
+
+		usk := sk
+		umsk := ""
+		if f.Type.Kind() == reflect.Map {
+			sep := f.Tag.Get("sep")
+			if len(sep) == 0 {
+				sep = "."
+			}
+			ukf := strings.Index(sk, sep)
+			if ukf == -1 {
+				//fmt.Println("@@@@ -1", sk, f.Type.Kind())
+				continue
+			}
+
+			usk = sk[:ukf]
+			umsk = sk[ukf+1:]
+			//fmt.Println("###", sk, usk, umsk)
+			if len(umsk) == 0 {
+				// 映射到的map，key空情况
+				//fmt.Println("@@@@", sk, usk, umsk)
+				continue
+			}
+		}
+
+		if !strings.EqualFold(usk, tag) {
+			//fmt.Println("not equal", sk, tag, f.Name)
+			continue
+		}
+		//fmt.Println("field struct equal", f, sk, tag, f.Name)
+
+		vf := vstruct.Field(i)
+
+		if !vf.CanSet() {
+			return fmt.Errorf("field cannot set:%s", f.Name)
+		}
+
+		if vf.Kind() == reflect.Map {
+			if vf.Type().Key().Kind() != reflect.String {
+				return fmt.Errorf("field elem isn't map key string")
+			}
+
+			if vf.IsNil() {
+				vf.Set(reflect.MakeMap(vf.Type()))
+			}
+
+			vtype := vf.Type().Elem()
+			pv := reflect.New(vtype).Elem()
+			if err := setcb(f.Tag, pv); err != nil {
+				return err
+			}
+
+			vf.SetMapIndex(reflect.ValueOf(umsk), pv)
+		} else {
+			if err := setcb(f.Tag, vf); err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+
+}
+
 func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 
 	tvf := vf.Type()
@@ -240,73 +312,15 @@ func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 	}
 
 
-	tstruct := vstruct.Type()
 	for sk, sv := range cfg {
-		for i := 0; i < tstruct.NumField(); i++ {
-			f := tstruct.Field(i)
-
-			tag := f.Tag.Get("sconf")
-			if len(tag) == 0 {
-				tag = f.Name
-			}
-
-			usk := sk
-			umsk := ""
-			if f.Type.Kind() == reflect.Map {
-				sep := f.Tag.Get("sep")
-				if len(sep) == 0 {
-					sep = "."
-				}
-				ukf := strings.Index(sk, sep)
-				if ukf == -1 {
-					//fmt.Println("@@@@ -1", sk, f.Type.Kind())
-					continue
-				}
-
-				usk = sk[:ukf]
-				umsk = sk[ukf+1:]
-				//fmt.Println("###", sk, usk, umsk)
-				if len(umsk) == 0 {
-					// 映射到的map，key空情况
-					//fmt.Println("@@@@", sk, usk, umsk)
-					continue
-				}
-			}
-
-			if !strings.EqualFold(usk, tag) {
-				//fmt.Println("not equal", sk, tag, f.Name)
-				continue
-			}
-			//fmt.Println("field struct equal", f, sk, tag, f.Name)
-
-			vf := vstruct.Field(i)
-
-			if !vf.CanSet() {
-				return fmt.Errorf("field cannot set:%s", f.Name)
-			}
-
-			if vf.Kind() == reflect.Map {
-				if vf.Type().Key().Kind() != reflect.String {
-					return fmt.Errorf("field elem isn't map key string")
-				}
-
-				if vf.IsNil() {
-					vf.Set(reflect.MakeMap(vf.Type()))
-				}
-
-				vtype := vf.Type().Elem()
-				pv := reflect.New(vtype).Elem()
-				if err := m.unmarshalSet(f.Tag, sv, pv); err != nil {
-					return err
-				}
-
-				vf.SetMapIndex(reflect.ValueOf(umsk), pv)
-			} else {
-				if err := m.unmarshalSet(f.Tag, sv, vf); err != nil {
-					return err
-				}
-			}
-
+		err := m.unmarshalStructField(sk,
+			vstruct,
+			func(tag reflect.StructTag, pv reflect.Value) error {
+				return m.unmarshalSet(tag, sv, pv)
+			},
+		)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -317,34 +331,14 @@ func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 }
 
 
-func (m *TierConf) unmarshalToStruct(sk string, sv map[string]string, tstruct reflect.Type, vstruct reflect.Value) error {
-	for i := 0; i < tstruct.NumField(); i++ {
-		f := tstruct.Field(i)
-
-		tag := f.Tag.Get("sconf")
-		if len(tag) == 0 {
-			tag = f.Name
-		}
-		if !strings.EqualFold(sk, tag) {
-			//fmt.Println("not equal", sk, tag, f.Name)
-			continue
-		}
-		//fmt.Println("equal", f, sk, tag, f.Name)
-
-		vf := vstruct.Field(i)
-
-		if !vf.CanSet() {
-			return fmt.Errorf("field cannot set:%s", f.Name)
-		}
-
-		if err := m.unmarshalMap(sv, vf); err != nil {
-			return err
-		}
-
-		//fmt.Println("MMMM", vf.Interface())
-
-	}
-	return nil
+func (m *TierConf) unmarshalToStruct(sk string, sv map[string]string, vstruct reflect.Value) error {
+	err := m.unmarshalStructField(sk,
+		vstruct,
+		func(tag reflect.StructTag, pv reflect.Value) error {
+			return m.unmarshalMap(sv, pv)
+		},
+	)
+	return err
 
 }
 
@@ -383,7 +377,7 @@ func (m *TierConf) Unmarshal(v interface{}) error {
 	k = vstruct.Kind()
 	if reflect.Struct == k {
 		for sk, sv := range cfg {
-			if err := m.unmarshalToStruct(sk, sv, tstruct, vstruct); err != nil {
+			if err := m.unmarshalToStruct(sk, sv, vstruct); err != nil {
 				return err
 			}
 		}

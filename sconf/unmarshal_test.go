@@ -36,6 +36,15 @@ M.k1=c,d,e
 M.k2=e
 M.=ddd
 M=asd
+
+[SM.a]
+EE=ee
+FF=ff
+
+[SM.b]
+EE=ff
+FF=ee
+
 `)
 
 	tf := NewTierConf()
@@ -79,13 +88,23 @@ M=asd
 		}
 
 		Ts1 *string
+
+		Sm map[string]struct {
+			Ee string
+			Ff string
+		}
+
+		
 	}
 
 
 	var c2 TConf2
 	fmt.Println("OK=======================")
 	err = tf.Unmarshal(&c2)
-	fmt.Println("result:", c2, c2.Ts, err)
+	if err != nil {
+		t.Errorf("err:%s", err)
+	}
+	fmt.Println("result:", c2, c2.Ts, c2.Sm, err)
 
 
 	cfg2 := []byte(
@@ -105,6 +124,14 @@ AAA=a
 CCC=false
 XXX=ddd
 LLL=1,2,3,4,5
+[SM.a]
+EE=ee
+FF=ff
+
+[SM.b]
+EE=ff
+FF=ee
+
 `)
 
 
