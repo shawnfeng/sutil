@@ -249,7 +249,31 @@ func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 			if len(tag) == 0 {
 				tag = f.Name
 			}
-			if !strings.EqualFold(sk, tag) {
+
+			usk := sk
+			umsk := ""
+			if f.Type.Kind() == reflect.Map {
+				sep := f.Tag.Get("sep")
+				if len(sep) == 0 {
+					sep = "."
+				}
+				ukf := strings.Index(sk, sep)
+				if ukf == -1 {
+					//fmt.Println("@@@@ -1", sk, f.Type.Kind())
+					continue
+				}
+
+				usk = sk[:ukf]
+				umsk = sk[ukf+1:]
+				//fmt.Println("###", sk, usk, umsk)
+				if len(umsk) == 0 {
+					// 映射到的map，key空情况
+					//fmt.Println("@@@@", sk, usk, umsk)
+					continue
+				}
+			}
+
+			if !strings.EqualFold(usk, tag) {
 				//fmt.Println("not equal", sk, tag, f.Name)
 				continue
 			}
@@ -261,8 +285,26 @@ func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 				return fmt.Errorf("field cannot set:%s", f.Name)
 			}
 
-			if err := m.unmarshalSet(f.Tag, sv, vf); err != nil {
-				return err
+			if vf.Kind() == reflect.Map {
+				if vf.Type().Key().Kind() != reflect.String {
+					return fmt.Errorf("field elem isn't map key string")
+				}
+
+				if vf.IsNil() {
+					vf.Set(reflect.MakeMap(vf.Type()))
+				}
+
+				vtype := vf.Type().Elem()
+				pv := reflect.New(vtype).Elem()
+				if err := m.unmarshalSet(f.Tag, sv, pv); err != nil {
+					return err
+				}
+
+				vf.SetMapIndex(reflect.ValueOf(umsk), pv)
+			} else {
+				if err := m.unmarshalSet(f.Tag, sv, vf); err != nil {
+					return err
+				}
 			}
 
 		}

@@ -31,6 +31,11 @@ AAA=a
 CCC=true
 BBB=233
 LLL=1,2,3
+M.k0=a,b,c
+M.k1=c,d,e
+M.k2=e
+M.=ddd
+M=asd
 `)
 
 	tf := NewTierConf()
@@ -70,6 +75,7 @@ LLL=1,2,3
 			CCC bool
 
 			LLL []int `sep:"," sconf:"lll"`
+			M map[string][]string
 		}
 
 		Ts1 *string
@@ -88,6 +94,10 @@ LLL=1,2,3
 ZZZ=1
 YYY=33
 AAA=b
+MMM.k0=3
+MMM.k1=4
+MMM.k2=5
+MMM=
 [uame]
 [noexist]
 [ts]
@@ -133,6 +143,7 @@ LLL=1,2,3,4,5
 		YYY int
 		ZZZ string
 		AAA string
+		MMM map[string]int `sep:"."`
 	}
 	err = tf2.Unmarshal(&c5)
 	if err != nil {
