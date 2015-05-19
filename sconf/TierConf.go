@@ -364,7 +364,24 @@ func (m *TierConf) unmarshalToMap(sk string, sv map[string]string, vmap reflect.
 
 
 func (m *TierConf) Unmarshal(v interface{}) error {
-	cfg := m.conf
+	cfg := make(map[string]map[string]string)
+
+
+	for name, section := range m.conf {
+		if _, ok := cfg[name]; !ok {
+			cfg[name] = make(map[string]string)
+		}
+
+		for k, _ := range section {
+			v, err := m.ToString(name, k)
+			if err != nil {
+				return err
+			}
+			cfg[name][k] = v
+		}
+	}
+
+
 	value := reflect.ValueOf(v)
 	k := value.Kind()
 	if reflect.Ptr != k {
