@@ -674,6 +674,17 @@ func (m *TierConf) ToSliceString(section string, property string, sep string) ([
 
 }
 
+func (m *TierConf) ToSliceStringWithDefault(section string, property string, sep string, deft []string) []string {
+	v, err := m.ToSliceString(section, property, sep)
+	if err != nil {
+		return deft
+
+	} else {
+		return v
+	}
+}
+
+
 func (m *TierConf) ToSliceInt(section string, property string, sep string) ([]int, error) {
 	s, err := m.ToSliceString(section, property, sep)
 	if err != nil {
