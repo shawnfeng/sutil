@@ -219,7 +219,10 @@ func (m *TierConf) unmarshalSet(tag reflect.StructTag, s string, v reflect.Value
 	return nil
 
 }
-
+// sk 用来判断是不是自己的field项
+// vstruct 用来unmarshal的结构
+// setcb 每个struct 的field 赋值回调闭包
+// 函数是循环vstruct每个field，并通过sk和tag fieldname对比，对对应的sk调用setcb
 func (m *TierConf) unmarshalStructField(sk string, vstruct reflect.Value, setcb func(reflect.StructTag, reflect.Value) error) error {
 	tstruct := vstruct.Type()
 	for i := 0; i < tstruct.NumField(); i++ {
@@ -292,6 +295,8 @@ func (m *TierConf) unmarshalStructField(sk string, vstruct reflect.Value, setcb 
 
 }
 
+// 内层struct 结构，把对应的map[string][string] 映射到vf
+// 进行类型检查，如果是指针则new, unmarshalStructField是做具体的事情的
 func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 
 	tvf := vf.Type()
@@ -307,6 +312,7 @@ func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 
 	var vstruct reflect.Value
 	if tvf.Kind() == reflect.Ptr {
+		// vf为指针，先要new出来
 		if vf.IsNil() {
 			vf.Set(reflect.New(tvf.Elem()))
 		}
@@ -336,6 +342,7 @@ func (m *TierConf) unmarshalMap(cfg map[string]string, vf reflect.Value) error {
 }
 
 
+// 1. struct {struct {}, *struct{}, map[string]struct{}, map[string]*struct{} }
 func (m *TierConf) unmarshalToStruct(sk string, sv map[string]string, vstruct reflect.Value) error {
 	err := m.unmarshalStructField(sk,
 		vstruct,
@@ -347,6 +354,8 @@ func (m *TierConf) unmarshalToStruct(sk string, sv map[string]string, vstruct re
 
 }
 
+// 2. map[string] struct {}
+// 3. map[string] *struct {}
 func (m *TierConf) unmarshalToMap(sk string, sv map[string]string, vmap reflect.Value) error {
 	//fmt.Println("AAA", vmap.IsValid(), vmap.IsNil())
 	if vmap.IsNil() {
@@ -366,8 +375,10 @@ func (m *TierConf) unmarshalToMap(sk string, sv map[string]string, vmap reflect.
 
 }
 
-
-
+// 内层struct: struct {Type,map[string]Type}
+// 1. struct {struct {}, *struct{}, map[string]struct{}, map[string]*struct{} }
+// 2. map[string] struct {}
+// 3. map[string] *struct {}
 func (m *TierConf) Unmarshal(v interface{}) error {
 	cfg := make(map[string]map[string]string)
 
@@ -397,7 +408,11 @@ func (m *TierConf) Unmarshal(v interface{}) error {
 	vstruct := value.Elem()
 
 	k = vstruct.Kind()
+	// 支持两种类型
+	// 1 struct { struct }
+	// 2 map[string]struct
 	if reflect.Struct == k {
+		// struct { struct }
 		for sk, sv := range cfg {
 			if err := m.unmarshalToStruct(sk, sv, vstruct); err != nil {
 				return err
@@ -405,6 +420,7 @@ func (m *TierConf) Unmarshal(v interface{}) error {
 		}
 
 	} else if reflect.Map == k {
+		// map[string]struct
 		if tstruct.Key().Kind() != reflect.String {
 			return fmt.Errorf("unmarshal to obj elem isn't map key string")
 		}
