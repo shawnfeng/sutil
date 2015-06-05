@@ -22,6 +22,9 @@ import (
 
 
 func HashV(addrs []string, key string) string {
+	if len(addrs) == 0 {
+		return ""
+	}
     h := fnv.New32a()
     h.Write([]byte(key))
     hv := h.Sum32()
