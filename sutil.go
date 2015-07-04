@@ -40,7 +40,41 @@ func IsJSON(s []byte) bool {
     return json.Unmarshal(s, &js) == nil
 }
 
+
+// 截取获取合法 num 个unicode字符 的utf8字符串
+// num 为0，全部截取
+// 返回截取的unicode字符个数，以及字符串
+func GetInvalidUtf8String(s string, num int) (string, int) {
+	rv := ""
+	count := 0
+	for i := 0; len(s)>0; i++ {
+		ru, size := utf8.DecodeRuneInString(s)
+		if ru != utf8.RuneError {
+			rv += s[:size]
+			count++
+
+			if num > 0 && count >= num {
+				break
+			}
+		}
+		s = s[size:]
+	}
+
+	return rv, count
+}
+
 func GetUtf8Chars(s string, num int) string {
+	rv := ""
+	for i := 0; len(s)>0 && i < num; i++ {
+		_, size := utf8.DecodeRuneInString(s)
+		rv += s[:size]
+		s = s[size:]
+	}
+
+	return rv
+}
+
+func GetUtf8Chars_old(s string, num int) string {
 	b := []byte(s)
 	rv := ""
 	for i := 0; len(b)>0 && i < num; i++ {
