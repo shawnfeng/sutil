@@ -12,7 +12,7 @@ import (
 	//"time"
 	"os/exec"
 
-	"sync/atomic"
+	"sync"
 )
 
 
@@ -20,7 +20,8 @@ type Scmd struct {
 	name string
 	args []string
 
-	pid  int32
+	muPid sync.Mutex
+	pid  int
 
 }
 
@@ -30,6 +31,14 @@ func NewScmd(name string, arg ...string) *Scmd {
 		name: name,
 		args: arg,
 	}
+}
+
+func (m *Scmd) opPid(opfun func()) {
+	m.muPid.Lock()
+	defer m.muPid.Unlock()
+
+	opfun()
+
 }
 
 func (m *Scmd) makeReaderChan(r io.Reader) (chan []byte) {
@@ -83,32 +92,39 @@ func (m *Scmd) Start() (stdout chan []byte, stderr chan []byte, er error) {
 		return nil, nil, err
 	}
 
-	atomic.StoreInt32(&m.pid, int32(cmd.Process.Pid))
+	m.opPid(func() {
+		m.pid = cmd.Process.Pid
+	})
 
 	return m.makeReaderChan(stdoutRc), m.makeReaderChan(stderrRc), nil
 
-	// 不需要wait的过程，chan 使用者，可以读取chan
-	// 就可以正常的判断出程序的结束
 }
 
 
-func (m *Scmd) Stop() error {
-	pid := m.GetPid()
-	p, err := os.FindProcess(pid)
-	if err != nil {
-		return fmt.Errorf("find pid:%d err:%v", pid, err)
-	} else {
-		err = p.Kill()
+func (m *Scmd) Stop() (er error) {
+    m.opPid(func() {
+		pid := m.pid
+		p, err := os.FindProcess(pid)
 		if err != nil {
-			return fmt.Errorf("kill pid:%d err:%v", pid, err)
+			er = fmt.Errorf("find pid:%d err:%v", pid, err)
 		} else {
-			return nil
+			err = p.Kill()
+			if err != nil {
+				er = fmt.Errorf("kill pid:%d err:%v", pid, err)
+			} else {
+				m.pid = 0
+			}
 		}
-	}
+	})
+
+	return
 }
 
-func (m *Scmd) GetPid() int {
-	return int(atomic.LoadInt32(&m.pid))
+func (m *Scmd) GetPid() (pid int) {
+	m.opPid(func() {
+		pid = m.pid
+	})
+	return
 }
 
 // 阻塞调用， 直到程序结束才会返回

@@ -13,7 +13,9 @@ import (
 )
 
 func TestIt(t *testing.T) {
-	testStart0(t)
+	//testStart0(t)
+	//testStart1(t)
+	testStartStop(t)
 }
 
 
