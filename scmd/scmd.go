@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 	"fmt"
-	//"time"
+	"time"
 	"os/exec"
 
 	"sync"
@@ -71,32 +71,72 @@ func (m *Scmd) makeReaderChan(r io.Reader) (chan []byte) {
 }
 
 
-func (m *Scmd) Start() (stdout chan []byte, stderr chan []byte, er error) {
+func (m *Scmd) waitExit(cmd *exec.Cmd) {
+	// StdoutPipe returns a pipe that will be connected to the command's standard output when the command starts.
 
-	fmt.Println("START:", m.name, m.args)
+	// Wait will close the pipe after seeing the command exit, so most callers need not close the pipe themselves; however,
+	// an implication is that it is incorrect to call Wait before all reads from the pipe have completed. For the same reason,
+	// it is incorrect to call Run when using StdoutPipe. See the example for idiomatic usage.
 
-	cmd := exec.Command(m.name, m.args...)
+	// 按照同步逻辑执行，wait先于pipe读取调用，wait就会阻塞在那里了
+	// 异步测试没发现什么问题，这里实现，没有严格按照read完，才wait，因为是异步逻辑，可能会有问题么？
 
-	stdoutRc, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, nil, err
-	}
+	fmt.Println("WAIT: call")
 
-	stderrRc, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return nil, nil, err
+	if err := cmd.Wait(); err != nil {
+		fmt.Printf("WAIT: err:%s\n", err)
 	}
 
 	m.opPid(func() {
+		m.pid = 0
+	})
+}
+
+func (m *Scmd) Start() (stdout chan []byte, stderr chan []byte, er error) {
+
+	//fmt.Println("START:", m.name, m.args)
+
+	m.opPid(func() {
+		if m.pid != 0 {
+			er = fmt.Errorf("cmd been start pid:%d", m.pid)
+			return
+		}
+
+		cmd := exec.Command(m.name, m.args...)
+
+		stdoutRc, err := cmd.StdoutPipe()
+		if err != nil {
+			er = fmt.Errorf("init stdout pipe err:%s", err)
+			return
+		}
+
+		stderrRc, err := cmd.StderrPipe()
+		if err != nil {
+			er = fmt.Errorf("init stderr pipe err:%s", err)
+			return
+		}
+
+		err = cmd.Start()
+		if err != nil {
+			er = fmt.Errorf("start process err:%s", err)
+			return
+		}
+
 		m.pid = cmd.Process.Pid
+
+		// test call here, will deadlock
+		// 并且这时候去查这个pid找不到，why？？
+		fmt.Printf("START pid:%d\n", m.pid)
+		//m.waitExit(cmd)
+
+		stdout = m.makeReaderChan(stdoutRc)
+		stderr = m.makeReaderChan(stderrRc)
+
+		go m.waitExit(cmd)
+
 	})
 
-	return m.makeReaderChan(stdoutRc), m.makeReaderChan(stderrRc), nil
+	return
 
 }
 
@@ -165,14 +205,17 @@ func (m *Scmd) StartWaitOutput() (stdout []byte, stderr []byte, er error) {
 
 }
 
-/*
+
 func (m *Scmd) StartTimeoutWaitOutput(timeout time.Duration) (stdout []byte, stderr []byte, er error) {
 
+	return
 }
-*/
+
 
 // 获取procid，超时停止，标准错误、输出chan返回启动、timeout启动、阻塞启动结束后才返回
 // 启动停止，都有error返回，需要判断，stop时候，pid为0时候停止失败
 
 
-// 被kill后，wait输出是: signal: killed
+// 被kill后，wait输出是: 
+// -9 signal: killed
+// 不带 signal: terminated
