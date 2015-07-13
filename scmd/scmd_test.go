@@ -60,9 +60,11 @@ func testStart1(t *testing.T) {
 
 func testStartStop(t *testing.T) {
 
-	c := NewScmd("sleep", "10")
+	//c := NewScmd("sh", "t.sh")
+	c := NewScmd("sleep", "20")
 
 	go func() {
+		log.Printf("go do start")
 		stdout, stderr, err := c.StartWaitOutput()
 		if err != nil {
 			t.Errorf("%s", err)
@@ -70,14 +72,18 @@ func testStartStop(t *testing.T) {
 		log.Printf("o:%s e:%s", stdout, stderr)
 	}()
 
-	time.Sleep(time.Second)
+	log.Printf("call go do start goroutine")
+	time.Sleep(time.Second*2)
 
+
+	log.Printf("do stop")
 	err := c.Stop()
 	if err != nil {
 		t.Errorf("%s", err)
 	}
+	log.Printf("do stop ok")
 
-	time.Sleep(1)
+	time.Sleep(5*time.Second)
 }
 
 

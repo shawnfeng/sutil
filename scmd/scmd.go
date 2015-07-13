@@ -41,15 +41,16 @@ func (m *Scmd) opPid(opfun func()) {
 
 }
 
-func (m *Scmd) makeReaderChan(r io.Reader) (chan []byte) {
+func (m *Scmd) makeReaderChan(r io.Reader) (chan []byte, chan bool) {
     read := make(chan []byte)
+	over := make(chan bool)
 
 	go func() {
 		for {
 			// buffer设置必须放到这，不要放到for外面，否则会造成，后面的read覆盖前面的read
 			b := make([]byte, 1024)
 			n, err := r.Read(b)
-			//fmt.Println("Debug", n, err)
+			fmt.Println("Debug", n, err)
 
 			// https://golang.org/pkg/io/#Reader
 			// Callers should always process the n > 0 bytes returned before considering the error err. Doing so correctly handles I/O errors that happen after reading some bytes and also both of the allowed EOF behaviors.
@@ -60,18 +61,20 @@ func (m *Scmd) makeReaderChan(r io.Reader) (chan []byte) {
 			}
 
 			if err != nil {
+				fmt.Println("READER err:%s", err)
 				close(read)
+				over <- true
 				return
 			}
 		}
 	}()
 
-	return read
+	return read, over
 
 }
 
 
-func (m *Scmd) waitExit(cmd *exec.Cmd) {
+func (m *Scmd) waitExit(cmd *exec.Cmd, stdoutOver, stderrOver chan bool) {
 	// StdoutPipe returns a pipe that will be connected to the command's standard output when the command starts.
 
 	// Wait will close the pipe after seeing the command exit, so most callers need not close the pipe themselves; however,
@@ -80,14 +83,20 @@ func (m *Scmd) waitExit(cmd *exec.Cmd) {
 
 	// 按照同步逻辑执行，wait先于pipe读取调用，wait就会阻塞在那里了
 	// 异步测试没发现什么问题，这里实现，没有严格按照read完，才wait，因为是异步逻辑，可能会有问题么？
-
+	// 最后还是这么做了，想把整个pid操作安全化完全，但是这里要wait保证调用时候完全不阻塞完成，防止对mutex占用时间过长
 	fmt.Println("WAIT: call")
 
-	if err := cmd.Wait(); err != nil {
-		fmt.Printf("WAIT: err:%s\n", err)
-	}
+	<-stdoutOver
+	fmt.Println("WAIT: stdout over")
+
+	<-stderrOver
+	fmt.Println("WAIT: stderr over")
 
 	m.opPid(func() {
+		if err := cmd.Wait(); err != nil {
+			fmt.Printf("WAIT: err:%s\n", err)
+		}
+
 		m.pid = 0
 	})
 }
@@ -129,10 +138,11 @@ func (m *Scmd) Start() (stdout chan []byte, stderr chan []byte, er error) {
 		fmt.Printf("START pid:%d\n", m.pid)
 		//m.waitExit(cmd)
 
-		stdout = m.makeReaderChan(stdoutRc)
-		stderr = m.makeReaderChan(stderrRc)
+		var stdoutOver, stderrOver chan bool
+		stdout, stdoutOver = m.makeReaderChan(stdoutRc)
+		stderr, stderrOver = m.makeReaderChan(stderrRc)
 
-		go m.waitExit(cmd)
+		go m.waitExit(cmd, stdoutOver, stderrOver)
 
 	})
 
@@ -182,7 +192,7 @@ func (m *Scmd) StartWaitOutput() (stdout []byte, stderr []byte, er error) {
 			if !ok {
 				stdoutChan = nil
 			} else {
-				//fmt.Printf("STDOUT n:%d %s\n", len(b), b)
+				fmt.Printf("STDOUT n:%d %s\n", len(b), b)
 				stdout = append(stdout, b...)
 			}
 
@@ -190,7 +200,7 @@ func (m *Scmd) StartWaitOutput() (stdout []byte, stderr []byte, er error) {
 			if !ok {
 				stderrChan = nil
 			} else {
-				//fmt.Printf("STDERR n:%d %s\n", len(b), b)
+				fmt.Printf("STDERR n:%d %s\n", len(b), b)
 				stderr = append(stderr, b...)
 			}
 		}
