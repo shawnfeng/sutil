@@ -17,9 +17,9 @@ func TestIt(t *testing.T) {
 	//testProg1(t)
 	//testProg2(t)
 
-	//testStart0(t)
+	testStart0(t)
 	//time.Sleep(20 * time.Second)
-	testStart1(t)
+	//testStart1(t)
 	//testStartStop(t)
 }
 
@@ -141,9 +141,10 @@ func testStart0(t *testing.T) {
 	}
 
 
-	log.Printf("o:%s e:%s", stdout, stderr)
+	log.Printf("o:%s e:%s c:%s", stdout, stderr, c.prog)
 
 	time.Sleep(time.Second)
+	log.Printf("o:%s e:%s c:%s", stdout, stderr, c.prog)
 }
 
 

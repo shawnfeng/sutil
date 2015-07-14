@@ -112,6 +112,8 @@ func (m *Scmd) StartWaitOutput() (stdout []byte, stderr []byte, er error) {
 			break
 		}
 	}
+	// 设置结束
+	go m.Stop(time.Second)
 
 	return stdout, stderr, nil
 
