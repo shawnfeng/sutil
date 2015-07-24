@@ -8,6 +8,7 @@ package snetutil
 
 import (
 	"fmt"
+	"bytes"
 	"strconv"
 	"io/ioutil"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 
 // http response interface
 type HttpResponse interface {
-	Unmarshal() (int, []byte)
+	Marshal() (int, []byte)
 }
 
 // 定义了几种产用的类型的response
@@ -32,8 +33,8 @@ type HttpRespJson struct {
 }
 
 
-func (m *HttpRespJson) Unmarshal() (int, []byte) {
-	fun := "HttpRespJson.Unmarshal -->"
+func (m *HttpRespJson) Marshal() (int, []byte) {
+	fun := "HttpRespJson.Marshal -->"
 	resp, err := json.Marshal(m.resp)
 
 	if err != nil {
@@ -60,7 +61,7 @@ type HttpRespBytes struct {
 	resp []byte
 }
 
-func (m *HttpRespBytes) Unmarshal() (int, []byte) {
+func (m *HttpRespBytes) Marshal() (int, []byte) {
 	return m.status, m.resp
 }
 
@@ -75,7 +76,7 @@ type HttpRespString struct {
 	resp string
 }
 
-func (m *HttpRespString) Unmarshal() (int, []byte) {
+func (m *HttpRespString) Marshal() (int, []byte) {
 	return m.status, []byte(m.resp)
 }
 
@@ -237,7 +238,9 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
 		return hrb, err
 	}
 
-	err = json.Unmarshal(hrb.Body.Body(), js)
+    dc := json.NewDecoder(bytes.NewBuffer(hrb.Body.Body()))
+    dc.UseNumber()
+    err = dc.Decode(js)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +280,7 @@ func HttpNoBodyWrapper(h HandleNoBody) func(http.ResponseWriter, *http.Request, 
 		}
 
 		resp := h.Factory().Handle(req)
-		status, rs := resp.Unmarshal()
+		status, rs := resp.Marshal()
 
 		if status == 200 {
 			fmt.Fprintf(w, "%s", rs)
@@ -302,7 +305,7 @@ func HttpCommonBodyWrapper(h HandleCommonBody) func(http.ResponseWriter, *http.R
 		}
 
 		resp := h.Factory().Handle(req)
-		status, rs := resp.Unmarshal()
+		status, rs := resp.Marshal()
 
 		if status == 200 {
 			fmt.Fprintf(w, "%s", rs)
@@ -329,7 +332,7 @@ func HttpJsonBodyWrapper(h HandleCommonBody) func(http.ResponseWriter, *http.Req
 		}
 
 		resp := newme.Handle(req)
-		status, rs := resp.Unmarshal()
+		status, rs := resp.Marshal()
 
 		if status == 200 {
 			fmt.Fprintf(w, "%s", rs)
