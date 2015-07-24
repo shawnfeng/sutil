@@ -149,12 +149,31 @@ func (m *reqArgs) Int64(key string) int64 {
 
 }
 // =========================
-type reqForm struct {
+type reqQuery struct {
 	r *http.Request
+	q url.Values
 }
 
-func (m *reqForm) Get(key string) string {
-	return m.r.Form.Get(key)
+func (m *reqQuery) Get(key string) string {
+	fun := "reqQuery.Get -->"
+	if m.q == nil {
+		if m.r.URL != nil {
+			var err error
+			m.q, err = url.ParseQuery(m.r.URL.RawQuery)
+			if err != nil {
+				slog.Warnf("%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, err)
+			}
+		}
+
+		if m.q == nil {
+			m.q = make(url.Values)
+		}
+
+		slog.Debugf("%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, m.q)
+	}
+
+
+	return m.q.Get(key)
 }
 
 
@@ -187,21 +206,18 @@ func NewreqBody(body []byte) *reqBody {
 // 没有body类的请求
 type HttpRequestNoBody struct {
 	URL *url.URL
-	Form *reqArgs
+	Method string
+	Query *reqArgs
 	Params *reqArgs
 
 }
 
 
 func NewHttpRequestNoBody(r *http.Request, ps httprouter.Params) (*HttpRequestNoBody, error) {
-    err := r.ParseForm()
-	if err != nil {
-		return nil, err
-	}
-
 	return &HttpRequestNoBody {
 		URL: r.URL,
-		Form: NewreqArgs(&reqForm{r}),
+		Method: r.Method,
+		Query: NewreqArgs(&reqQuery{r: r,}),
 		Params: NewreqArgs(&reqParams{ps}),
 	}, nil
 }
@@ -214,18 +230,14 @@ type HttpRequestCommonBody struct {
 
 
 func NewHttpRequestCommonBody(r *http.Request, ps httprouter.Params) (*HttpRequestCommonBody, error) {
-    err := r.ParseForm()
-	if err != nil {
-		return nil, err
-	}
 
 	body, err := ioutil.ReadAll(r.Body);
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read body %s", err.Error())
 	}
 
 	return &HttpRequestCommonBody {
-		HttpRequestNoBody: HttpRequestNoBody{r.URL, NewreqArgs(&reqForm{r}), NewreqArgs(&reqParams{ps})},
+		HttpRequestNoBody: HttpRequestNoBody{r.URL, r.Method, NewreqArgs(&reqQuery{r: r}), NewreqArgs(&reqParams{ps})},
 		Body: NewreqBody(body),
 	}, nil
 }
@@ -242,7 +254,7 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
     dc.UseNumber()
     err = dc.Decode(js)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("json unmarshal %s", err.Error())
 	}
 
 
