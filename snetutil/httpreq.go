@@ -148,6 +148,23 @@ func (m *reqArgs) Int64(key string) int64 {
 	return i
 
 }
+
+
+func (m *reqArgs) Bool(key string) bool {
+	fun := "reqArgs.Bool -->"
+	v := m.r.Get(key)
+	if len(v) == 0 {
+		return false
+	}
+
+	i, err := strconv.ParseBool(v)
+	if err != nil {
+		slog.Warnf("%s parse int64 v:%s err:%s", fun, v, err)
+	}
+	return i
+
+}
+
 // =========================
 type reqQuery struct {
 	r *http.Request
@@ -190,7 +207,7 @@ type reqBody struct {
 	body []byte
 }
 
-func (m *reqBody) Body() []byte {
+func (m *reqBody) Binary() []byte {
 	return m.body
 }
 
@@ -205,27 +222,64 @@ func NewreqBody(body []byte) *reqBody {
 // ============================
 // 没有body类的请求
 type HttpRequestNoBody struct {
-	URL *url.URL
-	Method string
-	Query *reqArgs
-	Params *reqArgs
+	r *http.Request
+
+	query *reqArgs
+	params *reqArgs
 
 }
+
+func (m *HttpRequestNoBody) Query() *reqArgs {
+	return m.query
+}
+
+func (m *HttpRequestNoBody) Params() *reqArgs {
+	return m.params
+}
+
+
+func (m *HttpRequestNoBody) URL() *url.URL {
+	return m.r.URL
+}
+
+func (m *HttpRequestNoBody) Method() string {
+	return m.r.Method
+}
+
+func (m *HttpRequestNoBody) RemoteAddr() string {
+	return m.r.RemoteAddr
+}
+
+
+func (m *HttpRequestNoBody) Header() http.Header {
+	return m.r.Header
+}
+
+
+func (m *HttpRequestNoBody) Request() *http.Request {
+	return m.r
+}
+
 
 
 func NewHttpRequestNoBody(r *http.Request, ps httprouter.Params) (*HttpRequestNoBody, error) {
 	return &HttpRequestNoBody {
-		URL: r.URL,
-		Method: r.Method,
-		Query: NewreqArgs(&reqQuery{r: r,}),
-		Params: NewreqArgs(&reqParams{ps}),
+		r: r,
+		query: NewreqArgs(&reqQuery{r: r,}),
+		params: NewreqArgs(&reqParams{ps}),
 	}, nil
 }
 
 
+
+// ============================
 type HttpRequestCommonBody struct {
 	HttpRequestNoBody
-	Body *reqBody
+	body *reqBody
+}
+
+func (m *HttpRequestCommonBody) Body() *reqBody {
+	return m.body
 }
 
 
@@ -237,8 +291,8 @@ func NewHttpRequestCommonBody(r *http.Request, ps httprouter.Params) (*HttpReque
 	}
 
 	return &HttpRequestCommonBody {
-		HttpRequestNoBody: HttpRequestNoBody{r.URL, r.Method, NewreqArgs(&reqQuery{r: r}), NewreqArgs(&reqParams{ps})},
-		Body: NewreqBody(body),
+		HttpRequestNoBody: HttpRequestNoBody{r, NewreqArgs(&reqQuery{r: r}), NewreqArgs(&reqParams{ps})},
+		body: NewreqBody(body),
 	}, nil
 }
 
@@ -250,7 +304,7 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
 		return hrb, err
 	}
 
-    dc := json.NewDecoder(bytes.NewBuffer(hrb.Body.Body()))
+    dc := json.NewDecoder(bytes.NewBuffer(hrb.Body().Binary()))
     dc.UseNumber()
     err = dc.Decode(js)
 	if err != nil {
