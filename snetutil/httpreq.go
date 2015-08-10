@@ -211,10 +211,29 @@ func (m *reqBody) Binary() []byte {
 	return m.body
 }
 
+
+func (m *reqBody) Json(js interface{}) error {
+
+    dc := json.NewDecoder(bytes.NewBuffer(m.body))
+    dc.UseNumber()
+    err := dc.Decode(js)
+	if err != nil {
+		return fmt.Errorf("json unmarshal %s", err.Error())
+	} else {
+		return nil
+	}
+
+}
+
 func NewreqBody(body []byte) *reqBody {
 	return &reqBody {
 		body: body,
 	}
+
+}
+
+// ============
+type reqMultiBody struct {
 
 }
 
@@ -304,9 +323,7 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
 		return hrb, err
 	}
 
-    dc := json.NewDecoder(bytes.NewBuffer(hrb.Body().Binary()))
-    dc.UseNumber()
-    err = dc.Decode(js)
+	err = hrb.Body().Json(js)
 	if err != nil {
 		return nil, fmt.Errorf("json unmarshal %s", err.Error())
 	}
@@ -365,7 +382,7 @@ func HttpCommonBodyWrapper(h HandleCommonBody) func(http.ResponseWriter, *http.R
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		req, err := NewHttpRequestCommonBody(r, ps)
 		if err != nil {
-			slog.Warnf("%s body json err:%s", fun, err)
+			slog.Warnf("%s req body err:%s", fun, err)
 			http.Error(w, "request err", 400)
 			return
 		}
