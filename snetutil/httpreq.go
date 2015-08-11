@@ -389,18 +389,12 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
 
 type HandleRequest interface {
 	Handle(*HttpRequest) HttpResponse
-	// 构造自己一个副本，如果结构本身保存了
-	// 本请求的数据，则factory必须new一个新的
-	// 否则没有共享数据问题，可以返回自己当前的指针就好
-
-	// 对于存在body，并使用json自动unmarshal
-	// 一定注意使用一般时候你都需要new一个新的
-	// 除非你想让请求之间通过某种技巧来关联，否则。。。
-	Factory() HandleRequest
 }
 
+type FactoryHandleRequest func() HandleRequest
 
-func HttpRequestWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+
+func HttpRequestWrapper(fac FactoryHandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	fun := "HttpRequestWrapper -->"
 
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -411,7 +405,7 @@ func HttpRequestWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request
 			return
 		}
 
-		resp := h.Factory().Handle(req)
+		resp := fac().Handle(req)
 		status, rs := resp.Marshal()
 
 		if status == 200 {
@@ -423,12 +417,12 @@ func HttpRequestWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request
 
 }
 
-func HttpRequestJsonBodyWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+func HttpRequestJsonBodyWrapper(fac FactoryHandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	fun := "HttpRequestJsonBodyWrapper -->"
 
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-		newme := h.Factory()
+		newme := fac()
 		req, err := NewHttpRequestJsonBody(r, ps, newme)
 		if err != nil {
 			slog.Warnf("%s body json err:%s", fun, err)
