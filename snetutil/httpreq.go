@@ -406,8 +406,8 @@ func HttpRequestWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		req, err := NewHttpRequest(r, ps)
 		if err != nil {
-			slog.Warnf("%s body json err:%s", fun, err)
-			http.Error(w, "request err", 400)
+			slog.Warnf("%s new request err:%s", fun, err)
+			http.Error(w, "new request err:"+err.Error(), 400)
 			return
 		}
 
@@ -432,7 +432,7 @@ func HttpRequestJsonBodyWrapper(h HandleRequest) func(http.ResponseWriter, *http
 		req, err := NewHttpRequestJsonBody(r, ps, newme)
 		if err != nil {
 			slog.Warnf("%s body json err:%s", fun, err)
-			http.Error(w, "request err", 400)
+			http.Error(w, "json unmarshal err:"+err.Error(), 400)
 			return
 		}
 
