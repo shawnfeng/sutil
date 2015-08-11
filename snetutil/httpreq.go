@@ -9,9 +9,12 @@ package snetutil
 import (
 	"fmt"
 	"bytes"
+	"strings"
 	"strconv"
 	"io/ioutil"
 	"net/http"
+	"mime"
+	"mime/multipart"
 	"net/url"
 	"encoding/json"
     "github.com/julienschmidt/httprouter"
@@ -204,17 +207,27 @@ func (m *reqParams) Get(key string) string {
 
 // ==========
 type reqBody struct {
+	r *http.Request
 	body []byte
 }
 
 func (m *reqBody) Binary() []byte {
+	fun := "reqBody.Binary"
+	if m.body == nil {
+		body, err := ioutil.ReadAll(m.r.Body);
+		if err != nil {
+			slog.Errorf("%s read body %s", fun, err.Error())
+		}
+		m.body = body
+	}
+
 	return m.body
 }
 
 
 func (m *reqBody) Json(js interface{}) error {
 
-    dc := json.NewDecoder(bytes.NewBuffer(m.body))
+    dc := json.NewDecoder(bytes.NewBuffer(m.Binary()))
     dc.UseNumber()
     err := dc.Decode(js)
 	if err != nil {
@@ -225,100 +238,140 @@ func (m *reqBody) Json(js interface{}) error {
 
 }
 
-func NewreqBody(body []byte) *reqBody {
-	return &reqBody {
-		body: body,
+
+func (m *reqBody) FormValue(key string) string {
+	fun := "reqBody.FormValue -->"
+	// 获取到content-type，并根据其类型来决策是从r.MultipartForm，获取数据
+	// 还是r.PostForm中获取数据，r.Form实际上市把query中的postform中的，mutlpartform都搞到一起了
+	// r.PostFrom 对应的content-type为 application/x-www-form-urlencoded
+	// r.MultipartForm 对应的 multipart/form-data
+
+	// 仅仅是为让内部触发对form的parse过程
+	m.r.FormValue(key)
+
+
+	// 参照http package中parsePostForm 实现
+	ct := m.r.Header.Get("Content-Type")
+	// RFC 2616, section 7.2.1 - empty type
+	//   SHOULD be treated as application/octet-stream
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+	var err error
+	ct, _, err = mime.ParseMediaType(ct)
+	if err != nil {
+		slog.Errorf("%s parsemediatype err:%s", fun, err)
 	}
 
+
+	if ct == "application/x-www-form-urlencoded" {
+		if vs := m.r.PostForm[key]; len(vs) > 0 {
+			return vs[0]
+		}
+
+	} else if ct == "multipart/form-data" {
+		if vs := m.r.MultipartForm.Value[key]; len(vs) > 0 {
+			return vs[0]
+		}
+
+	}
+
+	return ""
 }
 
-// ============
-type reqMultiBody struct {
+func (m *reqBody) FormValueJson(key string, js interface{}) error {
+
+    dc := json.NewDecoder(strings.NewReader(m.FormValue(key)))
+    dc.UseNumber()
+    err := dc.Decode(js)
+	if err != nil {
+		return fmt.Errorf("json unmarshal %s", err.Error())
+	} else {
+		return nil
+	}
+}
+
+
+
+func (m *reqBody) FormFile(key string) ([]byte, *multipart.FileHeader, error) {
+
+	file, head, err := m.r.FormFile(key)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get form file err:%s", err)
+	}
+
+    data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get form file data err:%s", err)
+	}
+
+	return data, head, nil
+
 
 }
 
 
 // ============================
 // 没有body类的请求
-type HttpRequestNoBody struct {
+type HttpRequest struct {
 	r *http.Request
 
 	query *reqArgs
 	params *reqArgs
 
+	body *reqBody
 }
 
-func (m *HttpRequestNoBody) Query() *reqArgs {
+func (m *HttpRequest) Query() *reqArgs {
 	return m.query
 }
 
-func (m *HttpRequestNoBody) Params() *reqArgs {
+func (m *HttpRequest) Params() *reqArgs {
 	return m.params
 }
 
+func (m *HttpRequest) Body() *reqBody {
+	return m.body
+}
 
-func (m *HttpRequestNoBody) URL() *url.URL {
+
+func (m *HttpRequest) URL() *url.URL {
 	return m.r.URL
 }
 
-func (m *HttpRequestNoBody) Method() string {
+func (m *HttpRequest) Method() string {
 	return m.r.Method
 }
 
-func (m *HttpRequestNoBody) RemoteAddr() string {
+func (m *HttpRequest) RemoteAddr() string {
 	return m.r.RemoteAddr
 }
 
 
-func (m *HttpRequestNoBody) Header() http.Header {
+func (m *HttpRequest) Header() http.Header {
 	return m.r.Header
 }
 
 
-func (m *HttpRequestNoBody) Request() *http.Request {
+func (m *HttpRequest) Request() *http.Request {
 	return m.r
 }
 
 
 
-func NewHttpRequestNoBody(r *http.Request, ps httprouter.Params) (*HttpRequestNoBody, error) {
-	return &HttpRequestNoBody {
+func NewHttpRequest(r *http.Request, ps httprouter.Params) (*HttpRequest, error) {
+	return &HttpRequest {
 		r: r,
 		query: NewreqArgs(&reqQuery{r: r,}),
 		params: NewreqArgs(&reqParams{ps}),
+		body: &reqBody{r: r,},
 	}, nil
 }
 
 
 
-// ============================
-type HttpRequestCommonBody struct {
-	HttpRequestNoBody
-	body *reqBody
-}
-
-func (m *HttpRequestCommonBody) Body() *reqBody {
-	return m.body
-}
-
-
-func NewHttpRequestCommonBody(r *http.Request, ps httprouter.Params) (*HttpRequestCommonBody, error) {
-
-	body, err := ioutil.ReadAll(r.Body);
-	if err != nil {
-		return nil, fmt.Errorf("read body %s", err.Error())
-	}
-
-	return &HttpRequestCommonBody {
-		HttpRequestNoBody: HttpRequestNoBody{r, NewreqArgs(&reqQuery{r: r}), NewreqArgs(&reqParams{ps})},
-		body: NewreqBody(body),
-	}, nil
-}
-
-
-
-func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{}) (*HttpRequestCommonBody, error) {
-	hrb, err := NewHttpRequestCommonBody(r, ps)
+func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{}) (*HttpRequest, error) {
+	hrb, err := NewHttpRequest(r, ps)
 	if err != nil {
 		return hrb, err
 	}
@@ -334,28 +387,24 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
 }
 
 
-type HandleNoBody interface {
-	Handle(*HttpRequestNoBody) HttpResponse
+type HandleRequest interface {
+	Handle(*HttpRequest) HttpResponse
 	// 构造自己一个副本，如果结构本身保存了
 	// 本请求的数据，则factory必须new一个新的
 	// 否则没有共享数据问题，可以返回自己当前的指针就好
-	Factory() HandleNoBody
-}
-
-type HandleCommonBody interface {
-	Handle(*HttpRequestCommonBody) HttpResponse
 
 	// 对于存在body，并使用json自动unmarshal
 	// 一定注意使用一般时候你都需要new一个新的
 	// 除非你想让请求之间通过某种技巧来关联，否则。。。
-	Factory() HandleCommonBody
+	Factory() HandleRequest
 }
 
-func HttpNoBodyWrapper(h HandleNoBody) func(http.ResponseWriter, *http.Request, httprouter.Params) {
-	fun := "HttpNoBodyWrapper -->"
+
+func HttpRequestWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+	fun := "HttpRequestWrapper -->"
 
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		req, err := NewHttpRequestNoBody(r, ps)
+		req, err := NewHttpRequest(r, ps)
 		if err != nil {
 			slog.Warnf("%s body json err:%s", fun, err)
 			http.Error(w, "request err", 400)
@@ -374,35 +423,8 @@ func HttpNoBodyWrapper(h HandleNoBody) func(http.ResponseWriter, *http.Request, 
 
 }
 
-
-
-func HttpCommonBodyWrapper(h HandleCommonBody) func(http.ResponseWriter, *http.Request, httprouter.Params) {
-	fun := "HttpCommmonBodyWrapper -->"
-
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		req, err := NewHttpRequestCommonBody(r, ps)
-		if err != nil {
-			slog.Warnf("%s req body err:%s", fun, err)
-			http.Error(w, "request err", 400)
-			return
-		}
-
-		resp := h.Factory().Handle(req)
-		status, rs := resp.Marshal()
-
-		if status == 200 {
-			fmt.Fprintf(w, "%s", rs)
-		} else {
-			http.Error(w, string(rs), status)
-		}
-	}
-
-}
-
-
-
-func HttpJsonBodyWrapper(h HandleCommonBody) func(http.ResponseWriter, *http.Request, httprouter.Params) {
-	fun := "HttpJsonBodyWrapper -->"
+func HttpRequestJsonBodyWrapper(h HandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
+	fun := "HttpRequestJsonBodyWrapper -->"
 
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
@@ -425,3 +447,9 @@ func HttpJsonBodyWrapper(h HandleCommonBody) func(http.ResponseWriter, *http.Req
 	}
 
 }
+
+
+// 测试get 获取body ok
+// 测试mutlibody 直接获取body,ok
+// 测试 application/x-www-form-urlencoded
+// 测试 multipart/form-data
