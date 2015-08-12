@@ -83,11 +83,38 @@ func GetExterIp() (string, error) {
 	return "", errors.New("no exter ip")
 }
 
+// 不指定host使用内网host
+// 指定了就使用指定的，不管指定的是0.0.0.0还是内网或者外网
+func GetListenAddr(a string) (string, error) {
+
+	addrTcp, err := net.ResolveTCPAddr("tcp", a)
+	if err != nil {
+		return "", err
+	}
+
+	addr := addrTcp.String()
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return "", err
+	}
+
+	if len(host) == 0 {
+		return GetServAddr(addrTcp)
+	}
+
+
+	return addr, nil
+
+}
+
 func GetServAddr(a net.Addr) (string, error) {
 	addr := a.String()
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
 		return "", err
+	}
+	if len(host) == 0 {
+		host = "0.0.0.0"
 	}
 
 	ip := net.ParseIP(host)
@@ -96,7 +123,7 @@ func GetServAddr(a net.Addr) (string, error) {
 		return "", fmt.Errorf("ParseIP error:%s", host)
 	}
 	/*
-	slog.Infoln("ADDR TYPE", ip,
+	fmt.Println("ADDR TYPE", ip,
 		"IsGlobalUnicast",
 		ip.IsGlobalUnicast(),
 		"IsInterfaceLocalMulticast",
