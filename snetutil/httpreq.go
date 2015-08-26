@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"io/ioutil"
 	"net/http"
+	"io"
 	"mime"
 	"mime/multipart"
 	"net/url"
@@ -223,6 +224,12 @@ func (m *reqBody) Binary() []byte {
 
 	return m.body
 }
+
+
+func (m *reqBody) Reader() io.ReadCloser {
+	return m.r.Body
+}
+
 
 
 func (m *reqBody) Json(js interface{}) error {
