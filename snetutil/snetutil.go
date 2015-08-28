@@ -300,7 +300,11 @@ func HttpReqGetOk(url string, timeout time.Duration) ([]byte, error) {
 }
 
 func HttpReqPostOk(url string, data []byte, timeout time.Duration) ([]byte, error) {
-	body, status, err := HttpReqPost(url, data, timeout)
+	return HttpReqOk(url, "POST", data, timeout)
+}
+
+func HttpReqOk(url, method string, data []byte, timeout time.Duration) ([]byte, error) {
+	body, status, err := HttpReq(url, method, data, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -314,6 +318,11 @@ func HttpReqPostOk(url string, data []byte, timeout time.Duration) ([]byte, erro
 }
 
 func HttpReqPost(url string, data []byte, timeout time.Duration) ([]byte, int, error) {
+	return HttpReq(url, "POST", data, timeout)
+}
+
+
+func HttpReq(url, method string, data []byte, timeout time.Duration) ([]byte, int, error) {
 	client := &http.Client{Timeout: timeout}
 
 	reqest, err := http.NewRequest("POST", url, bytes.NewReader(data))
