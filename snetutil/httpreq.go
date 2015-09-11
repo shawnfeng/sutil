@@ -277,6 +277,12 @@ func (m *reqBody) FormValue(key string) string {
 		}
 
 	} else if ct == "multipart/form-data" {
+		if m.r.MultipartForm == nil {
+			slog.Errorf("%s multipart/form-data parse nil", fun)
+			return ""
+		}
+
+
 		if vs := m.r.MultipartForm.Value[key]; len(vs) > 0 {
 			return vs[0]
 		}
