@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"fmt"
 	"strings"
+	"bytes"
 	"os"
 	"encoding/json"
 	"unicode/utf8"
@@ -39,6 +40,13 @@ func IsJSON(s []byte) bool {
     var js interface{}
     return json.Unmarshal(s, &js) == nil
 }
+
+func JsonBigInt64Decode(s []byte, v interface{}) (err error) {
+    d := json.NewDecoder(bytes.NewReader(s))
+    d.UseNumber()
+    return d.Decode(&v)
+}
+
 
 
 // 截取获取合法 num 个unicode字符 的utf8字符串
