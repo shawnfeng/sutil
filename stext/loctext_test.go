@@ -22,6 +22,15 @@ func ck(t *testing.T, correct, format string, params ...string) {
 }
 
 func TestLocText(t *testing.T) {
+	// 空测试
+	ck(t, "", "", "123")
+	ck(t, "123", "%@", "123")
+	ck(t, "123", "%@%@", "123")
+	ck(t, "123%@", "%@%%@", "123")
+	ck(t, "123%a@@", "%@%a@@", "123")
+
+	ck(t, "%abc", "%@%abc")
+	ck(t, "123%abc", "%@%abc", "123")
 
 	// 放在开头
 	ck(t, "123abc", "%@abc", "123")
