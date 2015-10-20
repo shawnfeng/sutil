@@ -15,11 +15,15 @@ import (
 
 
 func doFmt(f string) int {
-	if len(f) == 0 {
+	sz := len(f)
+	if sz == 0 {
 		return 0
 	}
+	if sz < 2 ||  f[sz-1] != '$' {
+		return -1
+	}
 
-	idx, err := strconv.Atoi(f)
+	idx, err := strconv.Atoi(f[:sz-1])
 	if err != nil {
 		return -1
 	}
@@ -27,7 +31,7 @@ func doFmt(f string) int {
 	return idx
 }
 
-// %3@ %@
+// %3$@ %@ or  %3$s %s
 func LocationText(format string, params ...string) string {
 
 	var res string
@@ -61,7 +65,7 @@ func LocationText(format string, params ...string) string {
 				}
 			}
 
-		} else if c == '@' {
+		} else if c == '@' || c == 's' {
 			if fb >= 0 {
 				res += format[cb:fb]
 				cb = fb
