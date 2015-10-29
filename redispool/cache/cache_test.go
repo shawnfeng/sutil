@@ -35,8 +35,15 @@ func TestCache(t *testing.T) {
 
 	cachet := NewCache([]string{"127.0.0.1:9600"}, "TTT", 60)
 
+	err := cachet.Del("test")
+	if err != nil {
+		t.Errorf("%s", err)
+		return
+	}
+
+
 	var data testData
-	err := cachet.Get("test", &data)
+	err = cachet.Get("test", &data)
 	if err != nil {
 		t.Errorf("%s", err)
 		return
@@ -48,5 +55,13 @@ func TestCache(t *testing.T) {
 	if data.Key != "test" || data.Tst != 12345 {
 		t.Errorf("get err")
 	}
+
+
+	err = cachet.Del("test")
+	if err != nil {
+		t.Errorf("%s", err)
+		return
+	}
+
 
 }

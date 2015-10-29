@@ -133,3 +133,24 @@ func (m *Cache) Get(key string, data CacheData) error {
 
 }
 
+
+func (m *Cache) Del(key string) error {
+	rd := sutil.HashV(m.addrs, key)
+
+	rp := redisPool.CmdSingle(
+		rd,
+		[]interface{}{
+			"DEL",
+			fmt.Sprintf("%s.%s", m.pref, key),
+		},
+	)
+
+	if rp.Type == redis.ErrorReply {
+		return fmt.Errorf("del cache err:%s", rp.String())
+	}
+
+	//slog.Infof("%s", rp)
+
+	return nil
+
+}
