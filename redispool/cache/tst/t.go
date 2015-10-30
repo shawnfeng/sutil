@@ -25,6 +25,7 @@ func (m *tinter0) load() {
 }
 
 
+
 func ttt1() {
 
 	var t tinter
@@ -112,7 +113,50 @@ func ttt3() {
 }
 
 
+func getMap() map[string]string {
+	return nil
+}
+
+
 func main() {
 
-	ttt3()
+	//ttt3()
+
+	rs := getMap()
+	if rs == nil {
+		// print
+		log.Println("return nil 0")
+	}
+	// ok
+	log.Println(rs["aa"])
+
+
+	var rr map[string]string
+	if rr == nil {
+		// print
+		log.Println("return nil 1")
+	}
+
+	// ok
+	log.Println(rr["aa"])
+
+
+	rz :=  make(map[string]string)
+
+	if rz == nil {
+		// not print
+		log.Println("return nil 2")
+	}
+
+	// ok
+	log.Println(rz["aa"])
+
+
+	// crash
+	//rs["aa"] = "bb";
+	// crash
+	//rr["aa"] = "bb";
+	// ok
+	rz["aa"] = "bb";
+
 }

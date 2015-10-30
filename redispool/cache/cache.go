@@ -133,6 +133,15 @@ func (m *Cache) Get(key string, data CacheData) error {
 
 }
 
+// 不会自动load
+func (m *Cache) Set(key string, data CacheData) error {
+	//fun := "Cache.Set -->"
+
+
+	return m.setData(key, data)
+
+}
+
 
 func (m *Cache) Del(key string) error {
 	rd := sutil.HashV(m.addrs, key)
