@@ -325,7 +325,7 @@ func HttpReqPost(url string, data []byte, timeout time.Duration) ([]byte, int, e
 func HttpReq(url, method string, data []byte, timeout time.Duration) ([]byte, int, error) {
 	client := &http.Client{Timeout: timeout}
 
-	reqest, err := http.NewRequest("POST", url, bytes.NewReader(data))
+	reqest, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
 		return nil, 0, err
 	}
