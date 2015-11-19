@@ -20,6 +20,32 @@ func DayBeginStamp(now int64) int64 {
 
 }
 
+// 获取指定天的时间范围
+// 天格式 2006-01-02
+// 为空时候返回当天的
+func DayBeginStampFromStr(day string) (int64, error) {
+	nowt := time.Now()
+	now := nowt.Unix()
+
+	var begin int64
+	if len(day) > 0 {
+		tm, err := time.ParseInLocation("2006-01-02", day, nowt.Location())
+		if err != nil {
+			return 0, err
+		}
+
+		begin = tm.Unix()
+
+	} else {
+		begin = DayBeginStamp(now)
+
+	}
+
+	return begin, nil
+
+}
+
+
 
 var (
 	Since2014 int64 = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC).UnixNano() / 1000
