@@ -17,6 +17,56 @@ import (
 	"net/http"
 )
 
+func IpBetween(from, to, test net.IP) (bool, error) {
+    if from == nil || to == nil || test == nil {
+        return false, fmt.Errorf("An ip input is nil")
+    }
+
+    from16 := from.To16()
+    to16 := to.To16()
+    test16 := test.To16()
+    if from16 == nil || to16 == nil || test16 == nil {
+        return false, fmt.Errorf("An ip did not convert to a 16 byte")
+    }
+
+    if bytes.Compare(test16, from16) >= 0 && bytes.Compare(test16, to16) <= 0 {
+        return true, nil
+    }
+    return false, nil
+}
+
+
+func IpBetweenStr(from, to, test string) (bool, error) {
+	return IpBetween(net.ParseIP(from), net.ParseIP(to), net.ParseIP(test))
+}
+
+//10.0.0.0/8：10.0.0.0～10.255.255.255
+//172.16.0.0/12：172.16.0.0～172.31.255.255
+//192.168.0.0/16：192.168.0.0～192.168.255.255
+func IsInterIp(ip string) (bool, error) {
+    ok, err := IpBetweenStr("10.0.0.0", "10.255.255.255", ip)
+	if err != nil {
+		return false, err
+	}
+
+	if !ok {
+		ok, err = IpBetweenStr("172.16.0.0", "172.31.255.255", ip)
+		if err != nil {
+			return false, err
+		}
+
+		if !ok {
+			ok, err = IpBetweenStr("192.168.0.0", "192.168.255.255", ip)
+			if err != nil {
+				return false, err
+			}
+		}
+	}
+
+
+	return ok, nil
+
+}
 
 
 
@@ -26,7 +76,17 @@ func GetInterIp() (string, error) {
 		return "", err
 	}
 
+    for _, address := range addrs {
+        // check the address type and if it is not a loopback the display it
+        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+            if ipnet.IP.To4() != nil {
+				//fmt.Println(ipnet.IP.String())
+                return ipnet.IP.String(), nil
+            }
+        }
+    }
 
+	/*
 	for _, addr := range addrs {
 		//fmt.Printf("Inter %v\n", addr)
 		ip := addr.String()
@@ -40,9 +100,8 @@ func GetInterIp() (string, error) {
 			return strings.Split(ip, "/")[0], nil
 		}
 
-
-
 	}
+    */
 
 	return "", errors.New("no inter ip")
 }
@@ -74,7 +133,11 @@ func GetExterIp() (string, error) {
 		}
 		ip := ipv4.String()
 
-		if "10." != ip[:3] && "172." != ip[:4] && "196." != ip[:4] && "127." != ip[:4] {
+		//if "10." != ip[:3] && "172." != ip[:4] && "196." != ip[:4] && "127." != ip[:4] {
+		//	return ip, nil
+		//}
+		ok, _ := IsInterIp(ip)
+		if !ok && !ipv.IsLoopback() {
 			return ip, nil
 		}
 
@@ -196,7 +259,8 @@ func IpAddressHttpClient(r *http.Request) string {
 		}
 		// TODO: should return first non-local address
 		for _, ip := range(parts) {
-			if len(ip) > 5 && "10." != ip[:3] && "172." != ip[:4] && "196." != ip[:4] && "127." != ip[:4] {
+			ok, _ := IsInterIp(ip)
+			if !ok && len(ip) > 5 && "127." != ip[:4] {
 				return ip
 			}
 		}

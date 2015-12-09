@@ -565,3 +565,105 @@ func TestUnPackdata10(t *testing.T) {
 }
 
 
+
+
+func HandleIpBetween(t *testing.T, from string, to string, test string, assert, ierr bool) {
+    res, err := IpBetweenStr(from, to, test)
+
+	if ierr && err == nil {
+        t.Errorf("check err:%s from:%s to:%s test:%s\n", err, from, to, test)
+		return
+	}
+
+	if !ierr && err != nil {
+        t.Errorf("check err:%s from:%s to:%s test:%s\n", err, from, to, test)
+		return
+	}
+
+    if res != assert {
+        t.Errorf("Assertion (have: %s should be: %s) failed on range %s-%s with test %s", res, assert, from, to, test)
+		return
+    }
+	fmt.Println("ck OK", from, to, test, assert)
+}
+
+
+func TestIPBetween(t *testing.T) {
+
+	HandleIpBetween(t, "0.0.0.0", "255.255.255.255", "0.0.0.0", true, false)
+	HandleIpBetween(t, "0.0.0.0", "255.255.255.255", "255.255.255.255", true, false)
+	HandleIpBetween(t, "0.0.0.0", "255.255.255.255", "128.128.128.128", true, false)
+    HandleIpBetween(t, "0.0.0.0", "128.128.128.128", "255.255.255.255", false, false)
+    HandleIpBetween(t, "74.50.153.0", "74.50.153.4", "74.50.153.0", true, false)
+    HandleIpBetween(t, "74.50.153.0", "74.50.153.4", "74.50.153.4", true, false)
+    HandleIpBetween(t, "74.50.153.0", "74.50.153.4", "74.50.153.5", false, false)
+    HandleIpBetween(t, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "74.50.153.4", "74.50.153.2", false, false)
+    HandleIpBetween(t, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:0db8:85a3:0000:0000:8a2e:0370:8334", "2001:0db8:85a3:0000:0000:8a2e:0370:7334", true, false)
+    HandleIpBetween(t, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:0db8:85a3:0000:0000:8a2e:0370:8334", "2001:0db8:85a3:0000:0000:8a2e:0370:7350", true, false)
+    HandleIpBetween(t, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:0db8:85a3:0000:0000:8a2e:0370:8334", "2001:0db8:85a3:0000:0000:8a2e:0370:8334", true, false)
+    HandleIpBetween(t, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", "2001:0db8:85a3:0000:0000:8a2e:0370:8334", "2001:0db8:85a3:0000:0000:8a2e:0370:8335", false, false)
+    HandleIpBetween(t, "::ffff:192.0.2.128", "::ffff:192.0.2.250", "::ffff:192.0.2.127", false, false)
+    HandleIpBetween(t, "::ffff:192.0.2.128", "::ffff:192.0.2.250", "::ffff:192.0.2.128", true, false)
+    HandleIpBetween(t, "::ffff:192.0.2.128", "::ffff:192.0.2.250", "::ffff:192.0.2.129", true, false)
+    HandleIpBetween(t, "::ffff:192.0.2.128", "::ffff:192.0.2.250", "::ffff:192.0.2.250", true, false)
+    HandleIpBetween(t, "::ffff:192.0.2.128", "::ffff:192.0.2.250", "::ffff:192.0.2.251", false, false)
+    HandleIpBetween(t, "::ffff:192.0.2.128", "::ffff:192.0.2.250", "192.0.2.130", true, false)
+    HandleIpBetween(t, "192.0.2.128", "192.0.2.250", "::ffff:192.0.2.130", true, false)
+    HandleIpBetween(t, "idonotparse", "192.0.2.250", "::ffff:192.0.2.130", false, true)
+
+	//10.0.0.0/8：10.0.0.0～10.255.255.255
+	//172.16.0.0/12：172.16.0.0～172.31.255.255
+	//192.168.0.0/16：192.168.0.0～192.168.255.255
+    HandleIpBetween(t, "10.0.0.0", "10.255.255.255", "10.0.0.0", true, false)
+    HandleIpBetween(t, "10.0.0.0", "10.255.255.255", "10.255.255.255", true, false)
+    HandleIpBetween(t, "10.0.0.0", "10.255.255.255", "10.1.2.3", true, false)
+    HandleIpBetween(t, "10.0.0.0", "10.255.255.255", "11.1.2.3", false, false)
+
+    HandleIpBetween(t, "172.16.0.0", "172.31.255.255", "10.0.0.0", false, false)
+
+    HandleIpBetween(t, "172.16.0.0", "172.31.255.255", "172.56.15.175", false, false)
+
+
+	//192.168.0.0/16：192.168.0.0～192.168.255.255
+
+    HandleIpBetween(t, "192.168.0.0", "192.168.255.255", "192.169.0.0", false, false)
+}
+
+func HandleInterIp(t *testing.T, test string, assert, ierr bool) {
+	res, err := IsInterIp(test)
+
+	if ierr && err == nil {
+        t.Errorf("check err:%s test:%s\n", err, test)
+		return
+	}
+
+	if !ierr && err != nil {
+        t.Errorf("check err:%s test:%s\n", err, test)
+		return
+	}
+
+    if res != assert {
+        t.Errorf("Assertion (have: %s should be: %s) failed on range with test %s", res, assert, test)
+		return
+    }
+	fmt.Println("ck OK", test, assert)
+
+}
+
+func TestInterIp(t *testing.T) {
+
+    HandleInterIp(t,"10.0.0.0", true, false)
+    HandleInterIp(t,"10.255.255.255", true, false)
+    HandleInterIp(t, "10.1.2.3", true, false)
+    HandleInterIp(t, "11.1.2.3", false, false)
+
+    HandleInterIp(t, "10.0.0.0", true, false)
+
+    HandleInterIp(t, "172.56.15.175", false, false)
+
+
+    HandleInterIp(t, "192.169.0.0", false, false)
+
+    HandleInterIp(t, "adsadfsdf", false, true)
+
+}
