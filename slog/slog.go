@@ -13,6 +13,7 @@ import (
 	"time"
 	"fmt"
 	"sync"
+	"sync/atomic"
 )
 
 type logger struct {
@@ -142,6 +143,17 @@ var (
 	headFmtFatal string
 	headFmtPanic string
 
+	// log count
+	cnTrace int64
+	cnDebug int64
+	cnInfo  int64
+	cnWarn  int64
+	cnError int64
+	cnFatal int64
+	cnPanic int64
+	// log count stat stamp
+	cnStamp int64
+
 
 	slogMutex sync.Mutex
 	log_level int
@@ -212,6 +224,8 @@ func init() {
 
 
 	Init("", "", "TRACE")
+
+	atomic.StoreInt64(&cnStamp, time.Now().Unix())
 }
 
 
@@ -223,6 +237,7 @@ func Tracef(format string, v ...interface{}) {
 
 	if LV_TRACE >= log_level {
 		lg.Printf(headFmtTrace+format, v...)
+		atomic.AddInt64(&cnTrace, 1)
 	}
 }
 
@@ -232,6 +247,7 @@ func Traceln(v ...interface{}) {
 
 	if LV_TRACE >= log_level {
 		lg.Println(append([]interface{}{headTrace}, v...)...)
+		atomic.AddInt64(&cnTrace, 1)
 	}
 }
 
@@ -242,6 +258,7 @@ func Debugf(format string, v ...interface{}) {
 
 	if LV_DEBUG >= log_level {
 		lg.Printf(headFmtDebug+format, v...)
+		atomic.AddInt64(&cnDebug, 1)
 	}
 }
 
@@ -251,6 +268,7 @@ func Debugln(v ...interface{}) {
 
 	if LV_DEBUG >= log_level {
 		lg.Println(append([]interface{}{headDebug}, v...)...)
+		atomic.AddInt64(&cnDebug, 1)
 	}
 }
 
@@ -261,6 +279,7 @@ func Infof(format string, v ...interface{}) {
 
 	if LV_INFO >= log_level {
 		lg.Printf(headFmtInfo+format, v...)
+		atomic.AddInt64(&cnInfo, 1)
 	}
 }
 
@@ -270,6 +289,7 @@ func Infoln(v ...interface{}) {
 
 	if LV_INFO >= log_level {
 		lg.Println(append([]interface{}{headInfo}, v...)...)
+		atomic.AddInt64(&cnInfo, 1)
 	}
 }
 
@@ -280,6 +300,7 @@ func Warnf(format string, v ...interface{}) {
 
 	if LV_WARN >= log_level {
 		lg.Printf(headFmtWarn+format, v...)
+		atomic.AddInt64(&cnWarn, 1)
 	}
 }
 
@@ -289,6 +310,7 @@ func Warnln(v ...interface{}) {
 
 	if LV_WARN >= log_level {
 		lg.Println(append([]interface{}{headWarn}, v...)...)
+		atomic.AddInt64(&cnWarn, 1)
 	}
 }
 
@@ -299,6 +321,7 @@ func Errorf(format string, v ...interface{}) {
 
 	if LV_ERROR >= log_level {
 		lg.Printf(headFmtError+format, v...)
+		atomic.AddInt64(&cnError, 1)
 	}
 }
 
@@ -308,6 +331,7 @@ func Errorln(v ...interface{}) {
 
 	if LV_ERROR >= log_level {
 		lg.Println(append([]interface{}{headError}, v...)...)
+		atomic.AddInt64(&cnError, 1)
 	}
 }
 
@@ -319,6 +343,7 @@ func Fatalf(format string, v ...interface{}) {
 
 	if LV_FATAL >= log_level {
 		lg.Printf(headFmtFatal+format, v...)
+		atomic.AddInt64(&cnFatal, 1)
 	}
 }
 
@@ -329,6 +354,7 @@ func Fatalln(v ...interface{}) {
 
 	if LV_FATAL >= log_level {
 		lg.Println(append([]interface{}{headFatal}, v...)...)
+		atomic.AddInt64(&cnFatal, 1)
 	}
 }
 
@@ -339,6 +365,7 @@ func Panicf(format string, v ...interface{}) {
 
 	if LV_PANIC >= log_level {
 		lg.Panicf(headFmtPanic+format, v...)
+		atomic.AddInt64(&cnPanic, 1)
 	}
 }
 
@@ -349,5 +376,26 @@ func Panicln(v ...interface{}) {
 
 	if LV_PANIC >= log_level {
 		lg.Panicln(append([]interface{}{headPanic}, v...)...)
+		atomic.AddInt64(&cnPanic, 1)
 	}
+}
+
+
+func LogStat() map[string]int64 {
+
+	st := map[string]int64 {
+		"TRACE": atomic.SwapInt64(&cnTrace, 0),
+		"DEBUG": atomic.SwapInt64(&cnDebug, 0),
+		"INFO": atomic.SwapInt64(&cnInfo, 0),
+		"WARN": atomic.SwapInt64(&cnWarn, 0),
+		"ERROR": atomic.SwapInt64(&cnError, 0),
+		"FATAL": atomic.SwapInt64(&cnFatal, 0),
+		"PANIC": atomic.SwapInt64(&cnPanic, 0),
+
+		"STAMP": atomic.SwapInt64(&cnStamp, time.Now().Unix()),
+	}
+
+
+	return st
+
 }

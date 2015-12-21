@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"fmt"
 	"strings"
+	"strconv"
 	"bytes"
 	"os"
 	"encoding/json"
@@ -125,6 +126,17 @@ func WriteFile(path string, data []byte, perm os.FileMode) error {
 
 	return ioutil.WriteFile(path, data, perm)
 }
+
+// 四舍五入
+func Round(val float64, deci int) float64 {
+	format := fmt.Sprintf("%%0.%df", deci)
+	sval := fmt.Sprintf(format, val)
+
+	nv, _ := strconv.ParseFloat(sval, 64)
+
+	return nv
+}
+
 
 
 type VersionCmp struct {
