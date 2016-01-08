@@ -20,6 +20,17 @@ func DayBeginStamp(now int64) int64 {
 
 }
 
+
+func HourBeginStamp(now int64) int64 {
+
+	_, offset := time.Now().Zone()
+	//fmt.Println(zone, offset)
+	return now - (now+int64(offset)) % int64(3600)
+	//return (now + int64(offset))/int64(3600 * 24) * int64(3600 * 24) - int64(offset)
+
+}
+
+
 // 获取指定天的时间范围
 // 天格式 2006-01-02
 // 为空时候返回当天的
