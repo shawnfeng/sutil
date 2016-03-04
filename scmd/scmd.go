@@ -6,6 +6,7 @@
 package scmd
 
 import (
+	"os"
 	"fmt"
 	"time"
 	"sync"
@@ -67,6 +68,35 @@ func (m *Scmd) Stop(timeout time.Duration) error {
 	} else {
 		return err
 	}
+}
+
+// 给进程发信号
+func (m *Scmd) Signal(sig os.Signal) error {
+	m.muProg.Lock()
+	defer m.muProg.Unlock()
+
+	if m.prog == nil {
+		return fmt.Errorf("process can not handle")
+	}
+
+	if m.prog.IsStop() {
+		return fmt.Errorf("process been stop")
+	}
+
+	return m.prog.Signal(sig)
+
+}
+
+
+func (m *Scmd) IsStop() bool {
+	m.muProg.Lock()
+	defer m.muProg.Unlock()
+
+	if m.prog == nil {
+		return true
+	}
+
+	return m.prog.IsStop()
 }
 
 /*

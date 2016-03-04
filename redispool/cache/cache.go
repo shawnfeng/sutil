@@ -109,6 +109,27 @@ func (m *Cache) getData(key string, data CacheData) error {
 
 }
 
+func (m *Cache) GetCache(key string, data CacheData) error {
+	fun := "Cache.GetCache -->"
+
+	err := m.getData(key, data)
+	if err == nil {
+		return nil
+	} else if err == errNilReply {
+		// 空的情况也返回正常
+		return nil
+
+	} else if err != nil {
+		slog.Warnf("%s cache key:%s err:%s", fun, key, err)
+		return err
+	}
+
+	return nil
+}
+
+
+
+
 func (m *Cache) Get(key string, data CacheData) error {
 	fun := "Cache.Get -->"
 

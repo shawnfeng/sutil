@@ -7,6 +7,7 @@ package scmd
 
 import (
 	"io"
+	"os"
 	"time"
 	"fmt"
 	"os/exec"
@@ -173,6 +174,19 @@ func (m *progress) Stop(timeout time.Duration) (er error) {
 
 	return
 }
+
+// 发送信号
+func (m *progress) Signal(sig os.Signal) (er error) {
+    m.opCmd(func() {
+		err := m.cmd.Process.Signal(sig)
+		if err != nil {
+			er = fmt.Errorf("send signal pid:%d err:%v", m.cmd.Process.Pid, err)
+		}
+	})
+
+	return er
+}
+
 
 // 这个接口是goroutine安全的
 func (m *progress) IsStop() bool {
