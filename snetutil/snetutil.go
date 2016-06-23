@@ -411,6 +411,51 @@ func HttpReq(url, method string, data []byte, timeout time.Duration) ([]byte, in
 
 }
 
+func HttpReqWithHeadOk(url, method string, heads map[string]string, data []byte, timeout time.Duration) ([]byte, error) {
+	body, status, err := HttpReqWithHead(url, method, heads, data, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+
+    if status < 200 || status > 299 {
+		return nil, errors.New(fmt.Sprintf("status:%d err:%s", status, body))
+
+	} else {
+		return body, nil
+	}
+
+}
+
+
+func HttpReqWithHead(url, method string, heads map[string]string, data []byte, timeout time.Duration) ([]byte, int, error) {
+    client := &http.Client{Timeout: timeout}
+
+    reqest, err := http.NewRequest(method, url, bytes.NewReader(data))
+    if err != nil {
+        return nil, 0, err
+    }
+
+    for key, val := range heads {
+        reqest.Header.Set(key, val)
+    }
+
+    response, err := client.Do(reqest)
+    if err != nil {
+        return nil, 0, err
+    }
+
+    defer response.Body.Close()
+
+    body, err := ioutil.ReadAll(response.Body)
+    if err != nil {
+        return nil, 0, err
+    }
+
+    return body, response.StatusCode, nil
+
+}
+
 
 
 

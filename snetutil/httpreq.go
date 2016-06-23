@@ -225,7 +225,11 @@ func (m *reqBody) Binary() []byte {
 	return m.body
 }
 
-
+// https://golang.org/pkg/net/http/#Request
+// For server requests the Request Body is always non-nil
+// but will return EOF immediately when no body is present.
+// The Server will close the request body. The ServeHTTP
+// Handler does not need to.
 func (m *reqBody) Reader() io.ReadCloser {
 	return m.r.Body
 }

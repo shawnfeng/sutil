@@ -6,6 +6,7 @@
 package sutil
 
 import (
+	"io"
 	"hash/fnv"
 	"io/ioutil"
 	"fmt"
@@ -46,6 +47,25 @@ func JsonBigInt64Decode(s []byte, v interface{}) (err error) {
     d := json.NewDecoder(bytes.NewReader(s))
     d.UseNumber()
     return d.Decode(&v)
+}
+
+
+func ComputeFileMd5(filePath string) (string, error) {
+  file, err := os.Open(filePath)
+  if err != nil {
+    return "", err
+  }
+  defer file.Close()
+
+  hash := md5.New()
+  if _, err := io.Copy(hash, file); err != nil {
+    return "", err
+  }
+
+  var result []byte
+  h := hash.Sum(result)
+
+  return fmt.Sprintf("%x", h), nil
 }
 
 
