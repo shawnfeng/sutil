@@ -54,6 +54,19 @@ func TestMu2(t *testing.T) {
 
 	var mu Mutex
 
+	isl := mu.Trylock()
+	fmt.Println("trylock", isl)
+
+	isl = mu.Trylock()
+	fmt.Println("trylock", isl)
+
+	isl = mu.Trylock()
+	fmt.Println("trylock", isl)
+
+	isl = mu.Trylock()
+	fmt.Println("trylock", isl)
+
+
 	for i := 0; i < 100; i++ {
 		go func(i int) {
 			fmt.Println("do lock", i)

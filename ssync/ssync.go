@@ -18,12 +18,15 @@ type Mutex struct {
 }
 
 
-func (m *Mutex) Lock() {
+func (m *Mutex) initLock() {
 	m.once.Do(func(){
 		//fmt.Println("init lock")
 		m.mu = make(chan bool, 1)
 	})
+}
 
+func (m *Mutex) Lock() {
+	m.initLock()
 	m.mu <- true
 }
 
@@ -37,6 +40,7 @@ func (m *Mutex) Unlock() {
 
 
 func (m *Mutex) Trylock() bool {
+	m.initLock()
 	select {
 	case m.mu <- true:
 		return true
