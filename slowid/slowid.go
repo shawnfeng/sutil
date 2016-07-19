@@ -3,6 +3,12 @@
 // license that can be found in the LICENSE file.
 
 
+/*
+基于snowflake算法改造，慢id生成器，适合id产生不是非常快的场景
+id表示可以再52bit完成，用double表示不会丢失精度，javascript等弱类型语音可以直接使用
+基于毫秒时间戳，每毫秒最多产生2个id，过快会自动阻塞，直到毫秒递增
+*/
+
 package slowid
 
 
