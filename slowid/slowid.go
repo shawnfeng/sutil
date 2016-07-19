@@ -46,7 +46,7 @@ func (sf *Slowid) uint64() uint64 {
 		(uint64(sf.sequence))
 }
 
-func (sf *Slowid) Next() (uint64, error) {
+func (sf *Slowid) Next() (int64, error) {
 	sf.lock.Lock()
 	defer sf.lock.Unlock()
 
@@ -65,15 +65,15 @@ func (sf *Slowid) Next() (uint64, error) {
 		return 0, fmt.Errorf("Invalid timestamp: %v - precedes %v", ts, sf)
 	}
 	sf.lastTimestamp = ts
-	return sf.uint64(),  nil
+	return int64(sf.uint64()),  nil
 }
 
 
-func NewSlowid(workerId uint32) (*Slowid, error) {
+func NewSlowid(workerId int) (*Slowid, error) {
 	if workerId < 0 || workerId > MaxWorkerId {
 		return nil, fmt.Errorf("Worker id %v is invalid", workerId)
 	}
-	return &Slowid{workerId: workerId}, nil
+	return &Slowid{workerId: uint32(workerId)}, nil
 }
 
 func timestamp() uint64 {

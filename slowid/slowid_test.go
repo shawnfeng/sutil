@@ -24,13 +24,17 @@ func TestDo(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		nid, _ := sf.Next()
-		log.Println(nid, nid >> 11)
+		log.Println(nid, nid >> 11, Since+nid>>11, time.Now().UnixNano()/1000000, (time.Now().UnixNano()/1000000 - Since) << 11)
 	}
 
 
 	for i := 0; i < 10; i++ {
 		time.Sleep(time.Millisecond)
 		nid, _ := sf.Next()
+
+
+
+
 		log.Println(nid, nid >> 11)
 	}
 
