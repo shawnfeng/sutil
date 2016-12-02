@@ -23,69 +23,108 @@ import (
 	"github.com/shawnfeng/sutil/slog"
 )
 
+func DoWriteResponse(w http.ResponseWriter, header http.Header, cookies []*http.Cookie, status int, body io.Reader) {
+	fun := "DoWriteResponse -->"
+
+	h := w.Header()
+	for k, v := range header {
+		h[k] = v
+	}
+
+	for _, c := range cookies {
+		http.SetCookie(w, c)
+	}
+
+	w.WriteHeader(status)
+
+	n, err := io.Copy(w, body)
+	if err != nil {
+		slog.Errorf("%s white response n:%d err:%s", fun, n, err)
+	}
+
+// WriteHeader 必须在Copy之前调用在起作用否则会出错误: http: multiple response.WriteHeader calls
+// w.Header 必须在WriteHeader，Copy之前调用，否则不起作用
+// SetCookie 必须在WriteHeader，Copy之前调用，否则不起作用
+
+}
+
 // http response interface
 type HttpResponse interface {
-	Marshal() (int, []byte)
+	WriteResponse(http.ResponseWriter)
 }
 
 // 定义了几种产用的类型的response
 
 // json形式的response
 type HttpRespJson struct {
-	status int
-	resp interface{}
+	Status int
+	Body interface{}
+	Header http.Header
+	Cookies []*http.Cookie
 }
 
 
-func (m *HttpRespJson) Marshal() (int, []byte) {
+func (m *HttpRespJson) WriteResponse(w http.ResponseWriter) {
 	fun := "HttpRespJson.Marshal -->"
-	resp, err := json.Marshal(m.resp)
+	resp, err := json.Marshal(m.Body)
 
 	if err != nil {
 		slog.Warnf("%s json unmarshal err:%s", fun, err)
+		DoWriteResponse(w, m.Header, m.Cookies, m.Status, strings.NewReader(err.Error()))
+
+	} else {
+		DoWriteResponse(w, m.Header, m.Cookies, m.Status, bytes.NewReader(resp))
+
 	}
 
-	return m.status, resp
 }
 
 
-func NewHttpRespJson200(r interface{}) HttpResponse {
-	return &HttpRespJson{200, r}
+func NewHttpRespJson200(body interface{}) HttpResponse {
+	return &HttpRespJson{http.StatusOK, body, nil, nil}
 }
 
 
-func NewHttpRespJson(status int, r interface{}) HttpResponse {
-	return &HttpRespJson{status, r}
+func NewHttpRespJson(status int, body interface{}) HttpResponse {
+	return &HttpRespJson{status, body, nil, nil}
 }
 
 
 // byte 形式的response
 type HttpRespBytes struct {
-	status int
-	resp []byte
+	Status int
+	Body []byte
+
+	Header http.Header
+	Cookies []*http.Cookie
 }
 
-func (m *HttpRespBytes) Marshal() (int, []byte) {
-	return m.status, m.resp
+func (m *HttpRespBytes) WriteResponse(w http.ResponseWriter) {
+	DoWriteResponse(w, m.Header, m.Cookies, m.Status, bytes.NewReader(m.Body))
+
 }
 
-func NewHttpRespBytes(status int, resp []byte) HttpResponse {
-	return &HttpRespBytes{status, resp}
+func NewHttpRespBytes(status int, body []byte) HttpResponse {
+	return &HttpRespBytes{status, body, nil, nil}
 }
 
 
 // string 形式的response
 type HttpRespString struct {
-	status int
-	resp string
+	Status int
+	Body string
+
+	Header http.Header
+	Cookies []*http.Cookie
 }
 
-func (m *HttpRespString) Marshal() (int, []byte) {
-	return m.status, []byte(m.resp)
+func (m *HttpRespString) WriteResponse(w http.ResponseWriter) {
+	DoWriteResponse(w, m.Header, m.Cookies, m.Status, strings.NewReader(m.Body))
+
 }
 
-func NewHttpRespString(status int, resp string) HttpResponse {
-	return &HttpRespString{status, resp}
+func NewHttpRespString(status int, body string) HttpResponse {
+	return &HttpRespString{status, body, nil, nil}
 }
 
 // ===============================================
@@ -423,13 +462,8 @@ func HttpRequestWrapper(fac FactoryHandleRequest) func(http.ResponseWriter, *htt
 		}
 
 		resp := fac().Handle(req)
-		status, rs := resp.Marshal()
 
-		if status == 200 {
-			fmt.Fprintf(w, "%s", rs)
-		} else {
-			http.Error(w, string(rs), status)
-		}
+		resp.WriteResponse(w)
 	}
 
 }
@@ -448,13 +482,8 @@ func HttpRequestJsonBodyWrapper(fac FactoryHandleRequest) func(http.ResponseWrit
 		}
 
 		resp := newme.Handle(req)
-		status, rs := resp.Marshal()
 
-		if status == 200 {
-			fmt.Fprintf(w, "%s", rs)
-		} else {
-			http.Error(w, string(rs), status)
-		}
+		resp.WriteResponse(w)
 	}
 
 }
