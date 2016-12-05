@@ -12,6 +12,31 @@ import (
 )
 
 
+func TestRand(t *testing.T) {
+
+
+
+	if RandString(4) != "BpLn" {
+		t.Errorf("err")
+	}
+
+
+	if RandDigit(4) != "1850" {
+		t.Errorf("err")
+	}
+
+	if RandString(5) != "c2WD8" {
+		t.Errorf("err")
+	}
+
+
+	if RandDigit(5) != "98415" {
+		t.Errorf("err")
+	}
+
+
+}
+
 func TestWriteFile(t *testing.T) {
 
 	err := WriteFile("aa", []byte("abcde\n"), 0600)

@@ -7,6 +7,7 @@ package sutil
 
 import (
 	"io"
+	"math/rand"
 	"hash/fnv"
 	"io/ioutil"
 	"fmt"
@@ -155,6 +156,38 @@ func Round(val float64, deci int) float64 {
 	nv, _ := strconv.ParseFloat(sval, 64)
 
 	return nv
+}
+
+
+
+const letterDigit = "0123456789"
+
+const letterAlpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func randString(n int, ctype int) string {
+
+    randset := letterAlpha
+    if ctype == 1 {
+        randset = letterDigit
+
+    } else if ctype == 2 {
+        randset = letterAlpha
+    }
+
+    b := make([]byte, n)
+    for i := range b {
+        b[i] = randset[rand.Intn(len(randset))]
+    }
+    return string(b)
+}
+
+
+func RandString(n int) string {
+	return randString(n, 2)
+}
+
+func RandDigit(n int) string {
+	return randString(n, 1)
 }
 
 
