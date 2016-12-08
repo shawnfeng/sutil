@@ -39,7 +39,7 @@ func DoWriteResponse(w http.ResponseWriter, header http.Header, cookies []*http.
 
 	n, err := io.Copy(w, body)
 	if err != nil {
-		slog.Errorf("%s white response n:%d err:%s", fun, n, err)
+		slog.Warnf("%s white response n:%d err:%s", fun, n, err)
 	}
 
 // WriteHeader 必须在Copy之前调用在起作用否则会出错误: http: multiple response.WriteHeader calls
