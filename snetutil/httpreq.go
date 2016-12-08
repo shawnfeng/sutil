@@ -127,6 +127,24 @@ func NewHttpRespString(status int, body string) HttpResponse {
 	return &HttpRespString{status, body, nil, nil}
 }
 
+
+// redirect
+type HttpRespRedirect struct {
+	Status int
+	Url string
+	R *HttpRequest
+}
+
+func NewHttpRespRedirect(r *HttpRequest, status int, redirectUrl string) HttpResponse {
+	return &HttpRespRedirect{status, redirectUrl, r}
+}
+
+
+func (m *HttpRespRedirect) WriteResponse(w http.ResponseWriter) {
+	http.Redirect(w, m.R.Request(), m.Url, m.Status)
+}
+
+
 // ===============================================
 type keyGet interface {
 	Get(key string) string
