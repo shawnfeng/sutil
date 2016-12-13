@@ -263,6 +263,37 @@ func (m *reqParams) Get(key string) string {
 	return m.p.ByName(key)
 }
 
+
+// =========================
+type reqCookie struct {
+	r *http.Request
+}
+
+func (m *reqCookie) Get(key string) string {
+	fun := "reqCookie.Get -->"
+
+	c, err := m.r.Cookie(key)
+	if err != nil {
+		slog.Infof("%s parse cookie key:%s err:%s", fun, key, err)
+		return ""
+	}
+
+	return c.Value
+
+}
+
+
+// =========================
+type reqHeader struct {
+	r *http.Request
+}
+
+func (m *reqHeader) Get(key string) string {
+	return m.r.Header.Get(key)
+}
+
+
+
 // ==========
 type reqBody struct {
 	r *http.Request
@@ -392,6 +423,8 @@ type HttpRequest struct {
 
 	query *reqArgs
 	params *reqArgs
+	cookies *reqArgs
+	headers *reqArgs
 
 	body *reqBody
 }
@@ -403,6 +436,15 @@ func (m *HttpRequest) Query() *reqArgs {
 func (m *HttpRequest) Params() *reqArgs {
 	return m.params
 }
+
+func (m *HttpRequest) Cookies() *reqArgs {
+	return m.cookies
+}
+
+func (m *HttpRequest) Headers() *reqArgs {
+	return m.headers
+}
+
 
 func (m *HttpRequest) Body() *reqBody {
 	return m.body
@@ -438,6 +480,8 @@ func NewHttpRequest(r *http.Request, ps httprouter.Params) (*HttpRequest, error)
 		r: r,
 		query: NewreqArgs(&reqQuery{r: r,}),
 		params: NewreqArgs(&reqParams{ps}),
+		cookies: NewreqArgs(&reqCookie{r: r,}),
+		headers: NewreqArgs(&reqHeader{r: r,}),
 		body: &reqBody{r: r,},
 	}, nil
 }
