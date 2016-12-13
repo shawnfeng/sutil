@@ -273,8 +273,11 @@ func (m *reqCookie) Get(key string) string {
 	fun := "reqCookie.Get -->"
 
 	c, err := m.r.Cookie(key)
-	if err != nil {
-		slog.Infof("%s parse cookie key:%s err:%s", fun, key, err)
+	if err == http.ErrNoCookie {
+		return ""
+
+	} else if err != nil {
+		slog.Warnf("%s parse cookie key:%s err:%s", fun, key, err)
 		return ""
 	}
 
