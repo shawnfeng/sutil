@@ -6,6 +6,9 @@
 package snetutil
 
 import (
+	"os"
+	"io"
+	"strconv"
 	"net"
 	"time"
 	"fmt"
@@ -454,6 +457,117 @@ func HttpReqWithHead(url, method string, heads map[string]string, data []byte, t
 
     return body, response.StatusCode, nil
 
+}
+
+
+
+func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Duration) (int, error) {
+
+	//output, err := os.OpenFile(fileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
+	output, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return 0, fmt.Errorf("create file:%s err:%s", fileName, err)
+	}
+	defer output.Close()
+
+	//slog.Infof("repali geturl:%s filename:%s", geturl, fileName)
+
+	resHead, err := http.Head(geturl)
+	if err != nil {
+		return 0, fmt.Errorf("get header request:%s err:%s", geturl, err)
+	}
+
+	contlen, err := strconv.Atoi(resHead.Header.Get("Content-Length"))
+	if err != nil {
+		return 0, fmt.Errorf("get header Content-Length err:%s", err)
+	}
+
+	requrl := resHead.Request.URL.String()
+
+	//slog.Infof("len:%d requrl:%s status:%d", contlen, requrl, resHead.StatusCode)
+
+
+	client := &http.Client{Timeout: timeout}
+	reqest, err := http.NewRequest("GET", requrl, nil)
+	if err != nil {
+		return 0, fmt.Errorf("reg http file geturl:%s requrl:%s err:%s", geturl, requrl, err)
+	}
+
+	reqest.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.110 Safari/537.36")
+
+
+	doGet := func(rge string) (int, error) {
+		//slog.Infof("get file range:%s", rge)
+		if len(rge) > 0 {
+			reqest.Header.Set("Range", rge)
+		}
+		response, err := client.Do(reqest)
+		if err != nil {
+			return 0, fmt.Errorf("http do geturl:%s regurl:%s range:%s err:%s", geturl, requrl, rge, err)
+		}
+
+		defer response.Body.Close()
+
+		n, err := io.Copy(output, response.Body)
+		if err != nil {
+			return 0, fmt.Errorf("write file geturl:%s regurl:%s range:%s err:%s", geturl, requrl, rge, err)
+		}
+
+		//slog.Infof("write file range:%s n:%d", rge, n)
+		return int(n), nil
+	}
+
+	if splitSize <= 0 {
+		return doGet("")
+	}
+
+/*
+FROM: https://tools.ietf.org/html/rfc7233
+   Examples of byte-ranges-specifier values:
+
+   o  The first 500 bytes (byte offsets 0-499, inclusive):
+
+        bytes=0-499
+
+   o  The second 500 bytes (byte offsets 500-999, inclusive):
+
+        bytes=500-999
+
+
+...
+   Additional examples, assuming a representation of length 10000:
+
+   o  The final 500 bytes (byte offsets 9500-9999, inclusive):
+
+        bytes=-500
+
+   Or:
+
+        bytes=9500-
+
+*/
+	var getlen int
+	step := contlen/splitSize
+	for i := 0; i < step; i++ {
+		rge := fmt.Sprintf("bytes=%d-%d", i*splitSize, i*splitSize+splitSize-1)
+		n, err := doGet(rge)
+		if err != nil {
+			return 0, err
+		}
+		getlen += n
+	}
+
+	if contlen % splitSize > 0 {
+		rge := fmt.Sprintf("bytes=%d-", step*splitSize)
+		n, err := doGet(rge)
+		if err != nil {
+			return 0, err
+		}
+		getlen += n
+	}
+
+
+	return getlen, nil
 }
 
 
