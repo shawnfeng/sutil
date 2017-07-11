@@ -22,6 +22,8 @@ import (
 
 	"sync"
 	"code.google.com/p/go-uuid/uuid"
+
+	"github.com/kaneshin/go-pkg/unicode"
 )
 
 
@@ -69,6 +71,31 @@ func ComputeFileMd5(filePath string) (string, error) {
   return fmt.Sprintf("%x", h), nil
 }
 
+func IsHaveEmoji(s string) bool {
+    rs := []rune(s)
+    for _, r := range rs {
+        if unicode.IsEmoji(r) {
+            return true
+        }
+    }
+
+    return false
+}
+
+
+func ReplaceEmoji(s string, ns string) string {
+    var rv []rune
+    rs := []rune(s)
+    for _, r := range rs {
+        if unicode.IsEmoji(r) {
+            rv = append(rv, []rune(ns)...)
+        } else {
+            rv = append(rv, r)
+        }
+    }
+
+    return string(rv)
+}
 
 
 // 截取获取合法 num 个unicode字符 的utf8字符串
@@ -251,3 +278,6 @@ func (m *VersionCmp) Ne(ver string) bool {
 	return m.ver != m.fmtver(ver)
 }
 
+func (m *VersionCmp) GetFormatVersion() string{
+	return m.ver
+}
