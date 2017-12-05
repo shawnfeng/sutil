@@ -57,6 +57,17 @@ func DayBeginStampFromStr(day string) (int64, error) {
 }
 
 
+func MonthScope(stamp int64) (int64, int64) {
+	now := time.Unix(stamp, 0)
+	currentYear, currentMonth, _ := now.Date()
+	currentLocation := now.Location()
+	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, currentLocation)
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	return firstOfMonth.Unix(), lastOfMonth.Unix()+3600*24-1
+}
+
+
 
 var (
 	Since2014 int64 = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC).UnixNano() / 1000
