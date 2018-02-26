@@ -56,6 +56,18 @@ func DayBeginStampFromStr(day string) (int64, error) {
 
 }
 
+func WeekScope(stamp int64) (int64, int64) {
+    now := time.Unix(stamp, 0)
+    weekday := time.Duration(now.Weekday())
+    if weekday == 0 {
+        weekday = 7
+    }
+    year, month, day := now.Date()
+	currentZeroDay:= time.Date(year, month, day, 0, 0, 0, 0, time.Local)
+    begin := currentZeroDay.Add(-1 * (weekday - 1) * 24 * time.Hour).Unix()
+    return begin, begin+24*3600*7-1
+}
+
 
 func MonthScope(stamp int64) (int64, int64) {
 	now := time.Unix(stamp, 0)

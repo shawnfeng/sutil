@@ -159,7 +159,10 @@ func (self *RedisPool) payback(addr string, re *RedisEntry) {
 
 	}
 
-	slog.Tracef("%s addr:%s re:%s len:%d", fun, addr, re, len(self.clipool[addr]))
+	slog.Infof("%s addr:%s re:%s len:%d", fun, addr, re, len(self.clipool[addr]))
+	if len(self.clipool[addr])> 3000{
+		slog.Errorf("%s addr:%s re:%s len:%d", fun, addr, re, len(self.clipool[addr]))
+	}
 
 	//slog.Traceln(fun, "end", addr, self)
 

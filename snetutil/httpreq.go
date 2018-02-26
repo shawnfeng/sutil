@@ -16,6 +16,7 @@ import (
 	"io"
 	"mime"
 	"mime/multipart"
+	"compress/gzip"
 	"net/url"
 	"encoding/json"
     "github.com/julienschmidt/httprouter"
@@ -316,6 +317,30 @@ func (m *reqBody) Binary() []byte {
 	return m.body
 }
 
+
+func (m *reqBody) BinaryUnGzip() []byte {
+	fun := "reqBody.BinaryUnGzip"
+	if m.body == nil {
+
+		r, err := gzip.NewReader(m.r.Body)
+		if err != nil {
+			slog.Errorf("%s unzip body %s", fun, err.Error())
+		}
+		defer r.Close()
+
+		body, err := ioutil.ReadAll(r);
+		if err != nil {
+			slog.Errorf("%s read body %s", fun, err.Error())
+		}
+		m.body = body
+
+
+	}
+
+	return m.body
+}
+
+
 // https://golang.org/pkg/net/http/#Request
 // For server requests the Request Body is always non-nil
 // but will return EOF immediately when no body is present.
@@ -339,6 +364,21 @@ func (m *reqBody) Json(js interface{}) error {
 	}
 
 }
+
+
+func (m *reqBody) JsonUnGzip(js interface{}) error {
+
+    dc := json.NewDecoder(bytes.NewBuffer(m.BinaryUnGzip()))
+    dc.UseNumber()
+    err := dc.Decode(js)
+	if err != nil {
+		return fmt.Errorf("json unmarshal %s", err.Error())
+	} else {
+		return nil
+	}
+
+}
+
 
 
 func (m *reqBody) FormValue(key string) string {
