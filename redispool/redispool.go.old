@@ -2,19 +2,20 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+
 package redispool
 
 import (
-	"crypto/sha1"
-	"errors"
 	"fmt"
-	"hash/fnv"
+	"errors"
 	"io/ioutil"
+	"crypto/sha1"
+	"hash/fnv"
 
-	//	"os"
-	"sync"
+//	"os"
 	"time"
-	//	"reflect"
+	"sync"
+//	"reflect"
 
 	"github.com/fzzy/radix/redis"
 
@@ -23,13 +24,12 @@ import (
 
 const (
 	TIMEOUT_INTV int64 = 200
-	POOL_SIZE    int   = 512
 )
 
 type RedisEntry struct {
 	client *redis.Client
-	addr   string
-	stamp  int64
+	addr string
+	stamp int64
 }
 
 func (self *RedisEntry) String() string {
@@ -47,7 +47,7 @@ func (self *RedisEntry) Cmd(args []interface{}) *redis.Reply {
 func (self *RedisEntry) close() {
 	fun := "RedisEntry.close"
 	slog.Infof("%s re:%s", fun, self)
-
+	
 	err := self.client.Close()
 	if err != nil {
 		slog.Infof("%s err re:%s err:%s", fun, self, err)
@@ -61,14 +61,14 @@ type luaScript struct {
 }
 
 type RedisPool struct {
-	mu      sync.RWMutex
-	clipool map[string]chan *RedisEntry
+	mu sync.Mutex
+	clipool map[string][]*RedisEntry
 
-	muLua sync.RWMutex
-	luas  map[string]*luaScript
-
-	poolLen int
+	muLua sync.Mutex
+	luas map[string]*luaScript
 }
+
+
 
 func (self *RedisPool) add(addr string) (*RedisEntry, error) {
 	fun := "RedisPool.add"
@@ -79,67 +79,107 @@ func (self *RedisPool) add(addr string) (*RedisEntry, error) {
 		return nil, err
 	}
 
-	en := &RedisEntry{
+	en := &RedisEntry {
 		client: c,
-		addr:   addr,
-		stamp:  time.Now().Unix(),
+		addr: addr,
+		stamp: time.Now().Unix(),
 	}
 
 	return en, nil
 
+
 }
 
-func (self *RedisPool) getPool(addr string) chan *RedisEntry {
-	//fun := "RedisPool.getPool -->"
+func (self *RedisPool) rmTimeout(rs *[]*RedisEntry) bool {
+	fun := "RedisPool.rmTimeout"
+	// 每次只检查一个最老的超时
+	if len(*rs) > 0 && (time.Now().Unix()-(*rs)[0].stamp) > TIMEOUT_INTV {
+		slog.Infof("%s rm timeout:%s", fun, (*rs)[0])
+		(*rs)[0].close()
+		*rs = (*rs)[1:]
+		return true
+	} else {
+		return false
+	}
 
-	self.mu.RLock()
+}
 
-	tmp, ok := self.clipool[addr]
-	self.mu.RUnlock()
+func (self *RedisPool) getCache(addr string) *RedisEntry {
+	fun := "RedisPool.getCache"
+	//slog.Traceln(fun, "call", addr, self)
 
-	if !ok {
-		self.mu.Lock()
-		tmp, ok = self.clipool[addr]
-		if !ok {
-			tmp = make(chan *RedisEntry, self.poolLen)
-			self.clipool[addr] = tmp
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	rs, ok := self.clipool[addr]
+	if ok {
+		if self.rmTimeout(&rs) {
+			self.clipool[addr] = rs
 		}
-		self.mu.Unlock()
+		if len(rs) == 0 {
+			return nil
+		} else {
+			tmp := rs[len(rs)-1]
+			self.clipool[addr] = rs[:len(rs)-1]
+
+			nowstp := time.Now().Unix()
+			if nowstp - tmp.stamp > TIMEOUT_INTV {
+				// 对于超时的连接不再使用
+				slog.Infof("%s rm timeout:%s", fun, tmp)
+				tmp.close()
+				return nil
+			} else {
+				// 更新使用时间戳
+				tmp.stamp = nowstp
+				return tmp
+
+			}
+
+		}
+
+	} else {
+		return nil
 	}
 
-	return tmp
-}
-
-func (self *RedisPool) get(addr string) (*RedisEntry, error) {
-	//fun := "RedisPool.get"
-
-	po := self.getPool(addr)
-
-	var err error
-	var entry *RedisEntry
-	select {
-	case entry = <-po:
-		//slog.Infof("%s get:%s len:%d", fun, addr, len(po))
-	default:
-		entry, err = self.add(addr)
-	}
-
-	return entry, err
 }
 
 func (self *RedisPool) payback(addr string, re *RedisEntry) {
 	fun := "RedisPool.payback"
+	//slog.Traceln(fun, "call", addr, self)
 
-	po := self.getPool(addr)
+	self.mu.Lock()
+	defer self.mu.Unlock()
 
-	select {
-	case po <- re:
-		//slog.Infof("%s payback:%s len:%d", fun, addr, len(po))
-	default:
-		slog.Warnf("%s full not payback:%s len:%d", fun, addr, len(po))
-		re.close()
+
+	if rs, ok := self.clipool[addr]; ok {
+
+		self.clipool[addr] = append(rs, re)
+
+	} else {
+		self.clipool[addr] = []*RedisEntry{re, }
+
+	}
+
+	//slog.Infof("%s addr:%s re:%s len:%d", fun, addr, re, len(self.clipool[addr]))
+	if len(self.clipool[addr])> 3000{
+		slog.Errorf("%s addr:%s re:%s len:%d", fun, addr, re, len(self.clipool[addr]))
+	}
+
+	//slog.Traceln(fun, "end", addr, self)
+
+
+}
+
+func (self *RedisPool) get(addr string) (*RedisEntry, error) {
+	if r := self.getCache(addr); r != nil {
+		return r, nil
+	} else {
+		return self.add(addr)
 	}
 }
+
+
+
+
 
 // 只对一个redis执行命令
 func (self *RedisPool) CmdSingleRetry(addr string, cmd []interface{}, retrytimes int) *redis.Reply {
@@ -148,7 +188,7 @@ func (self *RedisPool) CmdSingleRetry(addr string, cmd []interface{}, retrytimes
 	if err != nil {
 		es := fmt.Sprintf("get conn retrytimes:%d addr:%s err:%s", retrytimes, addr, err)
 		slog.Infoln(fun, es)
-		return &redis.Reply{Type: redis.ErrorReply, Err: errors.New(es)}
+		return &redis.Reply{Type: redis.ErrorReply, Err:errors.New(es)}
 	}
 
 	rp := c.Cmd(cmd)
@@ -161,6 +201,7 @@ func (self *RedisPool) CmdSingleRetry(addr string, cmd []interface{}, retrytimes
 			// redis 连接timeout，重试一次
 			return self.CmdSingleRetry(addr, cmd, retrytimes+1)
 		}
+
 
 		c.close()
 	} else {
@@ -177,8 +218,8 @@ func (self *RedisPool) CmdSingle(addr string, cmd []interface{}) *redis.Reply {
 }
 
 func (self *RedisPool) sha1Lua(key string) (string, error) {
-	self.muLua.RLock()
-	defer self.muLua.RUnlock()
+	self.muLua.Lock()
+	defer self.muLua.Unlock()
 	if v, ok := self.luas[key]; ok {
 		return v.sha1, nil
 	} else {
@@ -188,8 +229,8 @@ func (self *RedisPool) sha1Lua(key string) (string, error) {
 }
 
 func (self *RedisPool) dataLua(key string) ([]byte, error) {
-	self.muLua.RLock()
-	defer self.muLua.RUnlock()
+	self.muLua.Lock()
+	defer self.muLua.Unlock()
 
 	if v, ok := self.luas[key]; ok {
 		return v.data, nil
@@ -197,7 +238,9 @@ func (self *RedisPool) dataLua(key string) ([]byte, error) {
 		return []byte{}, errors.New("lua not find")
 	}
 
+
 }
+
 
 func (self *RedisPool) LoadLuaFile(key, file string) error {
 	data, err := ioutil.ReadFile(file)
@@ -213,14 +256,17 @@ func (self *RedisPool) LoadLuaFile(key, file string) error {
 	self.muLua.Lock()
 	defer self.muLua.Unlock()
 
-	self.luas[key] = &luaScript{
+	self.luas[key] = &luaScript {
 		sha1: hex,
 		data: data,
+
 	}
 
 	return nil
 
+
 }
+
 
 // lua 脚本执行的快捷命令
 func (self *RedisPool) EvalSingle(addr string, key string, cmd_args []interface{}) *redis.Reply {
@@ -228,10 +274,10 @@ func (self *RedisPool) EvalSingle(addr string, key string, cmd_args []interface{
 	sha1, err := self.sha1Lua(key)
 	if err != nil {
 		es := fmt.Sprintf("get lua sha1 add:%s key:%s err:%s", addr, key, err)
-		return &redis.Reply{Type: redis.ErrorReply, Err: errors.New(es)}
+		return &redis.Reply{Type: redis.ErrorReply, Err:errors.New(es)}
 	}
 
-	cmd := append([]interface{}{"evalsha", sha1}, cmd_args...)
+	cmd := append([]interface{}{"evalsha", sha1,}, cmd_args...)
 	rp := self.CmdSingle(addr, cmd)
 	if rp.Type == redis.ErrorReply && rp.String() == "NOSCRIPT No matching script. Please use EVAL." {
 		slog.Infoln(fun, "load lua", addr)
@@ -240,8 +286,10 @@ func (self *RedisPool) EvalSingle(addr string, key string, cmd_args []interface{
 		rp = self.CmdSingle(addr, cmd)
 	}
 
+
 	return rp
 }
+
 
 func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redis.Reply {
 	rv := make(map[string]*redis.Reply)
@@ -254,24 +302,21 @@ func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redi
 }
 
 func HashRedis(addrs []string, key string) string {
-	h := fnv.New32a()
-	h.Write([]byte(key))
-	hv := h.Sum32()
+    h := fnv.New32a()
+    h.Write([]byte(key))
+    hv := h.Sum32()
 
-	return addrs[hv%uint32(len(addrs))]
+	return addrs[hv % uint32(len(addrs))]
 
 }
 
-func NewRedisPool(poolLen int) *RedisPool {
-	if poolLen <= 0 {
-		poolLen = POOL_SIZE
-	}
+func NewRedisPool() *RedisPool {
 	return &RedisPool{
-		clipool: make(map[string]chan *RedisEntry),
-		luas:    make(map[string]*luaScript),
-		poolLen: poolLen,
+		clipool: make(map[string][]*RedisEntry),
+		luas: make(map[string]*luaScript),
 	}
 }
+
 
 //////////
 //TODO
@@ -279,3 +324,6 @@ func NewRedisPool(poolLen int) *RedisPool {
 // 2. multi addr channel get
 // 3. single addr multi cmd
 // 4. pool conn ceil controll
+
+
+

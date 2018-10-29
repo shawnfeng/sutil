@@ -17,7 +17,7 @@ var errNilReply = errors.New("nil reply")
 
 
 func init() {
-	redisPool = redispool.NewRedisPool()
+	redisPool = redispool.NewRedisPool(512)
 }
 
 type CacheData interface {

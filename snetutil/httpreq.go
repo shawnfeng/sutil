@@ -248,7 +248,7 @@ func (m *reqQuery) Get(key string) string {
 			m.q = make(url.Values)
 		}
 
-		slog.Debugf("%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, m.q)
+		//slog.Debugf("%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, m.q)
 	}
 
 
@@ -309,7 +309,10 @@ func (m *reqBody) Binary() []byte {
 	if m.body == nil {
 		body, err := ioutil.ReadAll(m.r.Body);
 		if err != nil {
-			slog.Errorf("%s read body %s", fun, err.Error())
+			if err != io.EOF{
+				slog.Warnf("%s read body %s", fun, err.Error())
+			}
+			slog.Warnf("%s read body %s", fun, err.Error())
 		}
 		m.body = body
 	}
@@ -413,7 +416,7 @@ func (m *reqBody) FormValue(key string) string {
 
 	} else if ct == "multipart/form-data" {
 		if m.r.MultipartForm == nil {
-			slog.Errorf("%s multipart/form-data parse nil", fun)
+			slog.Warnf("%s multipart/form-data parse nil", fun)
 			return ""
 		}
 

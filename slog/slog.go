@@ -236,43 +236,47 @@ func init() {
 }
 
 func Tracef(format string, v ...interface{}) {
+	if LV_TRACE < log_level {
+		return
+	}
+
 	slogMutex.Lock()
 	defer slogMutex.Unlock()
-
-	if LV_TRACE >= log_level {
-		lg.Printf(headFmtTrace+format, v...)
-		atomic.AddInt64(&cnTrace, 1)
-	}
+	lg.Printf(headFmtTrace+format, v...)
+	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Traceln(v ...interface{}) {
+	if LV_TRACE < log_level {
+		return
+	}
+
 	slogMutex.Lock()
 	defer slogMutex.Unlock()
-
-	if LV_TRACE >= log_level {
-		lg.Println(append([]interface{}{headTrace}, v...)...)
-		atomic.AddInt64(&cnTrace, 1)
-	}
+	lg.Println(append([]interface{}{headTrace}, v...)...)
+	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Debugf(format string, v ...interface{}) {
+	if LV_DEBUG < log_level {
+		return
+	}
+
 	slogMutex.Lock()
 	defer slogMutex.Unlock()
-
-	if LV_DEBUG >= log_level {
-		lg.Printf(headFmtDebug+format, v...)
-		atomic.AddInt64(&cnDebug, 1)
-	}
+	lg.Printf(headFmtDebug+format, v...)
+	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Debugln(v ...interface{}) {
+	if LV_DEBUG < log_level {
+		return
+	}
+
 	slogMutex.Lock()
 	defer slogMutex.Unlock()
-
-	if LV_DEBUG >= log_level {
-		lg.Println(append([]interface{}{headDebug}, v...)...)
-		atomic.AddInt64(&cnDebug, 1)
-	}
+	lg.Println(append([]interface{}{headDebug}, v...)...)
+	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Infof(format string, v ...interface{}) {
