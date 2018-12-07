@@ -136,7 +136,7 @@ func (self *RedisPool) payback(addr string, re *RedisEntry) {
 	case po <- re:
 		//slog.Infof("%s payback:%s len:%d", fun, addr, len(po))
 	default:
-		slog.Warnf("%s full not payback:%s len:%d", fun, addr, len(po))
+		slog.Errorf("%s full not payback:%s len:%d", fun, addr, len(po))
 		re.close()
 	}
 }

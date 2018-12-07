@@ -5,106 +5,16 @@
 package slog
 
 import (
-	"log"
-	//	"io"
 	"fmt"
-	"os"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
+    "io"
+    "os"
 	"sync"
 	"sync/atomic"
 	"time"
 )
-
-type logger struct {
-	hourUse int64
-
-	logpref string
-
-	logfp *os.File
-	per   *log.Logger
-}
-
-func (self *logger) resetOutput(logpref string) {
-	self.logpref = logpref
-	now := time.Now()
-	self.hourOutput(&now)
-
-}
-
-func (self *logger) hourOutput(now *time.Time) {
-	if self.logfp != nil {
-		self.logfp.Close()
-		self.logfp = nil
-	}
-
-	nx := now.Unix() + 3600
-	self.hourUse = time.Unix(nx-nx%3600, 0).Unix()
-
-	if self.logpref == "" {
-		self.per = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-
-	} else {
-		hour := now.Format("2006-01-02-15")
-		logFile := fmt.Sprintf("%s.%s.log", self.logpref, hour)
-
-		logf, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		self.per = log.New(logf, "", log.Ldate|log.Ltime|log.Lmicroseconds)
-		self.logfp = logf
-
-	}
-
-}
-
-func (self *logger) setOutput() {
-	now := time.Now()
-	if now.Unix() >= self.hourUse {
-		self.hourOutput(&now)
-	}
-
-}
-
-func (self *logger) Printf(format string, v ...interface{}) {
-	self.setOutput()
-	if self.per == nil {
-		log.Println("slog nil")
-		return
-	}
-	self.per.Printf(format, v...)
-}
-
-func (self *logger) Panicf(format string, v ...interface{}) {
-	self.setOutput()
-	if self.per == nil {
-		log.Println("slog nil")
-		return
-	}
-
-	self.per.Panicf(format, v...)
-}
-
-func (self *logger) Println(v ...interface{}) {
-	self.setOutput()
-	if self.per == nil {
-		log.Println("slog nil")
-		return
-	}
-
-	self.per.Println(v...)
-}
-
-func (self *logger) Panicln(v ...interface{}) {
-	self.setOutput()
-	if self.per == nil {
-		log.Println("slog nil")
-		return
-	}
-
-	self.per.Panicln(v...)
-}
 
 // log 级别
 const (
@@ -118,22 +28,6 @@ const (
 )
 
 var (
-	headTrace string
-	headDebug string
-	headInfo  string
-	headWarn  string
-	headError string
-	headFatal string
-	headPanic string
-
-	headFmtTrace string
-	headFmtDebug string
-	headFmtInfo  string
-	headFmtWarn  string
-	headFmtError string
-	headFmtFatal string
-	headFmtPanic string
-
 	// log count
 	cnTrace int64
 	cnDebug int64
@@ -146,13 +40,14 @@ var (
 	cnStamp int64
 
 	slogMutex sync.Mutex
-	log_level int
-	lg        *logger
+	lg        *zap.SugaredLogger
 
 	logs []string
 )
 
 func addLogs(log string) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
 	logs = append(logs, log)
 	if len(logs) > 10 {
 		logs = logs[len(logs)-10:]
@@ -170,33 +65,36 @@ func getLogs() []string {
 	return tmp
 }
 
+func TimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format("2006/01/02 15:04:05.000000"))
+}
+
+func CapitalLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(l.CapitalString())
+}
+
+func Sync() {
+	lg.Sync()
+}
+
 func Init(logdir string, logpref string, level string) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
+	log_level := zap.InfoLevel
 	if level == "TRACE" {
-		log_level = LV_TRACE
+		log_level = zap.DebugLevel
 	} else if level == "DEBUG" {
-		log_level = LV_DEBUG
+		log_level = zap.DebugLevel
 	} else if level == "INFO" {
-		log_level = LV_INFO
+		log_level = zap.InfoLevel
 	} else if level == "WARN" {
-		log_level = LV_WARN
+		log_level = zap.WarnLevel
 	} else if level == "ERROR" {
-		log_level = LV_ERROR
+		log_level = zap.ErrorLevel
 	} else if level == "FATAL" {
-		log_level = LV_FATAL
+		log_level = zap.FatalLevel
 	} else if level == "PANIC" {
-		log_level = LV_PANIC
+		log_level = zap.PanicLevel
 	} else {
-		log_level = LV_INFO
-	}
-
-	if logdir != "" {
-		err := os.MkdirAll(logdir, 0777)
-		if err != nil {
-			log.Fatalln("slog mkdir ", logdir, " err:", err)
-		}
+		log_level = zap.InfoLevel
 	}
 
 	logfile := ""
@@ -204,182 +102,130 @@ func Init(logdir string, logpref string, level string) {
 		logfile = logdir + "/" + logpref
 	}
 
-	if lg == nil {
-		lg = &logger{logpref: logfile, logfp: nil, per: nil}
-	} else {
-		lg.resetOutput(logfile)
-	}
+    var out io.Writer
+    if len(logfile) > 0 { 
+        var ljlogger *lumberjack.Logger
+        ljlogger = &lumberjack.Logger{
+            Filename:   logfile,
+            MaxSize:    1024000,
+            MaxBackups: 256,
+            MaxAge:     32, 
+            LocalTime:  true,
+        }   
 
+        go func() {
+            for {
+                now := time.Now().Unix()
+                duration := 3600 - now%3600
+                select {
+                case <-time.After(time.Second * time.Duration(duration)):
+                    ljlogger.Rotate()
+                }   
+            }   
+
+        }() 
+
+        out = ljlogger
+    } else {
+        out = os.Stdout
+    }   
+    w := zapcore.AddSync(out)
+
+    enconf := zap.NewProductionEncoderConfig()
+    enconf.EncodeTime = TimeEncoder
+    enconf.CallerKey = "caller"
+    enconf.EncodeCaller = zapcore.FullCallerEncoder
+    enconf.EncodeLevel = CapitalLevelEncoder
+    core := zapcore.NewCore(
+        //zapcore.NewJSONEncoder(enconf),
+        zapcore.NewConsoleEncoder(enconf),
+        w,  
+        log_level,
+    )   
+    logger := zap.New(core)
+    lg = logger.Sugar()
 }
 
 func init() {
-	pid := os.Getpid()
-	headTrace = fmt.Sprintf("[TRACE] [%d]", pid)
-	headDebug = fmt.Sprintf("[DEBUG] [%d]", pid)
-	headInfo = fmt.Sprintf("[INFO] [%d]", pid)
-	headWarn = fmt.Sprintf("[WARN] [%d]", pid)
-	headError = fmt.Sprintf("[ERROR] [%d]", pid)
-	headFatal = fmt.Sprintf("[FATAL] [%d]", pid)
-	headPanic = fmt.Sprintf("[PANIC] [%d]", pid)
-
-	headFmtTrace = fmt.Sprintf("%s ", headTrace)
-	headFmtDebug = fmt.Sprintf("%s ", headDebug)
-	headFmtInfo = fmt.Sprintf("%s ", headInfo)
-	headFmtWarn = fmt.Sprintf("%s ", headWarn)
-	headFmtError = fmt.Sprintf("%s ", headError)
-	headFmtFatal = fmt.Sprintf("%s ", headFatal)
-	headFmtPanic = fmt.Sprintf("%s ", headPanic)
-
 	Init("", "", "TRACE")
 
 	atomic.StoreInt64(&cnStamp, time.Now().Unix())
 }
 
 func Tracef(format string, v ...interface{}) {
-	if LV_TRACE < log_level {
-		return
-	}
-
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-	lg.Printf(headFmtTrace+format, v...)
+	lg.Debugf(format, v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Traceln(v ...interface{}) {
-	if LV_TRACE < log_level {
-		return
-	}
-
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-	lg.Println(append([]interface{}{headTrace}, v...)...)
+	lg.Debug(v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Debugf(format string, v ...interface{}) {
-	if LV_DEBUG < log_level {
-		return
-	}
-
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-	lg.Printf(headFmtDebug+format, v...)
+	lg.Debugf(format, v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Debugln(v ...interface{}) {
-	if LV_DEBUG < log_level {
-		return
-	}
-
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-	lg.Println(append([]interface{}{headDebug}, v...)...)
+	lg.Debug(v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Infof(format string, v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_INFO >= log_level {
-		lg.Printf(headFmtInfo+format, v...)
-		atomic.AddInt64(&cnInfo, 1)
-	}
+	lg.Infof(format, v...)
+	atomic.AddInt64(&cnInfo, 1)
 }
 
 func Infoln(v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_INFO >= log_level {
-		lg.Println(append([]interface{}{headInfo}, v...)...)
-		atomic.AddInt64(&cnInfo, 1)
-	}
+	lg.Info(v...)
+	atomic.AddInt64(&cnInfo, 1)
 }
 
 func Warnf(format string, v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_WARN >= log_level {
-		lg.Printf(headFmtWarn+format, v...)
-		atomic.AddInt64(&cnWarn, 1)
-	}
+	lg.Warnf(format, v...)
+	atomic.AddInt64(&cnWarn, 1)
 }
 
 func Warnln(v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_WARN >= log_level {
-		lg.Println(append([]interface{}{headWarn}, v...)...)
-		atomic.AddInt64(&cnWarn, 1)
-	}
+	lg.Warn(v...)
+	atomic.AddInt64(&cnWarn, 1)
 }
 
 func Errorf(format string, v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_ERROR >= log_level {
-		lg.Printf(headFmtError+format, v...)
-		atomic.AddInt64(&cnError, 1)
-		addLogs(fmt.Sprintf(headFmtError+format, v...))
-	}
+	lg.Errorf(format, v...)
+	atomic.AddInt64(&cnError, 1)
+	addLogs("ERROR " + fmt.Sprintf(format, v...))
 }
 
 func Errorln(v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_ERROR >= log_level {
-		lg.Println(append([]interface{}{headError}, v...)...)
-		atomic.AddInt64(&cnError, 1)
-	}
+	lg.Error(v...)
+	atomic.AddInt64(&cnError, 1)
+	addLogs("ERROR " + fmt.Sprintln(v...))
 }
 
 func Fatalf(format string, v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_FATAL >= log_level {
-		lg.Printf(headFmtFatal+format, v...)
-		atomic.AddInt64(&cnFatal, 1)
-		addLogs(fmt.Sprintf(headFmtError+format, v...))
-	}
+	lg.Fatalf(format, v...)
+	atomic.AddInt64(&cnFatal, 1)
+	addLogs("FATAL " + fmt.Sprintf(format, v...))
 }
 
 func Fatalln(v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_FATAL >= log_level {
-		lg.Println(append([]interface{}{headFatal}, v...)...)
-		atomic.AddInt64(&cnFatal, 1)
-	}
+	lg.Fatal(v...)
+	atomic.AddInt64(&cnFatal, 1)
+	addLogs("FATAL " + fmt.Sprintln(v...))
 }
 
 func Panicf(format string, v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_PANIC >= log_level {
-		lg.Panicf(headFmtPanic+format, v...)
-		atomic.AddInt64(&cnPanic, 1)
-		addLogs(fmt.Sprintf(headFmtError+format, v...))
-	}
+	lg.Panicf(format, v...)
+	atomic.AddInt64(&cnPanic, 1)
+	addLogs("PANIC " + fmt.Sprintf(format, v...))
 }
 
 func Panicln(v ...interface{}) {
-	slogMutex.Lock()
-	defer slogMutex.Unlock()
-
-	if LV_PANIC >= log_level {
-		lg.Panicln(append([]interface{}{headPanic}, v...)...)
-		atomic.AddInt64(&cnPanic, 1)
-	}
+	lg.Panic(v...)
+	atomic.AddInt64(&cnPanic, 1)
+	addLogs("PANIC " + fmt.Sprintln(v...))
 }
 
 func LogStat() (map[string]int64, []string) {
@@ -398,4 +244,15 @@ func LogStat() (map[string]int64, []string) {
 
 	return st, getLogs()
 
+}
+
+type Logger struct {
+}
+
+func GetLogger() *Logger {
+    return &Logger{}
+}
+
+func (m *Logger) Printf(format string, items ...interface{}) {
+    Errorf(format, items...)
 }
