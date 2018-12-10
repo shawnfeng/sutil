@@ -364,7 +364,11 @@ func NewAgent(
 		readto = (1000*60*5) * 3
 	}
 
-	aid := sutil.GetUniqueMd5()
+	aid, err := sutil.GetUniqueMd5()
+	if err != nil {
+		slog.Errorf("%s new err:%s", fun, err)
+		return nil
+	}
 
 	a := &Agent {
 		id: aid,
