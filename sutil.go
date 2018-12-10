@@ -21,7 +21,7 @@ import (
 	//"crypto/sha1"
 
 	"sync"
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/google/uuid"
 
 	"github.com/kaneshin/go-pkg/unicode"
 )
@@ -144,19 +144,25 @@ func GetUtf8Chars_old(s string, num int) string {
 }
 
 var uuidMu sync.Mutex
-func GetUUID() string {
+func GetUUID() (string, error) {
 	uuidMu.Lock()
 	defer uuidMu.Unlock()
 
-	uuidgen := uuid.NewUUID()
-	return uuidgen.String()
+	uuidgen, err := uuid.NewUUID()
+	if err != nil {
+		return "", err
+	}
+	return uuidgen.String(), nil
 }
 
 
-func GetUniqueMd5() string {
-	u := GetUUID()
+func GetUniqueMd5() (string, error) {
+	u, err := GetUUID()
+	if err != nil {
+		return "", err
+	}
 	h := md5.Sum([]byte(u))
-	return fmt.Sprintf("%x", h)
+	return fmt.Sprintf("%x", h), nil
 }
 
 

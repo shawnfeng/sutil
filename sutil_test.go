@@ -14,7 +14,8 @@ import (
 
 func TestRand(t *testing.T) {
 
-
+	u, err := GetUUID()
+	fmt.Println(u, err)
 
 	if RandString(4) != "BpLn" {
 		t.Errorf("err")

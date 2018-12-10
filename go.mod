@@ -1,12 +1,12 @@
 module github.com/shawnfeng/sutil
 
 require (
-	code.google.com/p/go-uuid v0.0.0
-	code.google.com/p/goprotobuf v0.0.0
 	github.com/BurntSushi/toml v0.3.1 // indirect
 
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
+	github.com/golang/protobuf v0.0.0-20140729232320-25535e35a86c
+	github.com/google/uuid v1.1.0
 	github.com/julienschmidt/httprouter v1.0.1-0.20150106073633-b55664b9e920
 	github.com/kaneshin/go-pkg v0.0.0-20150919125626-a8e1479186cf
 	github.com/kr/pretty v0.1.0 // indirect
@@ -26,9 +26,4 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 
-)
-
-replace (
-	code.google.com/p/go-uuid => github.com/shawnfeng/googleuuid v1.0.0
-	code.google.com/p/goprotobuf => github.com/shawnfeng/googlpb v1.0.0
 )

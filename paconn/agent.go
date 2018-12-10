@@ -16,8 +16,7 @@ import (
 
 
 	"github.com/sdming/gosnow"
-	"code.google.com/p/goprotobuf/proto"
-
+	"github.com/golang/protobuf/proto"
 
 	"github.com/shawnfeng/sutil"
 	"github.com/shawnfeng/sutil/slog"
