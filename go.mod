@@ -13,6 +13,7 @@ require (
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
+	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb
 	github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c // indirect
 	github.com/stretchrcom/testify v1.2.2 // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
@@ -23,7 +24,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 
 	gopkg.in/mgo.v2 v2.0.0-20141107142503-e2e914857713
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 
 )
