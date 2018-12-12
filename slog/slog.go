@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	//"github.com/shawnfeng/sutil/stime"
 	"github.com/shawnfeng/lumberjack.v2"
     "io"
     "os"
@@ -108,8 +109,8 @@ func Init(logdir string, logpref string, level string) {
         ljlogger = &lumberjack.Logger{
             Filename:   logfile,
             MaxSize:    1024000,
-            MaxBackups: 256,
-            MaxAge:     32, 
+            MaxBackups: 0,
+            MaxAge:     0, 
             LocalTime:  true,
         }   
 
@@ -119,7 +120,10 @@ func Init(logdir string, logpref string, level string) {
                 duration := 3600 - now%3600
                 select {
                 case <-time.After(time.Second * time.Duration(duration)):
+					//st := stime.NewTimeStat()
                     ljlogger.Rotate()
+					//dur := st.Duration()
+					//Infof("rotate tm:%d", dur)
                 }   
             }   
 
