@@ -2,7 +2,6 @@ module github.com/shawnfeng/sutil
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
-
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
 	github.com/golang/protobuf v0.0.0-20140729232320-25535e35a86c
@@ -24,6 +23,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 
 	gopkg.in/mgo.v2 v2.0.0-20141107142503-e2e914857713
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.2.2 // indirect
 
 )
