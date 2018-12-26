@@ -17,12 +17,6 @@ import (
 	"time"
 )
 
-var logger *Logger
-
-func init() {
-	Init("", "", "TRACE")
-}
-
 // log 级别
 const (
 	LV_TRACE int = 0
@@ -34,7 +28,7 @@ const (
 	LV_PANIC int = 6
 )
 
-type Logger struct {
+var (
 	// log count
 	cnTrace int64
 	cnDebug int64
@@ -43,19 +37,33 @@ type Logger struct {
 	cnError int64
 	cnFatal int64
 	cnPanic int64
-
 	// log count stat stamp
 	cnStamp int64
-	cnDrop  int64
-
-	isClose int32
-
-	lg *zap.SugaredLogger
-
-	logs    []string
-	logChan chan func()
 
 	slogMutex sync.Mutex
+	lg        *zap.SugaredLogger
+
+	logs []string
+)
+
+func addLogs(log string) {
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+	logs = append(logs, log)
+	if len(logs) > 10 {
+		logs = logs[len(logs)-10:]
+	}
+}
+
+func getLogs() []string {
+
+	slogMutex.Lock()
+	defer slogMutex.Unlock()
+
+	tmp := make([]string, len(logs))
+	copy(tmp, logs)
+	logs = []string{}
+	return tmp
 }
 
 func TimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -67,8 +75,7 @@ func CapitalLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 }
 
 func Sync() {
-	logger.stop()
-	logger.lg.Sync()
+	lg.Sync()
 }
 
 func Init(logdir string, logpref string, level string) {
@@ -139,289 +146,111 @@ func Init(logdir string, logpref string, level string) {
 		w,
 		log_level,
 	)
-	lg := zap.New(core).Sugar()
-
-	if logger != nil {
-		logger.stop()
-	}
-
-	logger = &Logger{
-		lg:      lg,
-		cnTrace: 0,
-		cnDebug: 0,
-		cnInfo:  0,
-		cnWarn:  0,
-		cnError: 0,
-		cnFatal: 0,
-		cnPanic: 0,
-		isClose: 0,
-		cnStamp: time.Now().Unix(),
-		logChan: make(chan func(), 1024*128),
-	}
-
-	go logger.run()
+	logger := zap.New(core)
+	lg = logger.Sugar()
 }
 
-func (m *Logger) stop() {
-	atomic.StoreInt32(&m.isClose, 1)
-	close(m.logChan)
-}
+func init() {
+	Init("", "", "TRACE")
 
-func (m *Logger) run() {
-	fun := "Logger.run -->"
-
-	ticker := time.NewTicker(time.Second * 30)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case logFun, ok := <-m.logChan:
-			if ok {
-				if logFun != nil {
-					logFun()
-				}
-			} else {
-				fmt.Printf("%s logChan is close", fun)
-				return
-			}
-
-		case <-ticker.C:
-			cnDrop := atomic.SwapInt64(&m.cnDrop, 0)
-			if cnDrop > 0 {
-				errorf("%s drop log %d", fun, cnDrop)
-			}
-		}
-	}
-}
-
-func (m *Logger) asyncDo(logFun func()) {
-
-	isClose := atomic.LoadInt32(&m.isClose)
-	if isClose == 1 {
-		return
-	}
-
-	select {
-	case m.logChan <- logFun:
-	default:
-		atomic.AddInt64(&m.cnDrop, 1)
-	}
-}
-
-func (m *Logger) addLogs(log string) {
-	m.slogMutex.Lock()
-	defer m.slogMutex.Unlock()
-
-	m.logs = append(m.logs, log)
-	if len(m.logs) > 10 {
-		m.logs = m.logs[len(m.logs)-10:]
-	}
-}
-
-func (m *Logger) getLogs() []string {
-	m.slogMutex.Lock()
-	defer m.slogMutex.Unlock()
-
-	tmp := make([]string, len(m.logs))
-	copy(tmp, m.logs)
-	m.logs = []string{}
-	return tmp
+	atomic.StoreInt64(&cnStamp, time.Now().Unix())
 }
 
 func Tracef(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			logger.lg.Debugf(format, v...)
-			atomic.AddInt64(&logger.cnTrace, 1)
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Debugf(format, v...)
+	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Traceln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Debug(v...)
-			atomic.AddInt64(&logger.cnTrace, 1)
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
+	lg.Debug(v...)
+	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Debugf(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			logger.lg.Debugf(format, v...)
-			atomic.AddInt64(&logger.cnDebug, 1)
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Debugf(format, v...)
+	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Debugln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Debug(v...)
-			atomic.AddInt64(&logger.cnDebug, 1)
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
+	lg.Debug(v...)
+	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Infof(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			logger.lg.Infof(format, v...)
-			atomic.AddInt64(&logger.cnInfo, 1)
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Infof(format, v...)
+	atomic.AddInt64(&cnInfo, 1)
 }
 
 func Infoln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Info(v...)
-			atomic.AddInt64(&logger.cnInfo, 1)
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
+	lg.Info(v...)
+	atomic.AddInt64(&cnInfo, 1)
 }
 
 func Warnf(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			logger.lg.Warnf(format, v...)
-			atomic.AddInt64(&logger.cnWarn, 1)
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Warnf(format, v...)
+	atomic.AddInt64(&cnWarn, 1)
 }
 
 func Warnln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Warn(v...)
-			atomic.AddInt64(&logger.cnWarn, 1)
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
-}
-
-func errorf(format string, v ...interface{}) {
-	logger.lg.Errorf(format, v...)
-	atomic.AddInt64(&logger.cnError, 1)
-	logger.addLogs("ERROR " + fmt.Sprintf(format, v...))
+	lg.Warn(v...)
+	atomic.AddInt64(&cnWarn, 1)
 }
 
 func Errorf(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			errorf(format, v...)
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Errorf(format, v...)
+	atomic.AddInt64(&cnError, 1)
+	addLogs("ERROR " + fmt.Sprintf(format, v...))
 }
 
 func Errorln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Error(v...)
-			atomic.AddInt64(&logger.cnError, 1)
-			logger.addLogs("ERROR " + fmt.Sprintln(v...))
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
+	lg.Error(v...)
+	atomic.AddInt64(&cnError, 1)
+	addLogs("ERROR " + fmt.Sprintln(v...))
 }
 
 func Fatalf(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			logger.lg.Fatalf(format, v...)
-			atomic.AddInt64(&logger.cnFatal, 1)
-			logger.addLogs("FATAL " + fmt.Sprintf(format, v...))
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Fatalf(format, v...)
+	atomic.AddInt64(&cnFatal, 1)
+	addLogs("FATAL " + fmt.Sprintf(format, v...))
 }
 
 func Fatalln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Fatal(v...)
-			atomic.AddInt64(&logger.cnFatal, 1)
-			logger.addLogs("FATAL " + fmt.Sprintln(v...))
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
+	lg.Fatal(v...)
+	atomic.AddInt64(&cnFatal, 1)
+	addLogs("FATAL " + fmt.Sprintln(v...))
 }
 
 func Panicf(format string, v ...interface{}) {
-
-	logFun := func(format string, v ...interface{}) func() {
-		return func() {
-			logger.lg.Panicf(format, v...)
-			atomic.AddInt64(&logger.cnPanic, 1)
-			logger.addLogs("PANIC " + fmt.Sprintf(format, v...))
-		}
-	}(format, v...)
-
-	logger.asyncDo(logFun)
+	lg.Panicf(format, v...)
+	atomic.AddInt64(&cnPanic, 1)
+	addLogs("PANIC " + fmt.Sprintf(format, v...))
 }
 
 func Panicln(v ...interface{}) {
-
-	logFun := func(v ...interface{}) func() {
-		return func() {
-			logger.lg.Panic(v...)
-			atomic.AddInt64(&logger.cnPanic, 1)
-			logger.addLogs("PANIC " + fmt.Sprintln(v...))
-		}
-	}(v...)
-
-	logger.asyncDo(logFun)
+	lg.Panic(v...)
+	atomic.AddInt64(&cnPanic, 1)
+	addLogs("PANIC " + fmt.Sprintln(v...))
 }
 
 func LogStat() (map[string]int64, []string) {
 
 	st := map[string]int64{
-		"TRACE": atomic.SwapInt64(&logger.cnTrace, 0),
-		"DEBUG": atomic.SwapInt64(&logger.cnDebug, 0),
-		"INFO":  atomic.SwapInt64(&logger.cnInfo, 0),
-		"WARN":  atomic.SwapInt64(&logger.cnWarn, 0),
-		"ERROR": atomic.SwapInt64(&logger.cnError, 0),
-		"FATAL": atomic.SwapInt64(&logger.cnFatal, 0),
-		"PANIC": atomic.SwapInt64(&logger.cnPanic, 0),
+		"TRACE": atomic.SwapInt64(&cnTrace, 0),
+		"DEBUG": atomic.SwapInt64(&cnDebug, 0),
+		"INFO":  atomic.SwapInt64(&cnInfo, 0),
+		"WARN":  atomic.SwapInt64(&cnWarn, 0),
+		"ERROR": atomic.SwapInt64(&cnError, 0),
+		"FATAL": atomic.SwapInt64(&cnFatal, 0),
+		"PANIC": atomic.SwapInt64(&cnPanic, 0),
 
-		"STAMP": atomic.SwapInt64(&logger.cnStamp, time.Now().Unix()),
+		"STAMP": atomic.SwapInt64(&cnStamp, time.Now().Unix()),
 	}
 
-	return st, logger.getLogs()
+	return st, getLogs()
 
+}
+
+type Logger struct {
 }
 
 func GetLogger() *Logger {
