@@ -12,7 +12,7 @@ require (
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
-	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb
+	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
 	github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c // indirect
 	github.com/stretchrcom/testify v1.2.2 // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec

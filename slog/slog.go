@@ -106,13 +106,7 @@ func Init(logdir string, logpref string, level string) {
 	var out io.Writer
 	if len(logfile) > 0 {
 		var ljlogger *lumberjack.Logger
-		ljlogger = &lumberjack.Logger{
-			Filename:   logfile,
-			MaxSize:    1024000,
-			MaxBackups: 0,
-			MaxAge:     0,
-			LocalTime:  true,
-		}
+		ljlogger = lumberjack.NewLogger(logfile, 10240000, 0, 0, true, false)
 
 		go func() {
 			for {

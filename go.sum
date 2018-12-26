@@ -25,6 +25,8 @@ github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886 h1:dkA4/6HgXq1Nq09XT
 github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886/go.mod h1:xucuMeiX1TAS2KBgvWFPd0UZN3BnOmHZEggfq28hlfA=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb h1:8XB3GJL0SMlYBeVm/CTdqHavrlX7lKsvTE1MuTLE4Vs=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb/go.mod h1:9u5PFfVGpGVlGplh2jWs0UqjcY3ptVZ/v5iXpsRGg9M=
+github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8 h1:UEgIO+GShCTkSTPdQj+5UODyJi2FpwMnyZ982jpABs8=
+github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8/go.mod h1:9u5PFfVGpGVlGplh2jWs0UqjcY3ptVZ/v5iXpsRGg9M=
 github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c h1:03OmljzZYsezlgAfa+f/cY8E8XXPiFh5bgANMhUlDI4=
 github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchrcom/testify v1.2.2 h1:R5L+N9NKlaO/Q0Dvq8kBEV/uRKEa/Mt2Wt2WNtMqKTw=
