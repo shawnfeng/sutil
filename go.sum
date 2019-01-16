@@ -4,6 +4,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594 h1:oNI7duAqnx59p+HQvLXlVcACWG50vb0QhH1JVdhnqCk=
 github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594/go.mod h1:KhtJfdbo4PD2LEOYO7QCVSIH0pOcZEZ/SpNsXgwQtkk=
+github.com/go-redis/redis v6.15.1+incompatible h1:BZ9s4/vHrIqwOb0OPtTQ5uABxETJ3NRuUNoSUurnkew=
+github.com/go-redis/redis v6.15.1+incompatible/go.mod h1:NAIEuMOZ/fxfXJIrKDQDz8wamY7mA7PouImQ2Jvg6kA=
 github.com/golang/protobuf v0.0.0-20140729232320-25535e35a86c h1:htMd+c4wJLC4hd4/rFtIjFeMtYzrcV+wer42v7D5Rj0=
 github.com/golang/protobuf v0.0.0-20140729232320-25535e35a86c/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/google/uuid v1.1.0 h1:Jf4mxPC/ziBnoPIdpQdPJ9OeiomAUHLvxmPRSPH9m4s=

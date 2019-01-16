@@ -4,6 +4,7 @@ require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
+	github.com/go-redis/redis v6.15.1+incompatible
 	github.com/golang/protobuf v0.0.0-20140729232320-25535e35a86c
 	github.com/google/uuid v1.1.0
 	github.com/julienschmidt/httprouter v1.0.1-0.20150106073633-b55664b9e920
