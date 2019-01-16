@@ -74,7 +74,7 @@ func (m *Cache) GetCache(key string, data CacheData) error {
 	err := m.getData(key, data)
 	if err == nil {
 		return nil
-	} else if err.Error() == "redis: nil" {
+	} else if err.Error() == RedisNil {
 		// 空的情况也返回正常
 		return nil
 
@@ -92,7 +92,7 @@ func (m *Cache) Get(key string, data CacheData) error {
 	err := m.getData(key, data)
 	if err == nil {
 		return nil
-	} else if err.Error() == "redis: nil" {
+	} else if err.Error() == RedisNil {
 		slog.Infof("%s miss key:%s", fun, key)
 
 	} else if err != nil {

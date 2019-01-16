@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var RedisNil = fmt.Sprintf("redis: nil")
+
 func NewCommonRedis(serverName string, poolSize int) (*RedisClient, error) {
 	return newRedisClient("common.codis.pri.ibanyu.com:19000", serverName, poolSize)
 }
