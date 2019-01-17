@@ -54,5 +54,9 @@ func (m *RedisClient) Set(key string, value interface{}, expiration time.Duratio
 }
 
 func (m *RedisClient) Del(keys ...string) *redis.IntCmd {
-	return m.client.Del(keys...)
+	var tkeys []string
+	for _, key := range keys {
+		tkeys = append(tkeys, m.fixKey(key))
+	}
+	return m.client.Del(tkeys...)
 }
