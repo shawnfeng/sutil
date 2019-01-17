@@ -19,10 +19,11 @@ type CacheData interface {
 type Cache struct {
 	expire      int
 	redisClient *RedisClient
+	prefix      string
 }
 
 // redis 地址列表，key前缀，过期时间
-func NewCommonCache(serverName string, poolSize, expire int) (*Cache, error) {
+func NewCommonCache(serverName, prefix string, poolSize, expire int) (*Cache, error) {
 	fun := "NewCommonCache-->"
 
 	redisClient, err := NewCommonRedis(serverName, poolSize)
@@ -33,6 +34,7 @@ func NewCommonCache(serverName string, poolSize, expire int) (*Cache, error) {
 	return &Cache{
 		redisClient: redisClient,
 		expire:      expire,
+		prefix:      prefix,
 	}, err
 }
 
@@ -44,7 +46,7 @@ func (m *Cache) setData(key string, data CacheData) error {
 		return fmt.Errorf("data marshal:%s", err)
 	}
 
-	err = m.redisClient.Set(key, sdata, time.Duration(m.expire)*time.Second).Err()
+	err = m.redisClient.Set(m.fixKey(key), sdata, time.Duration(m.expire)*time.Second).Err()
 	if err != nil {
 		return fmt.Errorf("set cache err:%s", err.Error())
 	}
@@ -52,10 +54,18 @@ func (m *Cache) setData(key string, data CacheData) error {
 	return nil
 }
 
+func (m *Cache) fixKey(key string) string {
+	if len(m.prefix) > 0 {
+		return fmt.Sprintf("%s.%s", m.prefix, key)
+	}
+
+	return key
+}
+
 func (m *Cache) getData(key string, data CacheData) error {
 	//fun := "Cache.getData -->"
 
-	sdata, err := m.redisClient.Get(key).Bytes()
+	sdata, err := m.redisClient.Get(m.fixKey(key)).Bytes()
 	if err != nil {
 		return fmt.Errorf("get cache key:%s err:%s", key, err.Error())
 	}
@@ -119,7 +129,7 @@ func (m *Cache) Set(key string, data CacheData) error {
 
 func (m *Cache) Del(key string) error {
 	//fun := "Cache.Del-->"
-	err := m.redisClient.Del(key).Err()
+	err := m.redisClient.Del(m.fixKey(key)).Err()
 	if err != nil {
 		return fmt.Errorf("del cache key:%s err:%s", key, err.Error())
 	}
