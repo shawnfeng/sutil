@@ -2,14 +2,18 @@ module github.com/shawnfeng/sutil
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/bitly/go-simplejson v0.5.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
 	github.com/go-redis/redis v6.15.1+incompatible
+	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/protobuf v0.0.0-20140729232320-25535e35a86c
 	github.com/google/uuid v1.1.0
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/julienschmidt/httprouter v1.0.1-0.20150106073633-b55664b9e920
 	github.com/kaneshin/go-pkg v0.0.0-20150919125626-a8e1479186cf
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/lib/pq v1.0.0
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
