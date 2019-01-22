@@ -43,7 +43,7 @@ func NewDefaultDBConfig(servName string) DBConfiger {
 
 func (m *DefaultDBConfig) GetConfig(dbType, dbName string) *ConfigInfo {
 	return &ConfigInfo{
-		DBAddr:   "common.kingshard.pri.ibanyu.com:4000",
+		DBAddr:   "common.kingshard.pri.ibanyu.com:9090",
 		UserName: m.userName,
 		PassWord: m.passWord,
 		TimeOut:  3 * time.Second,
