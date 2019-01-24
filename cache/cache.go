@@ -67,7 +67,7 @@ func (m *Cache) getData(key string, data CacheData) error {
 
 	sdata, err := m.redisClient.Get(m.fixKey(key)).Bytes()
 	if err != nil {
-		return fmt.Errorf("get cache key:%s err:%s", key, err.Error())
+		return err
 	}
 
 	err = data.Unmarshal(sdata)
