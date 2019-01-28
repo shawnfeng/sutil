@@ -104,7 +104,15 @@ func (m *DBInstanceManager) get(dbtype, dbname string) DBInstance {
 			return nil
 		}
 
-		m.instances.Store(name, dbIn)
+		in, ok = m.instances.LoadOrStore(name, dbIn)
+		if ok == true {
+			dbIn, ok = in.(DBInstance)
+			if ok == false {
+				slog.Errorf("%s ins.(DBInstance) err, name: %s", fun, name)
+				return nil
+			}
+		}
+
 		return dbIn
 	}
 
