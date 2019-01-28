@@ -97,7 +97,7 @@ func NewdbSql(dbtype, dbname, addr, userName, passWord string, timeout time.Dura
 		slog.Errorf("%s info:%v, err:%s", fun, *info, err.Error())
 		return nil, err
 	}
-	info.db.SetMaxIdleConns(32)
+	info.db.SetMaxIdleConns(8)
 	return info, err
 }
 

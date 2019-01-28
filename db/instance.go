@@ -103,6 +103,8 @@ func (m *DBInstanceManager) get(dbtype, dbname string) DBInstance {
 			slog.Errorf("%s NewInstance err, dbname: %s, err: %s", fun, dbname, err.Error())
 			return nil
 		}
+
+		m.instances.Store(name, dbIn)
 		return dbIn
 	}
 
