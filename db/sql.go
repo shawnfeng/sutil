@@ -76,6 +76,7 @@ func (m *dbSql) getType() string {
 }
 
 func NewdbSql(dbtype, dbname, addr, userName, passWord string, timeout time.Duration) (*dbSql, error) {
+	fun := "NewdbSql-->"
 
 	if timeout == 0 {
 		timeout = 3 * time.Second
@@ -92,6 +93,10 @@ func NewdbSql(dbtype, dbname, addr, userName, passWord string, timeout time.Dura
 
 	var err error
 	info.db, err = dial(info)
+	if err != nil {
+		slog.Errorf("%s info:%v, err:%s", fun, *info, err.Error())
+		return nil, err
+	}
 	info.db.SetMaxIdleConns(32)
 	return info, err
 }

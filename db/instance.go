@@ -101,6 +101,7 @@ func (m *DBInstanceManager) get(dbtype, dbname string) DBInstance {
 		dbIn, err = NewInstance(dbtype, dbname, configInfo.DBAddr, configInfo.UserName, configInfo.PassWord, configInfo.TimeOut)
 		if err != nil {
 			slog.Errorf("%s NewInstance err, dbname: %s, err: %s", fun, dbname, err.Error())
+			return nil
 		}
 		return dbIn
 	}
