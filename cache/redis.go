@@ -60,3 +60,7 @@ func (m *RedisClient) Del(keys ...string) *redis.IntCmd {
 	}
 	return m.client.Del(tkeys...)
 }
+
+func (m *RedisClient) Incr(key string) *redis.IntCmd {
+	return m.client.Incr(m.fixKey(key))
+}
