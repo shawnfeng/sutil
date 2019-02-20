@@ -13,6 +13,10 @@ func NewCommonRedis(serverName string, poolSize int) (*RedisClient, error) {
 	return newRedisClient("common.codis.pri.ibanyu.com:19000", serverName, poolSize)
 }
 
+func NewCoreRedis(serverName string, poolSize int) (*RedisClient, error) {
+	return newRedisClient("core.codis.pri.ibanyu.com:19000", serverName, poolSize)
+}
+
 type RedisClient struct {
 	client    *redis.Client
 	namespace string
