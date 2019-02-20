@@ -38,6 +38,21 @@ func NewCommonCache(serverName, prefix string, poolSize, expire int) (*Cache, er
 	}, err
 }
 
+func NewCoreCache(serverName, prefix string, poolSize, expire int) (*Cache, error) {
+	fun := "NewCoreCache-->"
+
+	redisClient, err := NewCoreRedis(serverName, poolSize)
+	if err != nil {
+		slog.Errorf("%s NewCoreRedis, serverNam:%s err:%s", fun, serverName, err)
+	}
+
+	return &Cache{
+		redisClient: redisClient,
+		expire:      expire,
+		prefix:      prefix,
+	}, err
+}
+
 func (m *Cache) setData(key string, data CacheData) error {
 	//fun := "Cache.setData -->"
 
