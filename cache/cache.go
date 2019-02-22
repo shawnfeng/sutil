@@ -54,19 +54,24 @@ func NewCoreCache(serverName, prefix string, poolSize, expire int) (*Cache, erro
 }
 
 func (m *Cache) setData(key string, data CacheData) error {
-	//fun := "Cache.setData -->"
+	fun := "Cache.setData -->"
 
-	sdata, err := data.Marshal()
-	if err != nil {
-		return fmt.Errorf("data marshal:%s", err)
+	sdata, merr := data.Marshal()
+	if merr != nil {
+		slog.Errorf("%s marshal err, cache key:%s err:%s", fun, key, merr)
+		sdata = []byte(merr.Error())
 	}
 
-	err = m.redisClient.Set(m.fixKey(key), sdata, time.Duration(m.expire)*time.Second).Err()
+	err := m.redisClient.Set(m.fixKey(key), sdata, time.Duration(m.expire)*time.Second).Err()
 	if err != nil {
-		return fmt.Errorf("set cache err:%s", err.Error())
+		slog.Errorf("%s set err, cache key:%s err:%s", fun, key, err)
 	}
 
-	return nil
+	if merr != nil {
+		return merr
+	}
+
+	return err
 }
 
 func (m *Cache) fixKey(key string) string {
@@ -117,25 +122,24 @@ func (m *Cache) Get(key string, data CacheData) error {
 	err := m.getData(key, data)
 	if err == nil {
 		return nil
-	} else if err.Error() == RedisNil {
-		slog.Infof("%s miss key:%s", fun, key)
-
-	} else if err != nil {
-		slog.Warnf("%s cache key:%s err:%s", fun, key, err)
-
 	}
 
-	// miss load
+	if err != nil && err.Error() != RedisNil {
+		slog.Errorf("%s cache key:%s err:%s", fun, key, err)
+		return fmt.Errorf("%s cache key:%s err:%s", fun, key, err)
+	}
+
+	slog.Infof("%s miss key:%s", fun, key)
+
 	err = data.Load(key)
 	if err != nil {
-		return err
+		slog.Warnf("%s load err, cache key:%s err:%s", fun, key, err)
 	}
 
 	return m.setData(key, data)
 
 }
 
-// 不会自动load
 func (m *Cache) Set(key string, data CacheData) error {
 	//fun := "Cache.Set -->"
 
@@ -144,6 +148,7 @@ func (m *Cache) Set(key string, data CacheData) error {
 
 func (m *Cache) Del(key string) error {
 	//fun := "Cache.Del-->"
+
 	err := m.redisClient.Del(m.fixKey(key)).Err()
 	if err != nil {
 		return fmt.Errorf("del cache key:%s err:%s", key, err.Error())
