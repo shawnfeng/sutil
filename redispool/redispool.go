@@ -153,7 +153,11 @@ func (self *RedisPool) CmdSingleRetry(addr string, cmd []interface{}, retrytimes
 
 	rp := c.Cmd(cmd)
 	if rp.Type == redis.ErrorReply {
-		slog.Errorf("%s redis Cmd try:%d error %s", fun, retrytimes, rp)
+		if retrytimes > 0 {
+			slog.Errorf("%s redis Cmd try:%d error %s", fun, retrytimes, rp)
+		} else {
+			slog.Warnf("%s redis Cmd try:%d error %s", fun, retrytimes, rp)
+		}
 		if rp.String() == "EOF" {
 			if retrytimes > 0 {
 				return rp
