@@ -2,24 +2,22 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package snetutil
 
-
 import (
-	"fmt"
 	"bytes"
-	"strings"
-	"strconv"
-	"io/ioutil"
-	"net/http"
+	"compress/gzip"
+	"encoding/json"
+	"fmt"
+	"github.com/julienschmidt/httprouter"
 	"io"
+	"io/ioutil"
 	"mime"
 	"mime/multipart"
-	"compress/gzip"
+	"net/http"
 	"net/url"
-	"encoding/json"
-    "github.com/julienschmidt/httprouter"
+	"strconv"
+	"strings"
 
 	"github.com/shawnfeng/sutil/slog"
 )
@@ -43,9 +41,9 @@ func DoWriteResponse(w http.ResponseWriter, header http.Header, cookies []*http.
 		slog.Warnf("%s white response n:%d err:%s", fun, n, err)
 	}
 
-// WriteHeader 必须在Copy之前调用在起作用否则会出错误: http: multiple response.WriteHeader calls
-// w.Header 必须在WriteHeader，Copy之前调用，否则不起作用
-// SetCookie 必须在WriteHeader，Copy之前调用，否则不起作用
+	// WriteHeader 必须在Copy之前调用在起作用否则会出错误: http: multiple response.WriteHeader calls
+	// w.Header 必须在WriteHeader，Copy之前调用，否则不起作用
+	// SetCookie 必须在WriteHeader，Copy之前调用，否则不起作用
 
 }
 
@@ -58,12 +56,11 @@ type HttpResponse interface {
 
 // json形式的response
 type HttpRespJson struct {
-	Status int
-	Body interface{}
-	Header http.Header
+	Status  int
+	Body    interface{}
+	Header  http.Header
 	Cookies []*http.Cookie
 }
-
 
 func (m *HttpRespJson) WriteResponse(w http.ResponseWriter) {
 	fun := "HttpRespJson.Marshal -->"
@@ -80,23 +77,20 @@ func (m *HttpRespJson) WriteResponse(w http.ResponseWriter) {
 
 }
 
-
 func NewHttpRespJson200(body interface{}) HttpResponse {
 	return &HttpRespJson{http.StatusOK, body, nil, nil}
 }
 
-
 func NewHttpRespJson(status int, body interface{}) HttpResponse {
-	return &HttpRespJson{status, body, nil, nil}
+	return &HttpRespJson{validStatusCode(status), body, nil, nil}
 }
-
 
 // byte 形式的response
 type HttpRespBytes struct {
 	Status int
-	Body []byte
+	Body   []byte
 
-	Header http.Header
+	Header  http.Header
 	Cookies []*http.Cookie
 }
 
@@ -106,16 +100,15 @@ func (m *HttpRespBytes) WriteResponse(w http.ResponseWriter) {
 }
 
 func NewHttpRespBytes(status int, body []byte) HttpResponse {
-	return &HttpRespBytes{status, body, nil, nil}
+	return &HttpRespBytes{validStatusCode(status), body, nil, nil}
 }
-
 
 // string 形式的response
 type HttpRespString struct {
 	Status int
-	Body string
+	Body   string
 
-	Header http.Header
+	Header  http.Header
 	Cookies []*http.Cookie
 }
 
@@ -125,32 +118,28 @@ func (m *HttpRespString) WriteResponse(w http.ResponseWriter) {
 }
 
 func NewHttpRespString(status int, body string) HttpResponse {
-	return &HttpRespString{status, body, nil, nil}
+	return &HttpRespString{validStatusCode(status), body, nil, nil}
 }
-
 
 // redirect
 type HttpRespRedirect struct {
 	Status int
-	Url string
-	R *HttpRequest
+	Url    string
+	R      *HttpRequest
 }
 
 func NewHttpRespRedirect(r *HttpRequest, status int, redirectUrl string) HttpResponse {
-	return &HttpRespRedirect{status, redirectUrl, r}
+	return &HttpRespRedirect{validStatusCode(status), redirectUrl, r}
 }
-
 
 func (m *HttpRespRedirect) WriteResponse(w http.ResponseWriter) {
 	http.Redirect(w, m.R.Request(), m.Url, m.Status)
 }
 
-
 // ===============================================
 type keyGet interface {
 	Get(key string) string
 }
-
 
 type reqArgs struct {
 	r keyGet
@@ -159,7 +148,6 @@ type reqArgs struct {
 func NewreqArgs(r keyGet) *reqArgs {
 	return &reqArgs{r}
 }
-
 
 func (m *reqArgs) String(key string) string {
 	return m.r.Get(key)
@@ -187,7 +175,6 @@ func (m *reqArgs) Int32(key string) int32 {
 		return 0
 	}
 
-
 	i, err := strconv.ParseInt(v, 10, 32)
 	if err != nil {
 		slog.Warnf("%s parse int32 v:%s err:%s", fun, v, err)
@@ -210,7 +197,6 @@ func (m *reqArgs) Int64(key string) int64 {
 	return i
 
 }
-
 
 func (m *reqArgs) Bool(key string) bool {
 	fun := "reqArgs.Bool -->"
@@ -251,10 +237,8 @@ func (m *reqQuery) Get(key string) string {
 		//slog.Debugf("%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, m.q)
 	}
 
-
 	return m.q.Get(key)
 }
-
 
 type reqParams struct {
 	p httprouter.Params
@@ -263,7 +247,6 @@ type reqParams struct {
 func (m *reqParams) Get(key string) string {
 	return m.p.ByName(key)
 }
-
 
 // =========================
 type reqCookie struct {
@@ -286,7 +269,6 @@ func (m *reqCookie) Get(key string) string {
 
 }
 
-
 // =========================
 type reqHeader struct {
 	r *http.Request
@@ -296,20 +278,18 @@ func (m *reqHeader) Get(key string) string {
 	return m.r.Header.Get(key)
 }
 
-
-
 // ==========
 type reqBody struct {
-	r *http.Request
+	r    *http.Request
 	body []byte
 }
 
 func (m *reqBody) Binary() []byte {
 	fun := "reqBody.Binary"
 	if m.body == nil {
-		body, err := ioutil.ReadAll(m.r.Body);
+		body, err := ioutil.ReadAll(m.r.Body)
 		if err != nil {
-			if err != io.EOF{
+			if err != io.EOF {
 				slog.Warnf("%s read body %s", fun, err.Error())
 			}
 			slog.Warnf("%s read body %s", fun, err.Error())
@@ -319,7 +299,6 @@ func (m *reqBody) Binary() []byte {
 
 	return m.body
 }
-
 
 func (m *reqBody) BinaryUnGzip() []byte {
 	fun := "reqBody.BinaryUnGzip"
@@ -331,18 +310,16 @@ func (m *reqBody) BinaryUnGzip() []byte {
 		}
 		defer r.Close()
 
-		body, err := ioutil.ReadAll(r);
+		body, err := ioutil.ReadAll(r)
 		if err != nil {
 			slog.Errorf("%s read body %s", fun, err.Error())
 		}
 		m.body = body
 
-
 	}
 
 	return m.body
 }
-
 
 // https://golang.org/pkg/net/http/#Request
 // For server requests the Request Body is always non-nil
@@ -353,13 +330,11 @@ func (m *reqBody) Reader() io.ReadCloser {
 	return m.r.Body
 }
 
-
-
 func (m *reqBody) Json(js interface{}) error {
 
-    dc := json.NewDecoder(bytes.NewBuffer(m.Binary()))
-    dc.UseNumber()
-    err := dc.Decode(js)
+	dc := json.NewDecoder(bytes.NewBuffer(m.Binary()))
+	dc.UseNumber()
+	err := dc.Decode(js)
 	if err != nil {
 		return fmt.Errorf("json unmarshal %s", err.Error())
 	} else {
@@ -367,13 +342,12 @@ func (m *reqBody) Json(js interface{}) error {
 	}
 
 }
-
 
 func (m *reqBody) JsonUnGzip(js interface{}) error {
 
-    dc := json.NewDecoder(bytes.NewBuffer(m.BinaryUnGzip()))
-    dc.UseNumber()
-    err := dc.Decode(js)
+	dc := json.NewDecoder(bytes.NewBuffer(m.BinaryUnGzip()))
+	dc.UseNumber()
+	err := dc.Decode(js)
 	if err != nil {
 		return fmt.Errorf("json unmarshal %s", err.Error())
 	} else {
@@ -381,8 +355,6 @@ func (m *reqBody) JsonUnGzip(js interface{}) error {
 	}
 
 }
-
-
 
 func (m *reqBody) FormValue(key string) string {
 	fun := "reqBody.FormValue -->"
@@ -393,7 +365,6 @@ func (m *reqBody) FormValue(key string) string {
 
 	// 仅仅是为让内部触发对form的parse过程
 	m.r.FormValue(key)
-
 
 	// 参照http package中parsePostForm 实现
 	ct := m.r.Header.Get("Content-Type")
@@ -408,7 +379,6 @@ func (m *reqBody) FormValue(key string) string {
 		slog.Errorf("%s parsemediatype err:%s", fun, err)
 	}
 
-
 	if ct == "application/x-www-form-urlencoded" {
 		if vs := m.r.PostForm[key]; len(vs) > 0 {
 			return vs[0]
@@ -419,7 +389,6 @@ func (m *reqBody) FormValue(key string) string {
 			slog.Warnf("%s multipart/form-data parse nil", fun)
 			return ""
 		}
-
 
 		if vs := m.r.MultipartForm.Value[key]; len(vs) > 0 {
 			return vs[0]
@@ -432,17 +401,15 @@ func (m *reqBody) FormValue(key string) string {
 
 func (m *reqBody) FormValueJson(key string, js interface{}) error {
 
-    dc := json.NewDecoder(strings.NewReader(m.FormValue(key)))
-    dc.UseNumber()
-    err := dc.Decode(js)
+	dc := json.NewDecoder(strings.NewReader(m.FormValue(key)))
+	dc.UseNumber()
+	err := dc.Decode(js)
 	if err != nil {
 		return fmt.Errorf("json unmarshal %s", err.Error())
 	} else {
 		return nil
 	}
 }
-
-
 
 func (m *reqBody) FormFile(key string) ([]byte, *multipart.FileHeader, error) {
 
@@ -451,24 +418,22 @@ func (m *reqBody) FormFile(key string) ([]byte, *multipart.FileHeader, error) {
 		return nil, nil, fmt.Errorf("get form file err:%s", err)
 	}
 
-    data, err := ioutil.ReadAll(file)
+	data, err := ioutil.ReadAll(file)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get form file data err:%s", err)
 	}
 
 	return data, head, nil
 
-
 }
-
 
 // ============================
 // 没有body类的请求
 type HttpRequest struct {
 	r *http.Request
 
-	query *reqArgs
-	params *reqArgs
+	query   *reqArgs
+	params  *reqArgs
 	cookies *reqArgs
 	headers *reqArgs
 
@@ -491,11 +456,9 @@ func (m *HttpRequest) Headers() *reqArgs {
 	return m.headers
 }
 
-
 func (m *HttpRequest) Body() *reqBody {
 	return m.body
 }
-
 
 func (m *HttpRequest) URL() *url.URL {
 	return m.r.URL
@@ -509,30 +472,24 @@ func (m *HttpRequest) RemoteAddr() string {
 	return m.r.RemoteAddr
 }
 
-
 func (m *HttpRequest) Header() http.Header {
 	return m.r.Header
 }
-
 
 func (m *HttpRequest) Request() *http.Request {
 	return m.r
 }
 
-
-
 func NewHttpRequest(r *http.Request, ps httprouter.Params) (*HttpRequest, error) {
-	return &HttpRequest {
-		r: r,
-		query: NewreqArgs(&reqQuery{r: r,}),
-		params: NewreqArgs(&reqParams{ps}),
-		cookies: NewreqArgs(&reqCookie{r: r,}),
-		headers: NewreqArgs(&reqHeader{r: r,}),
-		body: &reqBody{r: r,},
+	return &HttpRequest{
+		r:       r,
+		query:   NewreqArgs(&reqQuery{r: r}),
+		params:  NewreqArgs(&reqParams{ps}),
+		cookies: NewreqArgs(&reqCookie{r: r}),
+		headers: NewreqArgs(&reqHeader{r: r}),
+		body:    &reqBody{r: r},
 	}, nil
 }
-
-
 
 func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{}) (*HttpRequest, error) {
 	hrb, err := NewHttpRequest(r, ps)
@@ -545,18 +502,15 @@ func NewHttpRequestJsonBody(r *http.Request, ps httprouter.Params, js interface{
 		return nil, fmt.Errorf("json unmarshal %s", err.Error())
 	}
 
-
 	return hrb, nil
 
 }
-
 
 type HandleRequest interface {
 	Handle(*HttpRequest) HttpResponse
 }
 
 type FactoryHandleRequest func() HandleRequest
-
 
 func HttpRequestWrapper(fac FactoryHandleRequest) func(http.ResponseWriter, *http.Request, httprouter.Params) {
 	fun := "HttpRequestWrapper -->"
@@ -596,6 +550,17 @@ func HttpRequestJsonBodyWrapper(fac FactoryHandleRequest) func(http.ResponseWrit
 
 }
 
+//see http.checkWriteHeaderCode in net/http/server.go
+func isValidStatusCode(code int) bool {
+	return code >= 100 && code <= 999
+}
+func validStatusCode(code int) int {
+	if isValidStatusCode(code) {
+		return code
+	}
+	slog.Warnf("invalid code %d", code)
+	return http.StatusInternalServerError
+}
 
 // 测试get 获取body ok
 // 测试mutlibody 直接获取body,ok
