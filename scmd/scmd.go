@@ -2,33 +2,40 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package scmd
 
 import (
-	"os"
 	"fmt"
-	"time"
+	"os"
 	"sync"
+	"time"
 )
-
 
 type Scmd struct {
 	name string
 	args []string
+	dir  string
 
 	muProg sync.Mutex
-	prog *progress
+	prog   *progress
 }
 
-func NewScmd(name string, arg ...string) *Scmd {
+func NewScmdWithDir(dir string, name string, arg ...string) *Scmd {
 
-	return &Scmd {
+	return &Scmd{
+		dir:  dir,
 		name: name,
 		args: arg,
 	}
 }
 
+func NewScmd(name string, arg ...string) *Scmd {
+
+	return &Scmd{
+		name: name,
+		args: arg,
+	}
+}
 
 func (m *Scmd) Start() (stdout chan []byte, stderr chan []byte, er error) {
 	m.muProg.Lock()
@@ -39,7 +46,7 @@ func (m *Scmd) Start() (stdout chan []byte, stderr chan []byte, er error) {
 		return
 	}
 
-	m.prog, stdout, stderr, er = Newprogress(m.name, m.args...)
+	m.prog, stdout, stderr, er = Newprogress(m.dir, m.name, m.args...)
 	return
 }
 
@@ -86,7 +93,6 @@ func (m *Scmd) Signal(sig os.Signal) error {
 	return m.prog.Signal(sig)
 
 }
-
 
 func (m *Scmd) IsStop() bool {
 	m.muProg.Lock()
@@ -149,9 +155,6 @@ func (m *Scmd) StartWaitOutput() (stdout []byte, stderr []byte, er error) {
 
 }
 
-
-
-
 func (m *Scmd) StartTimeoutWaitOutput(timeout time.Duration) (stdout []byte, stderr []byte, er error) {
 
 	over := make(chan bool)
@@ -164,7 +167,6 @@ func (m *Scmd) StartTimeoutWaitOutput(timeout time.Duration) (stdout []byte, std
 		}
 	}()
 
-
 	select {
 	case <-over:
 	case <-time.After(timeout):
@@ -172,7 +174,7 @@ func (m *Scmd) StartTimeoutWaitOutput(timeout time.Duration) (stdout []byte, std
 		// 这种问题应该不需要考虑
 		m.Stop(time.Second)
 
-		er =  fmt.Errorf("run timeout")
+		er = fmt.Errorf("run timeout")
 	}
 
 	return

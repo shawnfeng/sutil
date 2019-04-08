@@ -2,30 +2,27 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package scmd
 
 import (
+	"fmt"
 	"io"
 	"os"
-	"time"
-	"fmt"
 	"os/exec"
+	"time"
 
 	"sync"
 	"sync/atomic"
 )
 
-
 type progress struct {
 	muCmd sync.Mutex
-	cmd *exec.Cmd
+	cmd   *exec.Cmd
 
 	waitNotify chan bool
 
-	isStop   int32
+	isStop int32
 }
-
 
 func (m *progress) opCmd(opfun func()) {
 	m.muCmd.Lock()
@@ -36,7 +33,7 @@ func (m *progress) opCmd(opfun func()) {
 }
 
 func makeReaderChan(r io.Reader) (chan []byte, chan bool) {
-    read := make(chan []byte)
+	read := make(chan []byte)
 	over := make(chan bool)
 
 	go func() {
@@ -67,7 +64,6 @@ func makeReaderChan(r io.Reader) (chan []byte, chan bool) {
 	return read, over
 
 }
-
 
 func (m *progress) waitExit(stdoutOver, stderrOver chan bool) {
 	// StdoutPipe returns a pipe that will be connected to the command's standard output when the command starts.
@@ -103,11 +99,14 @@ func (m *progress) waitExit(stdoutOver, stderrOver chan bool) {
 	})
 }
 
-func Newprogress(name string, arg ...string) (prog *progress, stdout chan []byte, stderr chan []byte, er error) {
+func Newprogress(dir, name string, arg ...string) (prog *progress, stdout chan []byte, stderr chan []byte, er error) {
 
 	//fmt.Println("START:", m.name, m.args)
 
 	cmd := exec.Command(name, arg...)
+	if len(dir) > 0 {
+		cmd.Dir = dir
+	}
 
 	stdoutRc, err := cmd.StdoutPipe()
 	if err != nil {
@@ -136,26 +135,22 @@ func Newprogress(name string, arg ...string) (prog *progress, stdout chan []byte
 	stdout, stdoutOver = makeReaderChan(stdoutRc)
 	stderr, stderrOver = makeReaderChan(stderrRc)
 
-
-	prog = &progress {
-		cmd: cmd,
+	prog = &progress{
+		cmd:        cmd,
 		waitNotify: make(chan bool),
 	}
 
-
 	go prog.waitExit(stdoutOver, stderrOver)
-
 
 	return
 
 }
 
-
 // 进程没有挂断，重复kill没有问题
 // stop完成后保证进程已经挂掉
 // 这个接口是goroutine安全的
 func (m *progress) Stop(timeout time.Duration) (er error) {
-    m.opCmd(func() {
+	m.opCmd(func() {
 		err := m.cmd.Process.Kill()
 		if err != nil {
 			er = fmt.Errorf("kill pid:%d err:%v", m.cmd.Process.Pid, err)
@@ -177,7 +172,7 @@ func (m *progress) Stop(timeout time.Duration) (er error) {
 
 // 发送信号
 func (m *progress) Signal(sig os.Signal) (er error) {
-    m.opCmd(func() {
+	m.opCmd(func() {
 		err := m.cmd.Process.Signal(sig)
 		if err != nil {
 			er = fmt.Errorf("send signal pid:%d err:%v", m.cmd.Process.Pid, err)
@@ -186,7 +181,6 @@ func (m *progress) Signal(sig os.Signal) (er error) {
 
 	return er
 }
-
 
 // 这个接口是goroutine安全的
 func (m *progress) IsStop() bool {
@@ -200,15 +194,12 @@ func (m *progress) GetPid() (pid int) {
 	return
 }
 
-
 // 获取procid，超时停止，标准错误、输出chan返回启动、timeout启动、阻塞启动结束后才返回
 // 启动停止，都有error返回，需要判断，stop时候，pid为0时候停止失败
 
-
-// 被kill后，wait输出是: 
+// 被kill后，wait输出是:
 // -9 signal: killed
 // 不带 signal: terminated
-
 
 // wait sh 脚本，
 // sh 被干掉后，wait可以获取都立即的返回，但是pipe确没有马上EOF
@@ -216,7 +207,6 @@ func (m *progress) GetPid() (pid int) {
 
 // 如果直接用cmd 中start获取到process kill，测试没有发现这个问题(发现不是，是启动立即stop是这个效果)
 // 原因是应该因为，还没有产生输出时候，就EOF了，所以就终止了
-
 
 // StdoutPipe returns a pipe that will be connected to the command's standard output when the command starts.
 
@@ -228,7 +218,6 @@ func (m *progress) GetPid() (pid int) {
 // 异步测试没发现什么问题，这里实现，没有严格按照read完，才wait，因为是异步逻辑，可能会有问题么？
 
 // 让wait就单纯的去wait，不要调整pid的逻辑了
-
 
 // os
 // func (p *Process) Release() error
