@@ -27,11 +27,11 @@ func newRedisClient(addr, serverName string, poolSize int) (*RedisClient, error)
 
 	client := redis.NewClient(&redis.Options{
 		Addr:         addr,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
+		DialTimeout:  3 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
 		PoolSize:     poolSize,
-		PoolTimeout:  4 * time.Second,
+		PoolTimeout:  2 * time.Second,
 	})
 
 	pong, err := client.Ping().Result()
