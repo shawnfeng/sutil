@@ -19,10 +19,12 @@ const (
 )
 
 type Config struct {
-	MQType  int
-	MQAddr  []string
-	Topic   string
-	TimeOut time.Duration
+	MQType         int
+	MQAddr         []string
+	Topic          string
+	TimeOut        time.Duration
+	CommitInterval time.Duration
+	Offset         int64
 }
 
 var DefaultConfiger = NewSimpleConfiger()
@@ -57,10 +59,12 @@ func NewSimpleConfiger() Configer {
 
 func (m *SimpleConfig) GetConfig(topic string) *Config {
 	return &Config{
-		MQType:  MQ_TYPE_KAFKA,
-		MQAddr:  m.mqAddr,
-		Topic:   topic,
-		TimeOut: 3 * time.Second,
+		MQType:         MQ_TYPE_KAFKA,
+		MQAddr:         m.mqAddr,
+		Topic:          topic,
+		TimeOut:        3 * time.Second,
+		CommitInterval: 1 * time.Second,
+		Offset:         FirstOffset,
 	}
 }
 
