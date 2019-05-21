@@ -18,12 +18,7 @@ type Msg struct {
 }
 
 func main() {
-	writer, err := mq.NewWriter("palfish.test.test")
-	if err != nil {
-		slog.Errorf("err: %s", err)
-		return
-	}
-	defer writer.Close()
+	topic := "palfish.test.test"
 
 	ctx := context.Background()
 	go func() {
@@ -38,26 +33,23 @@ func main() {
 				Key:   value.Body,
 				Value: value,
 			})
+			err := mq.WriteMsg(ctx, topic, value.Body, value)
+			slog.Infof("in msg: %v, err:%v", value, err)
 		}
-		err := writer.WriteMsgs(ctx, msgs...)
+		err := mq.WriteMsgs(ctx, topic, msgs...)
 		slog.Infof("in msgs: %v, err:%v", msgs, err)
 	}()
-
-	reader, err := mq.NewGroupReader("palfish.test.test", "testid", time.Second)
-	if err != nil {
-		slog.Errorf("err: %s", err)
-		return
-	}
-	defer reader.Close()
 
 	ctx1 := context.Background()
 	go func() {
 		for i := 0; i < 10000; i++ {
 			var msg Msg
-			err := reader.ReadMsg(ctx1, &msg)
+			err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
 			slog.Infof("out msg: %v, err:%v", msg, err)
 		}
 	}()
 
-	time.Sleep(100 * time.Second)
+	defer mq.Close()
+
+	time.Sleep(3 * time.Second)
 }

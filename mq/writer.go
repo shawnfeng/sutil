@@ -11,14 +11,9 @@ import (
 	//"github.com/shawnfeng/sutil/slog"
 )
 
-type Message struct {
-	Key   string
-	Value interface{}
-}
-
 type Writer interface {
 	WriteMsg(ctx context.Context, key string, value interface{}) error
-	WriteMsgs(ctx context.Context, msg ...Message) error
+	WriteMsgs(ctx context.Context, msgs ...Message) error
 	Close() error
 }
 
