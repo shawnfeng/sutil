@@ -12,6 +12,22 @@ import (
 	"time"
 )
 
+type KafkaHandler struct {
+	msg    kafka.Message
+	reader *kafka.Reader
+}
+
+func NewKafkaHandler(reader *kafka.Reader, msg kafka.Message) *KafkaHandler {
+	return &KafkaHandler{
+		msg:    msg,
+		reader: reader,
+	}
+}
+
+func (m *KafkaHandler) CommitMsg(ctx context.Context) error {
+	return m.reader.CommitMessages(ctx, m.msg)
+}
+
 type KafkaReader struct {
 	*kafka.Reader
 }
@@ -45,6 +61,20 @@ func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}) error {
 	}
 
 	return nil
+}
+
+func (m *KafkaReader) FetchMsg(ctx context.Context, v interface{}) (Handler, error) {
+	msg, err := m.FetchMessage(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(msg.Value, v)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewKafkaHandler(m.Reader, msg), nil
 }
 
 func (m *KafkaReader) Close() error {
