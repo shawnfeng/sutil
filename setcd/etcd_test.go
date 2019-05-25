@@ -155,10 +155,10 @@ func TestEtcdInstance_SetTtl(t *testing.T) {
 	t.Log("xxxx", s, i)
 	return
 }
-func TestEtcdInstance_Register(t *testing.T) {
+func TestEtcdInstance_Regist(t *testing.T) {
 	path := testpath("/d1/r2")
 	e := etcdIns.Set(context.Background(), path, "rrr")
-	e = etcdIns.Register(context.Background(), path, "rrr1", time.Second*3, time.Second*10)
+	e = etcdIns.Regist(context.Background(), path, "rrr1", time.Second*3, time.Second*10)
 	if e != nil {
 		t.Error(e)
 		return

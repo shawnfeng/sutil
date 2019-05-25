@@ -120,8 +120,8 @@ func (m *EtcdInstance) SetNx(ctx context.Context, path, val string) error {
 
 	return nil
 }
-func (m *EtcdInstance) Register(ctx context.Context, path, val string, heatbeat time.Duration, ttl time.Duration) error {
-	fun := "EtcdInstance.Register -->"
+func (m *EtcdInstance) Regist(ctx context.Context, path, val string, heatbeat time.Duration, ttl time.Duration) error {
+	fun := "EtcdInstance.Regist -->"
 	var isset = true
 	go func() {
 		for i := 0; ; i++ {
