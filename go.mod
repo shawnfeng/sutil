@@ -3,6 +3,8 @@ module github.com/shawnfeng/sutil
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/bitly/go-simplejson v0.5.0
+
+	github.com/coreos/etcd v3.0.0-beta.0.0.20160712024141-cc26f2c8892e+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
 	github.com/go-redis/redis v6.15.1+incompatible
@@ -21,11 +23,14 @@ require (
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
 	github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c // indirect
 	github.com/stretchrcom/testify v1.2.2 // indirect
+	github.com/ugorji/go v0.0.0-20160531122944-b94837a2404a // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
 
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1
+	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f // indirect
+	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 
 	gopkg.in/mgo.v2 v2.0.0-20141107142503-e2e914857713
