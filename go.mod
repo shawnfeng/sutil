@@ -14,6 +14,7 @@ require (
 	github.com/kaneshin/go-pkg v0.0.0-20150919125626-a8e1479186cf
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.0.0
+	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
@@ -21,6 +22,8 @@ require (
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
 	github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c // indirect
 	github.com/stretchrcom/testify v1.2.2 // indirect
+	github.com/uber/jaeger-client-go v2.16.0+incompatible // indirect
+	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
 
 	go.uber.org/atomic v1.3.2 // indirect
