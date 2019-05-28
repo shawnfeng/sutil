@@ -22,17 +22,17 @@ const (
 )
 
 const (
-	JAEGER_DEBUG_HEADER = "trace-debug-id"
-	JAEGER_BAGGAGE_HEADER = "trace-baggage"
-	TRACE_CONTEXT_HEADER_NAME = "banyu-trace-id"
+	JAEGER_DEBUG_HEADER         = "trace-debug-id"
+	JAEGER_BAGGAGE_HEADER       = "trace-baggage"
+	TRACE_CONTEXT_HEADER_NAME   = "banyu-trace-id"
 	TRACE_BAGGAGE_HEADER_PREFIX = "banyuctx-"
 )
 
 var defaultConfigurator = NewSimpleConfigurator()
 
 type Config struct {
-	TracerType string
-	ServiceName string
+	TracerType   string
+	ServiceName  string
 	TracerConfig interface{}
 }
 
@@ -53,7 +53,6 @@ func NewConfigurator(configType int) (Configurator, error) {
 }
 
 type SimpleConfig struct {
-
 }
 
 func NewSimpleConfigurator() Configurator {
@@ -74,20 +73,20 @@ func (m *SimpleConfig) GetConfig(serviceName string) *Config {
 	}
 
 	return &Config{
-		TracerType:   TRACER_TYPE_JAEGER,
-		ServiceName:  serviceName,
+		TracerType:  TRACER_TYPE_JAEGER,
+		ServiceName: serviceName,
 		TracerConfig: config.Configuration{
-			ServiceName:         serviceName,
-			Disabled:            false,
-			RPCMetrics:          false,
-			Sampler:             &config.SamplerConfig{
-				Type: "const",
+			ServiceName: serviceName,
+			Disabled:    false,
+			RPCMetrics:  false,
+			Sampler: &config.SamplerConfig{
+				Type:  "const",
 				Param: 1,
 			},
-			Reporter:            &config.ReporterConfig{
+			Reporter: &config.ReporterConfig{
 				LocalAgentHostPort: fmt.Sprintf("%s:%s", agentHost, agentPort),
 			},
-			Headers: 			 &jaeger.HeadersConfig{
+			Headers: &jaeger.HeadersConfig{
 				JaegerDebugHeader:        JAEGER_DEBUG_HEADER,
 				JaegerBaggageHeader:      JAEGER_BAGGAGE_HEADER,
 				TraceContextHeaderName:   TRACE_CONTEXT_HEADER_NAME,
@@ -116,4 +115,3 @@ func (m *EtcdConfig) GetConfig(serviceName string) *Config {
 		TracerConfig: nil,
 	}
 }
-
