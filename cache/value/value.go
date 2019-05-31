@@ -22,32 +22,21 @@ type Cache struct {
 	prefix    string
 	load      LoadFunc
 	expire    time.Duration
-
-	client *redis.Client
 }
 
-func NewCache(ctx context.Context, namespace, prefix string, expire time.Duration, load LoadFunc) (*Cache, error) {
-	fun := "NewCache -->"
-
-	client, err := redis.NewClient(ctx, namespace)
-	if err != nil {
-		slog.Errorf("%s NewClient, err:%s", fun, err)
-		return nil, err
-	}
-
+func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Cache {
 	return &Cache{
 		namespace: namespace,
 		prefix:    prefix,
 		load:      load,
-		client:    client,
 		expire:    expire,
-	}, nil
+	}
 }
 
 func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
 
-	err := m.getValueFromCache(key, value)
+	err := m.getValueFromCache(ctx, key, value)
 	if err == nil {
 		return nil
 	}
@@ -58,7 +47,14 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 	slog.Infof("%s miss key: %v, err: %s", fun, key, err)
 
-	return m.loadValueToCache(key)
+	err = m.loadValueToCache(ctx, key)
+	if err != nil {
+		slog.Errorf("%s loadValueToCache key: %s err: %s", fun, key, err)
+		return err
+	}
+
+	//简单处理interface对象构造的问题
+	return m.getValueFromCache(ctx, key, value)
 }
 
 func (m *Cache) Del(ctx context.Context, key interface{}) error {
@@ -70,7 +66,13 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 		return err
 	}
 
-	err = m.client.Del(skey).Err()
+	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
+	if client == nil {
+		slog.Errorf("%s get instance err, namespace: %s", fun, m.namespace)
+		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
+	}
+
+	err = client.Del(skey).Err()
 	if err != nil {
 		return fmt.Errorf("del cache key: %v err: %s", key, err.Error())
 	}
@@ -121,19 +123,26 @@ func (m *Cache) fixKey(key interface{}) (string, error) {
 	return skey, nil
 }
 
-func (m *Cache) getValueFromCache(key, value interface{}) error {
+func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) error {
+	fun := "Cache.getValueFromCache -->"
 
 	skey, err := m.fixKey(key)
 	if err != nil {
 		return err
 	}
 
-	data, err := m.client.Get(skey).Bytes()
+	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
+	if client == nil {
+		slog.Errorf("%s get instance err, namespace: %s", fun, m.namespace)
+		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
+	}
+
+	data, err := client.Get(skey).Bytes()
 	if err != nil {
 		return err
 	}
 
-	slog.Infof("key: %v data: %s", key, string(data))
+	slog.Infof("%s key: %v data: %s", fun, key, string(data))
 
 	err = json.Unmarshal(data, value)
 	if err != nil {
@@ -143,7 +152,7 @@ func (m *Cache) getValueFromCache(key, value interface{}) error {
 	return nil
 }
 
-func (m *Cache) loadValueToCache(key interface{}) error {
+func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 	fun := "Cache.loadValueToCache -->"
 
 	var data []byte
@@ -166,7 +175,13 @@ func (m *Cache) loadValueToCache(key interface{}) error {
 		return err
 	}
 
-	rerr := m.client.Set(skey, data, m.expire*time.Second).Err()
+	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
+	if client == nil {
+		slog.Errorf("%s get instance err, namespace: %s", fun, m.namespace)
+		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
+	}
+
+	rerr := client.Set(skey, data, m.expire*time.Second).Err()
 	if rerr != nil {
 		slog.Errorf("%s set err, cache key: %v rerr: %s", fun, key, rerr)
 	}
