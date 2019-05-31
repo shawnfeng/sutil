@@ -66,3 +66,7 @@ func (m *Client) Incr(key string) *redis.IntCmd {
 func (m *Client) SetNX(key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
 	return m.client.SetNX(m.fixKey(key), value, expiration)
 }
+
+func (m *Client) Close() error {
+	return m.client.Close()
+}
