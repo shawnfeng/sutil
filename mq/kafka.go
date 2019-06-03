@@ -87,9 +87,12 @@ type KafkaWriter struct {
 
 func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
 	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  brokers,
-		Topic:    topic,
-		Balancer: &kafka.Hash{},
+		Brokers:   brokers,
+		Topic:     topic,
+		Balancer:  &kafka.Hash{},
+		BatchSize: 1,
+		//RequiredAcks: 1,
+		//Async:        true,
 	})
 
 	return &KafkaWriter{
