@@ -2,42 +2,49 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package snetutil
 
 import (
-	"os"
-	"io"
-	"strconv"
-	"net"
-	"time"
-	"fmt"
 	"bytes"
-	"io/ioutil"
+	"context"
 	"encoding/binary"
-	"strings"
 	"errors"
+	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
-func IpBetween(from, to, test net.IP) (bool, error) {
-    if from == nil || to == nil || test == nil {
-        return false, fmt.Errorf("An ip input is nil")
-    }
-
-    from16 := from.To16()
-    to16 := to.To16()
-    test16 := test.To16()
-    if from16 == nil || to16 == nil || test16 == nil {
-        return false, fmt.Errorf("An ip did not convert to a 16 byte")
-    }
-
-    if bytes.Compare(test16, from16) >= 0 && bytes.Compare(test16, to16) <= 0 {
-        return true, nil
-    }
-    return false, nil
+var DefaultClient *http.Client = &http.Client{
+	Transport: &http.Transport{
+		MaxIdleConnsPerHost: 128,
+		MaxConnsPerHost:     1024,
+	},
+	Timeout: 0,
 }
 
+func IpBetween(from, to, test net.IP) (bool, error) {
+	if from == nil || to == nil || test == nil {
+		return false, fmt.Errorf("An ip input is nil")
+	}
+
+	from16 := from.To16()
+	to16 := to.To16()
+	test16 := test.To16()
+	if from16 == nil || to16 == nil || test16 == nil {
+		return false, fmt.Errorf("An ip did not convert to a 16 byte")
+	}
+
+	if bytes.Compare(test16, from16) >= 0 && bytes.Compare(test16, to16) <= 0 {
+		return true, nil
+	}
+	return false, nil
+}
 
 func IpBetweenStr(from, to, test string) (bool, error) {
 	return IpBetween(net.ParseIP(from), net.ParseIP(to), net.ParseIP(test))
@@ -47,7 +54,7 @@ func IpBetweenStr(from, to, test string) (bool, error) {
 //172.16.0.0/12：172.16.0.0～172.31.255.255
 //192.168.0.0/16：192.168.0.0～192.168.255.255
 func IsInterIp(ip string) (bool, error) {
-    ok, err := IpBetweenStr("10.0.0.0", "10.255.255.255", ip)
+	ok, err := IpBetweenStr("10.0.0.0", "10.255.255.255", ip)
 	if err != nil {
 		return false, err
 	}
@@ -66,12 +73,9 @@ func IsInterIp(ip string) (bool, error) {
 		}
 	}
 
-
 	return ok, nil
 
 }
-
-
 
 func GetInterIp() (string, error) {
 	addrs, err := net.InterfaceAddrs()
@@ -79,32 +83,32 @@ func GetInterIp() (string, error) {
 		return "", err
 	}
 
-    for _, address := range addrs {
-        // check the address type and if it is not a loopback the display it
-        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-            if ipnet.IP.To4() != nil {
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
 				//fmt.Println(ipnet.IP.String())
-                return ipnet.IP.String(), nil
-            }
-        }
-    }
+				return ipnet.IP.String(), nil
+			}
+		}
+	}
 
 	/*
-	for _, addr := range addrs {
-		//fmt.Printf("Inter %v\n", addr)
-		ip := addr.String()
-		if "10." == ip[:3] {
-			return strings.Split(ip, "/")[0], nil
-		} else if "172." == ip[:4] {
-			return strings.Split(ip, "/")[0], nil
-		} else if "196." == ip[:4] {
-			return strings.Split(ip, "/")[0], nil
-		} else if "192." == ip[:4] {
-			return strings.Split(ip, "/")[0], nil
-		}
+		for _, addr := range addrs {
+			//fmt.Printf("Inter %v\n", addr)
+			ip := addr.String()
+			if "10." == ip[:3] {
+				return strings.Split(ip, "/")[0], nil
+			} else if "172." == ip[:4] {
+				return strings.Split(ip, "/")[0], nil
+			} else if "196." == ip[:4] {
+				return strings.Split(ip, "/")[0], nil
+			} else if "192." == ip[:4] {
+				return strings.Split(ip, "/")[0], nil
+			}
 
-	}
-    */
+		}
+	*/
 
 	return "", errors.New("no inter ip")
 }
@@ -116,23 +120,22 @@ func GetExterIp() (string, error) {
 		return "", err
 	}
 
-
 	for _, addr := range addrs {
 		//fmt.Printf("Inter %v\n", addr)
 		ips := addr.String()
 		idx := strings.LastIndex(ips, "/")
 		if idx == -1 {
-                        continue
+			continue
 		}
 		ipv := net.ParseIP(ips[:idx])
 		if ipv == nil {
-                        continue
+			continue
 		}
 
 		ipv4 := ipv.To4()
 		if ipv4 == nil {
-                        // ipv6
-                        continue
+			// ipv6
+			continue
 		}
 		ip := ipv4.String()
 
@@ -168,7 +171,6 @@ func GetListenAddr(a string) (string, error) {
 		return GetServAddr(addrTcp)
 	}
 
-
 	return addr, nil
 
 }
@@ -189,23 +191,23 @@ func GetServAddr(a net.Addr) (string, error) {
 		return "", fmt.Errorf("ParseIP error:%s", host)
 	}
 	/*
-	fmt.Println("ADDR TYPE", ip,
-		"IsGlobalUnicast",
-		ip.IsGlobalUnicast(),
-		"IsInterfaceLocalMulticast",
-		ip.IsInterfaceLocalMulticast(),
-		"IsLinkLocalMulticast",
-		ip.IsLinkLocalMulticast(),
-		"IsLinkLocalUnicast",
-		ip.IsLinkLocalUnicast(),
-		"IsLoopback",
-		ip.IsLoopback(),
-		"IsMulticast",
-		ip.IsMulticast(),
-		"IsUnspecified",
-		ip.IsUnspecified(),
-	)
-    */
+		fmt.Println("ADDR TYPE", ip,
+			"IsGlobalUnicast",
+			ip.IsGlobalUnicast(),
+			"IsInterfaceLocalMulticast",
+			ip.IsInterfaceLocalMulticast(),
+			"IsLinkLocalMulticast",
+			ip.IsLinkLocalMulticast(),
+			"IsLinkLocalUnicast",
+			ip.IsLinkLocalUnicast(),
+			"IsLoopback",
+			ip.IsLoopback(),
+			"IsMulticast",
+			ip.IsMulticast(),
+			"IsUnspecified",
+			ip.IsUnspecified(),
+		)
+	*/
 
 	raddr := addr
 	if ip.IsUnspecified() {
@@ -222,8 +224,6 @@ func GetServAddr(a net.Addr) (string, error) {
 
 	return raddr, nil
 }
-
-
 
 // Request.RemoteAddress contains port, which we want to remove i.e.:
 // "[::1]:58292" => "[::1]"
@@ -243,7 +243,6 @@ func IpAddrPort(s string) string {
 	return s[idx+1:]
 }
 
-
 // 获取http请求的client的地址
 func IpAddressHttpClient(r *http.Request) string {
 	hdr := r.Header
@@ -261,7 +260,7 @@ func IpAddressHttpClient(r *http.Request) string {
 			parts[i] = strings.TrimSpace(p)
 		}
 		// TODO: should return first non-local address
-		for _, ip := range(parts) {
+		for _, ip := range parts {
 			ok, _ := IsInterIp(ip)
 			if !ok && len(ip) > 5 && "127." != ip[:4] {
 				return ip
@@ -273,8 +272,6 @@ func IpAddressHttpClient(r *http.Request) string {
 	return hdrRealIp
 }
 
-
-
 func PackdataPad(data []byte, pad byte) []byte {
 	sendbuff := make([]byte, 0)
 	// no pad
@@ -283,8 +280,8 @@ func PackdataPad(data []byte, pad byte) []byte {
 	rv := binary.PutUvarint(buff, pacLen)
 
 	sendbuff = append(sendbuff, buff[:rv]...) // len
-	sendbuff = append(sendbuff, data...) //data
-	sendbuff = append(sendbuff, pad) //pad
+	sendbuff = append(sendbuff, data...)      //data
+	sendbuff = append(sendbuff, pad)          //pad
 
 	return sendbuff
 
@@ -294,7 +291,6 @@ func Packdata(data []byte) []byte {
 	return PackdataPad(data, 0)
 }
 
-
 // 最小的消息长度、最大消息长度，数据流，包回调
 // 正常返回解析剩余的数据，nil
 // 否则返回错误
@@ -303,7 +299,7 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 
 		// n == 0: buf too small
 		// n  < 0: value larger than 64 bits (overflow)
-        //     and -n is the number of bytes read
+		//     and -n is the number of bytes read
 		pacLen, sz := binary.Uvarint(packBuff)
 		if sz < 0 {
 			return packBuff, errors.New("package head error")
@@ -320,32 +316,39 @@ func UnPackdata(lenmin uint, lenmax uint, packBuff []byte, readCall func([]byte)
 			return packBuff, errors.New("package too short")
 		}
 
-		apacLen := uint64(sz)+pacLen+1
+		apacLen := uint64(sz) + pacLen + 1
 		if uint64(len(packBuff)) >= apacLen {
 			pad := packBuff[apacLen-1]
 			if pad != 0 {
 				return packBuff, errors.New("package pad error")
 			}
 
-			readCall(packBuff[sz:apacLen-1])
+			readCall(packBuff[sz : apacLen-1])
 			packBuff = packBuff[apacLen:]
 		} else {
 			return packBuff, nil
 		}
 
-
 	}
 
-
 	return nil, errors.New("unknown err")
-
 
 }
 
 func HttpReqGetOk(url string, timeout time.Duration) ([]byte, error) {
 
-	client := &http.Client{Timeout: timeout}
-	response, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	time.AfterFunc(timeout, func() {
+		cancel()
+	})
+	req = req.WithContext(ctx)
+
+	response, err := DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +365,6 @@ func HttpReqGetOk(url string, timeout time.Duration) ([]byte, error) {
 	} else {
 		return body, nil
 	}
-
 
 }
 
@@ -388,17 +390,20 @@ func HttpReqPost(url string, data []byte, timeout time.Duration) ([]byte, int, e
 	return HttpReq(url, "POST", data, timeout)
 }
 
-
 func HttpReq(url, method string, data []byte, timeout time.Duration) ([]byte, int, error) {
-	client := &http.Client{Timeout: timeout}
 
 	reqest, err := http.NewRequest(method, url, bytes.NewReader(data))
 	if err != nil {
 		return nil, 0, err
 	}
-	reqest.Header.Set("Connection","Keep-Alive")
+	reqest.Header.Set("Connection", "Keep-Alive")
+	ctx, cancel := context.WithCancel(context.TODO())
+	time.AfterFunc(timeout, func() {
+		cancel()
+	})
+	reqest = reqest.WithContext(ctx)
 
-	response, err := client.Do(reqest)
+	response, err := DefaultClient.Do(reqest)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -420,8 +425,7 @@ func HttpReqWithHeadOk(url, method string, heads map[string]string, data []byte,
 		return nil, err
 	}
 
-
-    if status < 200 || status > 299 {
+	if status < 200 || status > 299 {
 		return nil, errors.New(fmt.Sprintf("status:%d err:%s", status, body))
 
 	} else {
@@ -430,36 +434,37 @@ func HttpReqWithHeadOk(url, method string, heads map[string]string, data []byte,
 
 }
 
-
 func HttpReqWithHead(url, method string, heads map[string]string, data []byte, timeout time.Duration) ([]byte, int, error) {
-    client := &http.Client{Timeout: timeout}
 
-    reqest, err := http.NewRequest(method, url, bytes.NewReader(data))
-    if err != nil {
-        return nil, 0, err
-    }
+	reqest, err := http.NewRequest(method, url, bytes.NewReader(data))
+	if err != nil {
+		return nil, 0, err
+	}
+	ctx, cancel := context.WithCancel(context.TODO())
+	time.AfterFunc(timeout, func() {
+		cancel()
+	})
+	reqest = reqest.WithContext(ctx)
 
-    for key, val := range heads {
-        reqest.Header.Set(key, val)
-    }
+	for key, val := range heads {
+		reqest.Header.Set(key, val)
+	}
 
-    response, err := client.Do(reqest)
-    if err != nil {
-        return nil, 0, err
-    }
+	response, err := DefaultClient.Do(reqest)
+	if err != nil {
+		return nil, 0, err
+	}
 
-    defer response.Body.Close()
+	defer response.Body.Close()
 
-    body, err := ioutil.ReadAll(response.Body)
-    if err != nil {
-        return nil, 0, err
-    }
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, 0, err
+	}
 
-    return body, response.StatusCode, nil
+	return body, response.StatusCode, nil
 
 }
-
-
 
 func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Duration) (int, error) {
 
@@ -486,22 +491,24 @@ func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Dura
 
 	//slog.Infof("len:%d requrl:%s status:%d", contlen, requrl, resHead.StatusCode)
 
-
-	client := &http.Client{Timeout: timeout}
 	reqest, err := http.NewRequest("GET", requrl, nil)
 	if err != nil {
 		return 0, fmt.Errorf("reg http file geturl:%s requrl:%s err:%s", geturl, requrl, err)
 	}
+	ctx, cancel := context.WithCancel(context.TODO())
+	time.AfterFunc(timeout, func() {
+		cancel()
+	})
+	reqest = reqest.WithContext(ctx)
 
 	reqest.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.110 Safari/537.36")
-
 
 	doGet := func(rge string) (int, error) {
 		//slog.Infof("get file range:%s", rge)
 		if len(rge) > 0 {
 			reqest.Header.Set("Range", rge)
 		}
-		response, err := client.Do(reqest)
+		response, err := DefaultClient.Do(reqest)
 		if err != nil {
 			return 0, fmt.Errorf("http do geturl:%s regurl:%s range:%s err:%s", geturl, requrl, rge, err)
 		}
@@ -521,33 +528,33 @@ func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Dura
 		return doGet("")
 	}
 
-/*
-FROM: https://tools.ietf.org/html/rfc7233
-   Examples of byte-ranges-specifier values:
+	/*
+	   FROM: https://tools.ietf.org/html/rfc7233
+	      Examples of byte-ranges-specifier values:
 
-   o  The first 500 bytes (byte offsets 0-499, inclusive):
+	      o  The first 500 bytes (byte offsets 0-499, inclusive):
 
-        bytes=0-499
+	           bytes=0-499
 
-   o  The second 500 bytes (byte offsets 500-999, inclusive):
+	      o  The second 500 bytes (byte offsets 500-999, inclusive):
 
-        bytes=500-999
+	           bytes=500-999
 
 
-...
-   Additional examples, assuming a representation of length 10000:
+	   ...
+	      Additional examples, assuming a representation of length 10000:
 
-   o  The final 500 bytes (byte offsets 9500-9999, inclusive):
+	      o  The final 500 bytes (byte offsets 9500-9999, inclusive):
 
-        bytes=-500
+	           bytes=-500
 
-   Or:
+	      Or:
 
-        bytes=9500-
+	           bytes=9500-
 
-*/
+	*/
 	var getlen int
-	step := contlen/splitSize
+	step := contlen / splitSize
 	for i := 0; i < step; i++ {
 		rge := fmt.Sprintf("bytes=%d-%d", i*splitSize, i*splitSize+splitSize-1)
 		n, err := doGet(rge)
@@ -557,7 +564,7 @@ FROM: https://tools.ietf.org/html/rfc7233
 		getlen += n
 	}
 
-	if contlen % splitSize > 0 {
+	if contlen%splitSize > 0 {
 		rge := fmt.Sprintf("bytes=%d-", step*splitSize)
 		n, err := doGet(rge)
 		if err != nil {
@@ -566,12 +573,8 @@ FROM: https://tools.ietf.org/html/rfc7233
 		getlen += n
 	}
 
-
 	return getlen, nil
 }
-
-
-
 
 func PackageSplit(conn net.Conn, readtimeout time.Duration, readCall func([]byte)) (bool, []byte, error) {
 	buffer := make([]byte, 2048)
@@ -584,8 +587,6 @@ func PackageSplit(conn net.Conn, readtimeout time.Duration, readCall func([]byte
 			return true, nil, err
 		}
 
-
-
 		packBuff = append(packBuff, buffer[:bytesRead]...)
 
 		packBuff, err = UnPackdata(1, 1024*5, packBuff, readCall)
@@ -593,7 +594,6 @@ func PackageSplit(conn net.Conn, readtimeout time.Duration, readCall func([]byte
 		if err != nil {
 			return false, packBuff, err
 		}
-
 
 	}
 
