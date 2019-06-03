@@ -44,8 +44,9 @@ func main() {
 	go func() {
 		for i := 0; i < 10000; i++ {
 			var msg Msg
-			err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
+			handler, err := mq.FetchMsgByGroup(ctx1, topic, "group2", &msg)
 			slog.Infof("out msg: %v, err:%v", msg, err)
+			handler.CommitMsg(ctx1)
 		}
 	}()
 

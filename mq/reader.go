@@ -12,7 +12,12 @@ import (
 	//"github.com/shawnfeng/sutil/slog"
 )
 
+type Handler interface {
+	CommitMsg(ctx context.Context) error
+}
+
 type Reader interface {
+	FetchMsg(ctx context.Context, value interface{}) (Handler, error)
 	ReadMsg(ctx context.Context, value interface{}) error
 	Close() error
 }

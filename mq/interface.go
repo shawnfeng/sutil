@@ -42,6 +42,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	return writer.WriteMsgs(ctx, msgs...)
 }
 
+// 读完消息后会自动提交offset
 func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) error {
 	fun := "ReadMsgByGroup -->"
 
@@ -55,6 +56,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	return reader.ReadMsg(ctx, value)
 }
 
+//
 func ReadMsgByPartition(ctx context.Context, topic string, partition int, value interface{}) error {
 	fun := "ReadMsgByPartition -->"
 
@@ -66,6 +68,20 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	}
 
 	return reader.ReadMsg(ctx, value)
+}
+
+// 读完消息后不会自动提交offset,需要手动调用Handle.CommitMsg方法来提交offset
+func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (Handler, error) {
+	fun := "FetchMsgByGroup -->"
+
+	//todo flag
+	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
+	if reader == nil {
+		slog.Errorf("%s getReader err, topic: %s", fun, topic)
+		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
+	}
+
+	return reader.FetchMsg(ctx, value)
 }
 
 func Close() {
