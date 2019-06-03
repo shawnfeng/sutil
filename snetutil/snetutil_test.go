@@ -2,15 +2,39 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package snetutil
 
 import (
+	//	"fmt"
 	"testing"
-	"fmt"
-	"net"
+	"time"
 )
 
+/*
+func TestHttpReqGetOk(t *testing.T) {
+
+	data, err := HttpReqGetOk("http://www.baidu.com", time.Millisecond*500)
+	fmt.Printf("data: %s", string(data))
+	fmt.Printf("err: %v", err)
+}
+*/
+
+func Benchmark1(b *testing.B) {
+	for i := 0; i < 1000; i++ { // b.N，测试循环次数
+		go HttpReqGetOk1("http://www.baidu.com", time.Second)
+	}
+	time.Sleep(time.Second * 30)
+}
+
+func Benchmark2(b *testing.B) {
+	for i := 0; i < 1000; i++ { // b.N，测试循环次数
+		go HttpReqGetOk("http://www.baidu.com", time.Second)
+	}
+
+	time.Sleep(time.Second * 30)
+}
+
+/*
 func cmpbyte(a []byte, b []byte) bool {
 
 	if len(a) != len(b) {
@@ -23,11 +47,17 @@ func cmpbyte(a []byte, b []byte) bool {
 		}
 	}
 
-
 	return true
 
 }
 
+func TestGetInterIp(t *testing.T) {
+	//t.Errorf()
+
+	ip, err := GetInterIp()
+	fmt.Printf("GetInterIp:%s %v\n", ip, err)
+
+}
 
 func TestGetInterIp(t *testing.T) {
 	//t.Errorf()
@@ -667,3 +697,4 @@ func TestInterIp(t *testing.T) {
     HandleInterIp(t, "adsadfsdf", false, true)
 
 }
+*/
