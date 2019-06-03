@@ -21,14 +21,14 @@ func TestHttpReqGetOk(t *testing.T) {
 
 func Benchmark1(b *testing.B) {
 	for i := 0; i < 1000; i++ { // b.N，测试循环次数
-		go HttpReqGetOk1("http://www.baidu.com", time.Second)
+		HttpReqGetOk("http://www.baidu.com", time.Second)
 	}
 	time.Sleep(time.Second * 30)
 }
 
 func Benchmark2(b *testing.B) {
 	for i := 0; i < 1000; i++ { // b.N，测试循环次数
-		go HttpReqGetOk("http://www.baidu.com", time.Second)
+		HttpReqGetOk("http://www.baidu.com", time.Second)
 	}
 
 	time.Sleep(time.Second * 30)
