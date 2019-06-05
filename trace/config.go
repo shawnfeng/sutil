@@ -80,7 +80,7 @@ func (m *SimpleConfig) GetConfig(serviceName string) *Config {
 			Disabled:    false,
 			RPCMetrics:  false,
 			Sampler: &config.SamplerConfig{
-				Type:  "const",
+				Type:  jaeger.SamplerTypeRateLimiting,
 				Param: 1,
 			},
 			Reporter: &config.ReporterConfig{
