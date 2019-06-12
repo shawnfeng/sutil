@@ -27,7 +27,7 @@ func NewRouter(data []byte) (*Router, error) {
 		}
 	}(configer)
 	return &Router{
-		configer:  NewSimpleConfiger(data),
+		configer:  configer,
 		instances: NewInstanceManager(factory),
 		stat:      newStat(),
 	}, nil
@@ -47,15 +47,15 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	table := tables[0]
-	dbType, dbName := m.configer.GetTypeAndName(ctx, cluster, table)
-	in := m.instances.Get(ctx, generateKey(dbType, dbName))
+	instance := m.configer.GetInstance(ctx, cluster, table)
+	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
-		return fmt.Errorf("db instance not find: dbname:%s", dbName)
+		return fmt.Errorf("db instance not find: instance:%s", instance)
 	}
 
 	dbsql, ok := in.(*Sql)
 	if !ok {
-		return fmt.Errorf("db instance type error: dbname:%s, dbtype:%s", dbName, in.GetType())
+		return fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
 	}
 
 	db := dbsql.getDB()
@@ -63,7 +63,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	defer func() {
 		dur := st.Duration()
 		m.stat.incQuery(cluster, table, st.Duration())
-		slog.Infof("%s type:%s dbname:%s query:%d", fun, in.GetType(), dbName, dur)
+		slog.Infof("%s type:%s instance:%s query:%d", fun, in.GetType(), instance, dur)
 	}()
 
 	var tmptables []interface{}
@@ -89,8 +89,8 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
 	st := stime.NewTimeStat()
 
-	dbType, dbName := m.configer.GetTypeAndName(ctx, cluster, table)
-	in := m.instances.Get(ctx, generateKey(dbType, dbName))
+	instance := m.configer.GetInstance(ctx, cluster, table)
+	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
 		return fmt.Errorf("db instance not find: cluster:%s table:%s", cluster, table)
 	}

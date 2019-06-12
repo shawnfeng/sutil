@@ -13,7 +13,6 @@ import (
 //var DefaultInstanceManager = NewInstanceManager(Factory)
 
 type Instancer interface {
-	GetKey() string
 	GetType() string
 	Close() error
 }
@@ -29,10 +28,6 @@ func NewInstanceManager(factory FactoryFunc) *InstanceManager {
 	return &InstanceManager{
 		factory: factory,
 	}
-}
-
-func (m *InstanceManager) add(in Instancer) {
-	m.instances.Store(in.GetKey(), in)
 }
 
 func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {

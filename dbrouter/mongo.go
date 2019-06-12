@@ -132,10 +132,6 @@ func (m *dbMongo) getSession(consistency mode) (*mgo.Session, error) {
 	}
 }
 
-func (m *dbMongo) GetKey() string {
-	return generateKey(m.dbType, m.dbName)
-}
-
 func (m *dbMongo) Close() error {
 	return nil
 }

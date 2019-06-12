@@ -7,7 +7,6 @@ package dbrouter
 import (
 	"context"
 	"fmt"
-	//	"github.com/shawnfeng/sutil/slog"
 	"time"
 )
 
@@ -32,24 +31,9 @@ type Config struct {
 }
 
 type Configer interface {
-	GetConfig(ctx context.Context, dbType, dbName string) *Config
-	GetTypeAndName(ctx context.Context, cluster, table string) (dbType, dbName string)
+	GetConfig(ctx context.Context, instance string) *Config
+	GetInstance(ctx context.Context, cluster, table string) (instance string)
 }
-
-/*
-var DefaultConfiger Configer
-
-func InitDefaultConfiger(configType int, data []byte) {
-	//fun := "InitDefaultConfiger -->"
-
-	configer, err := NewConfiger(configType, data)
-	if err != nil {
-		slog.Errorf("%s NewConfiger, configType: %s", configType)
-	}
-
-	DefaultConfiger = configer
-}
-*/
 
 func NewConfiger(configType int, data []byte) (Configer, error) {
 
@@ -76,20 +60,21 @@ func NewSimpleConfiger(data []byte) Configer {
 	}
 }
 
-func (m *SimpleConfig) GetConfig(ctx context.Context, dbType, dbName string) *Config {
-	info := m.parser.GetConfig(dbType, dbName)
+func (m *SimpleConfig) GetConfig(ctx context.Context, instance string) *Config {
+	info := m.parser.GetConfig(instance)
 	return &Config{
-		DBType:   info.dbType,
-		DBAddr:   info.dbAddr,
-		DBName:   info.dbName,
-		UserName: info.userName,
-		PassWord: info.passWord,
+		DBType:   info.DBType,
+		DBAddr:   info.DBAddr,
+		DBName:   info.DBName,
+		UserName: info.UserName,
+		PassWord: info.PassWord,
 		TimeOut:  3 * time.Second,
 	}
 }
 
-func (m *SimpleConfig) GetTypeAndName(ctx context.Context, cluster, table string) (dbType, dbName string) {
-	return m.parser.GetTypeAndName(cluster, table)
+func (m *SimpleConfig) GetInstance(ctx context.Context, cluster, table string) (instance string) {
+	instance = m.parser.GetInstance(cluster, table)
+	return instance
 }
 
 type EtcdConfig struct {
@@ -102,7 +87,7 @@ func NewEtcdConfiger() Configer {
 	}
 }
 
-func (m *EtcdConfig) GetConfig(ctx context.Context, dbType, dbName string) *Config {
+func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
 	//todo etcd router
 	return &Config{
 		DBType:   "",
@@ -113,6 +98,6 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, dbType, dbName string) *Conf
 	}
 }
 
-func (m *EtcdConfig) GetTypeAndName(ctx context.Context, cluster, table string) (dbType, dbName string) {
-	return "", ""
+func (m *EtcdConfig) GetInstance(ctx context.Context, cluster, table string) (instance string) {
+	return ""
 }
