@@ -121,10 +121,6 @@ func (m *Sql) GetType() string {
 	return m.dbType
 }
 
-func (m *Sql) GetKey() string {
-	return generateKey(m.dbType, m.dbName)
-}
-
 func (m *Sql) Close() error {
 	return m.db.Close()
 }

@@ -27,11 +27,12 @@ type dbInsCfg struct {
 }
 
 type dbInsInfo struct {
-	dbType   string
-	dbName   string
-	dbAddr   []string
-	userName string
-	passWord string
+	Instance string
+	DBType   string
+	DBName   string
+	DBAddr   []string `json:"addrs"`
+	UserName string   `json:"user"`
+	PassWord string   `json:"passwd"`
 }
 
 type routeConfig struct {
@@ -48,27 +49,21 @@ func (m *Parser) String() string {
 	return fmt.Sprintf("%s", m.dbCls.clusters)
 }
 
-func (m *Parser) GetTypeAndName(cluster, table string) (string, string) {
-	dbName := m.dbCls.getInstance(cluster, table)
-	info := m.getConfig(dbName)
-	return info.dbType, info.dbName
+func (m *Parser) GetInstance(cluster, table string) string {
+	instance := m.dbCls.getInstance(cluster, table)
+	info := m.getConfig(instance)
+	return info.Instance
 }
 
-func (m *Parser) getConfig(dbName string) *dbInsInfo {
-	if info, ok := m.dbIns[dbName]; ok {
+func (m *Parser) getConfig(instance string) *dbInsInfo {
+	if info, ok := m.dbIns[instance]; ok {
 		return info
 	}
 	return &dbInsInfo{}
 }
 
-func (m *Parser) GetConfig(dbType, dbName string) *dbInsInfo {
-	if info, ok := m.dbIns[dbName]; ok {
-		if info.dbType == dbType {
-			return info
-		}
-	}
-
-	return &dbInsInfo{}
+func (m *Parser) GetConfig(instance string) *dbInsInfo {
+	return m.getConfig(instance)
 }
 
 // 检查用户输入的合法性
@@ -149,13 +144,16 @@ func NewParser(jscfg []byte) (*Parser, error) {
 			slog.Errorf("%s unmarshal err, cfg:%s", fun, string(cfg))
 			continue
 		}
+		info.DBType = dbtype
+		info.DBName = dbname
+		info.Instance = ins
 
-		if _, ok := r.dbIns[info.dbName]; ok {
-			slog.Errorf("%s dbname dup, cfg:%v", fun, string(cfg))
+		if _, ok := r.dbIns[ins]; ok {
+			slog.Errorf("%s dbname dup, ins:%s, cfg:%v", fun, ins, string(cfg))
 			continue
 		}
 
-		r.dbIns[dbname] = &info
+		r.dbIns[ins] = &info
 	}
 
 	cls := cfg.Cluster

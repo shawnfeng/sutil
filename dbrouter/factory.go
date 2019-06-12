@@ -7,31 +7,36 @@ package dbrouter
 import (
 	"context"
 	"fmt"
-	"strings"
+	//"strings"
 )
 
-func parseKey(key string) (dbType, dbName string) {
-	items := strings.Split(key, "-")
-	if len(items) != 2 {
-		return "", ""
-	}
+func parseKey(key string) (instance string) {
+	/*
+		items := strings.Split(key, "-")
+		if len(items) != 2 {
+			return "", ""
+		}
 
-	return items[0], items[1]
+		return items[0], items[1]
+	*/
+
+	return key
 }
 
-func generateKey(dbType, dbName string) string {
-	return fmt.Sprintf("%s-%s", dbType, dbName)
+func generateKey(instance string) string {
+	//return fmt.Sprintf("%s-%s", dbType, dbName)
+	return instance
 }
 
 func Factory(ctx context.Context, key string, configer Configer) (in Instancer, err error) {
-	dbType, dbName := parseKey(key)
+	instance := parseKey(key)
 
-	config := configer.GetConfig(ctx, dbType, dbName)
+	config := configer.GetConfig(ctx, instance)
 	if len(config.DBAddr) == 0 {
 		return nil, fmt.Errorf("config.DBAddr err, key: %s", key)
 	}
 
-	switch dbType {
+	switch config.DBType {
 	case DB_TYPE_MONGO:
 		return NewMongo(config.DBType, config.DBName, config.UserName, config.PassWord, config.DBAddr, config.TimeOut)
 
