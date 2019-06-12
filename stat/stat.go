@@ -1,4 +1,4 @@
-package dbrouter
+package stat
 
 import (
 	"sync"
@@ -12,18 +12,18 @@ type QueryStat struct {
 	Sum          int64
 }
 
-type statReport struct {
+type StatReport struct {
 	mu   sync.RWMutex
 	runs map[string]*QueryStat
 }
 
-func newStat() *statReport {
-	return &statReport{
+func NewStat() *StatReport {
+	return &StatReport{
 		runs: make(map[string]*QueryStat),
 	}
 }
 
-func (m *statReport) getItem(key string) *QueryStat {
+func (m *StatReport) getItem(key string) *QueryStat {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -31,7 +31,7 @@ func (m *statReport) getItem(key string) *QueryStat {
 }
 
 // copy 复制, 复制完后，初始化原值
-func (m *statReport) copyItem(item *QueryStat) *QueryStat {
+func (m *StatReport) copyItem(item *QueryStat) *QueryStat {
 	return &QueryStat{
 		Count: atomic.SwapInt64(&item.Count, 0),
 		Sum:   atomic.SwapInt64(&item.Sum, 0),
@@ -39,7 +39,7 @@ func (m *statReport) copyItem(item *QueryStat) *QueryStat {
 
 }
 
-func (m *statReport) statInfo() []*QueryStat {
+func (m *StatReport) StatInfo() []*QueryStat {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -54,7 +54,7 @@ func (m *statReport) statInfo() []*QueryStat {
 
 }
 
-func (m *statReport) addItem(key string) *QueryStat {
+func (m *StatReport) addItem(key string) *QueryStat {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	// recheck again
@@ -68,7 +68,7 @@ func (m *statReport) addItem(key string) *QueryStat {
 	return m.runs[key]
 }
 
-func (m *statReport) incQuery(cluster, table string, elapse time.Duration) {
+func (m *StatReport) IncQuery(cluster, table string, elapse time.Duration) {
 	key := cluster + "." + table
 
 	item := m.getItem(key)
