@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/shawnfeng/sutil/slog"
+	stat "github.com/shawnfeng/sutil/stat"
 	"github.com/shawnfeng/sutil/stime"
 	"gopkg.in/mgo.v2"
 )
@@ -15,7 +16,7 @@ import (
 type Router struct {
 	configer  Configer
 	instances *InstanceManager
-	stat      *statReport
+	report    *stat.StatReport
 }
 
 func NewRouter(data []byte) (*Router, error) {
@@ -29,12 +30,12 @@ func NewRouter(data []byte) (*Router, error) {
 	return &Router{
 		configer:  configer,
 		instances: NewInstanceManager(factory),
-		stat:      newStat(),
+		report:    stat.NewStat(),
 	}, nil
 }
 
-func (m *Router) StatInfo() []*QueryStat {
-	return m.stat.statInfo()
+func (m *Router) StatInfo() []*stat.QueryStat {
+	return m.report.StatInfo()
 }
 
 func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []interface{}) error, tables ...string) error {
@@ -62,7 +63,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 
 	defer func() {
 		dur := st.Duration()
-		m.stat.incQuery(cluster, table, st.Duration())
+		m.report.IncQuery(cluster, table, st.Duration())
 		slog.Infof("%s type:%s instance:%s query:%d", fun, in.GetType(), instance, dur)
 	}()
 
@@ -115,7 +116,7 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 
 	defer func() {
 		dur := st.Duration()
-		m.stat.incQuery(cluster, table, st.Duration())
+		m.report.IncQuery(cluster, table, st.Duration())
 		slog.Tracef("[MONGO] const:%d cls:%s table:%s dur:%d", consistency, cluster, table, dur)
 	}()
 
