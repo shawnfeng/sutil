@@ -7,6 +7,7 @@ package dbrouter
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/slog"
 	stat "github.com/shawnfeng/sutil/stat"
 	"github.com/shawnfeng/sutil/stime"
@@ -20,7 +21,6 @@ type Router struct {
 }
 
 func NewRouter(data []byte) (*Router, error) {
-
 	configer := NewSimpleConfiger(data)
 	factory := func(configer Configer) func(ctx context.Context, key string) (in Instancer, err error) {
 		return func(ctx context.Context, key string) (in Instancer, err error) {
@@ -40,6 +40,11 @@ func (m *Router) StatInfo() []*stat.QueryStat {
 
 func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []interface{}) error, tables ...string) error {
 	fun := "Router.SqlExec -->"
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
+	if span != nil {
+		defer span.Finish()
+	}
 
 	st := stime.NewTimeStat()
 
@@ -88,6 +93,11 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 }
 
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
+	if span != nil {
+		defer span.Finish()
+	}
+
 	st := stime.NewTimeStat()
 
 	instance := m.configer.GetInstance(ctx, cluster, table)

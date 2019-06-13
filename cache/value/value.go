@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/slog"
 	"time"
@@ -36,6 +37,11 @@ func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Ca
 func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
 
+	span, _ := opentracing.StartSpanFromContext(ctx, "redis.value.Get")
+	if span != nil {
+		defer span.Finish()
+	}
+
 	err := m.getValueFromCache(ctx, key, value)
 	if err == nil {
 		return nil
@@ -59,6 +65,11 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	fun := "Cache.Del -->"
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "redis.value.Del")
+	if span != nil {
+		defer span.Finish()
+	}
 
 	skey, err := m.fixKey(key)
 	if err != nil {
