@@ -82,12 +82,14 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	}
 
 	var payload Payload
-	err := reader.ReadMsg(ctx, &payload)
+	err := reader.ReadMsg(ctx, &payload, value)
 	if err != nil {
 		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
-		//slog.Warnf("%s ReadMsg err, topic: %s", fun, topic)
+	}
 
+	if len(payload.Value) == 0 {
+		return context.TODO(), nil
 	}
 
 	mctx, err := parsePayload(&payload, "mq.ReadMsgByGroup", value)
@@ -114,14 +116,15 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
-	//return reader.ReadMsg(ctx, value)
 	var payload Payload
-	err := reader.ReadMsg(ctx, &payload)
+	err := reader.ReadMsg(ctx, &payload, value)
 	if err != nil {
 		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
-		//slog.Warnf("%s ReadMsg err, topic: %s", fun, topic)
+	}
 
+	if len(payload.Value) == 0 {
+		return context.TODO(), nil
 	}
 
 	mctx, err := parsePayload(&payload, "mq.ReadMsgByPartition", value)
@@ -149,11 +152,14 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	}
 
 	var payload Payload
-	handler, err := reader.FetchMsg(ctx, &payload)
+	handler, err := reader.FetchMsg(ctx, &payload, value)
 	if err != nil {
 		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
-		//slog.Warnf("%s ReadMsg err, topic: %s", fun, topic)
+	}
+
+	if len(payload.Value) == 0 {
+		return context.TODO(), handler, nil
 	}
 
 	mctx, err := parsePayload(&payload, "mq.FetchMsgByGroup", value)
