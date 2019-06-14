@@ -13,7 +13,7 @@ import (
 )
 
 func TestLuaLoad(t *testing.T) {
-	pool := NewRedisPool()
+	pool := NewRedisPool(10)
 
 	err := pool.LoadLuaFile("Test", "./test.luad")
 	slog.Infoln(context.TODO(), err)

@@ -66,7 +66,7 @@ func (m *InstanceManager) newInstance(flag string, role int, topic, groupId stri
 		return NewWriter(topic)
 
 	default:
-		return nil, fmt.Errorf("role %s error", role)
+		return nil, fmt.Errorf("role %d error", role)
 	}
 }
 

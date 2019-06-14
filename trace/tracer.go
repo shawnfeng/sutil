@@ -23,7 +23,7 @@ func InitTracer(tracerType string, serviceName string) error {
 	case TRACER_TYPE_JAEGER:
 		return initJaeger(serviceName)
 	default:
-		return fmt.Errorf("unsupported tracer type:%d", tracerType)
+		return fmt.Errorf("unsupported tracer type:%s", tracerType)
 	}
 }
 

@@ -26,6 +26,6 @@ func NewWriter(topic string) (Writer, error) {
 		return NewKafkaWriter(config.MQAddr, topic), nil
 
 	default:
-		return nil, fmt.Errorf("mqType %s error", mqType)
+		return nil, fmt.Errorf("mqType %d error", mqType)
 	}
 }
