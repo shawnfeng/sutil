@@ -6,6 +6,7 @@
 package redispool
 
 import (
+	"context"
 	"testing"
 	"github.com/fzzy/radix/redis"
 	"github.com/shawnfeng/sutil/slog"
@@ -15,7 +16,7 @@ func TestLuaLoad(t *testing.T) {
 	pool := NewRedisPool()
 
 	err := pool.LoadLuaFile("Test", "./test.luad")
-	slog.Infoln(err)
+	slog.Infoln(context.TODO(), err)
 	if err == nil || err.Error() != "open ./test.luad: no such file or directory" {
 		t.Errorf("error here")
 	}
@@ -36,7 +37,7 @@ func TestLuaLoad(t *testing.T) {
 
 	rp := pool.EvalSingle(addr, "Nothave", args)
 
-	slog.Infoln(rp)
+	slog.Infoln(context.TODO(), rp)
 
 	if "get lua sha1 add:localhost:9600 key:Nothave err:lua not find" != rp.String() {
 		t.Errorf("error here")
@@ -44,7 +45,7 @@ func TestLuaLoad(t *testing.T) {
 
 	rp = pool.EvalSingle(addr, "Test", args)
 
-	slog.Infoln(rp)
+	slog.Infoln(context.TODO(), rp)
 	if rp.Type == redis.ErrorReply {
 		t.Errorf("error here")
 	}

@@ -6,6 +6,7 @@
 package paconn
 
 import (
+	"context"
 	"testing"
 	"fmt"
 	"time"
@@ -16,11 +17,11 @@ import (
 func newagentcb(ag *Agent) {
 	fun := "newagentcb"
 
-	slog.Infof("%s ag:%s", fun, ag)
+	slog.Infof(context.TODO(), "%s ag:%s", fun, ag)
 
 	err := ag.Oneway(0, []byte("Hello Fuck You"), time.Millisecond*100)
 	if err != nil {
-		slog.Errorln(err)
+		slog.Errorln(context.TODO(), err)
 	}
 
 }
@@ -40,7 +41,7 @@ func TestMan(t *testing.T) {
 	)
 
 
-	slog.Infof("%s %s %v", fun, agm.Listenport(), err)
+	slog.Infof(context.TODO(), "%s %s %v", fun, agm.Listenport(), err)
 
 	ag, err := NewAgentFromAddr(
 		fmt.Sprintf("127.0.0.1:%s", agm.Listenport()),
@@ -56,19 +57,19 @@ func TestMan(t *testing.T) {
 	}
 
 
-	slog.Infoln(ag)
+	slog.Infoln(context.TODO(), ag)
 
 
 	err = ag.Oneway(0, []byte("NT"), time.Millisecond*100)
 	if err != nil {
-		slog.Infoln(err)
+		slog.Infoln(context.TODO(), err)
 		t.Errorf("%s oneway %s", fun, err)
 	}
 
-	slog.Infof("%s ^^^^^^^^^^^^^^^^ oneway", fun)
+	slog.Infof(context.TODO(), "%s ^^^^^^^^^^^^^^^^ oneway", fun)
 	btype, res, err := ag.Twoway(2, []byte("NT"), time.Millisecond*100)
 	if err != nil {
-		slog.Warnln(err)
+		slog.Warnln(context.TODO(), err)
 		t.Errorf("%s twoway %s", fun, err)
 	}
 
@@ -77,7 +78,7 @@ func TestMan(t *testing.T) {
 	}
 
 
-	slog.Infof("%s twoway btype:%d res:%s", fun, btype, res)
+	slog.Infof(context.TODO(), "%s twoway btype:%d res:%s", fun, btype, res)
 
 	ag.Close()
 

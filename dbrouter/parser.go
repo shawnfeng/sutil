@@ -5,6 +5,7 @@
 package dbrouter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/shawnfeng/sutil/slog"
@@ -108,14 +109,14 @@ func NewParser(jscfg []byte) (*Parser, error) {
 	var cfg routeConfig
 	err := json.Unmarshal(jscfg, &cfg)
 	if err != nil {
-		slog.Errorf("%s dbrouter config unmarshal:%s", fun, err.Error())
+		slog.Errorf(context.TODO(), "%s dbrouter config unmarshal:%s", fun, err.Error())
 		return r, nil
 	}
 
 	inss := cfg.Instances
 	for ins, db := range inss {
 		if er := checkVarname(ins); er != nil {
-			slog.Errorf("%s instances name config err:%s", fun, err.Error())
+			slog.Errorf(context.TODO(),"%s instances name config err:%s", fun, err.Error())
 			continue
 		}
 
@@ -124,24 +125,24 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		cfg := db.Dbcfg
 
 		if er := checkVarname(dbtype); er != nil {
-			slog.Errorf("%s dbtype instance:%s err:%s", fun, ins, er.Error())
+			slog.Errorf(context.TODO(), "%s dbtype instance:%s err:%s", fun, ins, er.Error())
 			continue
 		}
 
 		if er := checkVarname(dbname); er != nil {
-			slog.Errorf("%sdbname instance:%s err:%s", fun, ins, er.Error())
+			slog.Errorf(context.TODO(), "%sdbname instance:%s err:%s", fun, ins, er.Error())
 			continue
 		}
 
 		if len(cfg) == 0 {
-			slog.Errorf("%s empty dbcfg instance:%s", fun, ins)
+			slog.Errorf(context.TODO(), "%s empty dbcfg instance:%s", fun, ins)
 			continue
 		}
 
 		var info dbInsInfo
 		err := json.Unmarshal(cfg, &info)
 		if err != nil {
-			slog.Errorf("%s unmarshal err, cfg:%s", fun, string(cfg))
+			slog.Errorf(context.TODO(), "%s unmarshal err, cfg:%s", fun, string(cfg))
 			continue
 		}
 		info.DBType = dbtype
@@ -149,7 +150,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		info.Instance = ins
 
 		if _, ok := r.dbIns[ins]; ok {
-			slog.Errorf("%s dbname dup, ins:%s, cfg:%v", fun, ins, string(cfg))
+			slog.Errorf(context.TODO(), "%s dbname dup, ins:%s, cfg:%v", fun, ins, string(cfg))
 			continue
 		}
 
@@ -159,28 +160,28 @@ func NewParser(jscfg []byte) (*Parser, error) {
 	cls := cfg.Cluster
 	for c, ins := range cls {
 		if er := checkVarname(c); er != nil {
-			slog.Errorf("%s cluster config name err:%s", fun, err)
+			slog.Errorf(context.TODO(), "%s cluster config name err:%s", fun, err)
 			continue
 		}
 
 		if len(ins) == 0 {
-			slog.Errorf("%s empty instance in cluster:%s", fun, c)
+			slog.Errorf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
 			continue
 		}
 
 		for _, v := range ins {
 			if len(v.Express) == 0 {
-				slog.Errorf("%s empty express in cluster:%s instance:%s", fun, c, v.Instance)
+				slog.Errorf(context.TODO(), "%s empty express in cluster:%s instance:%s", fun, c, v.Instance)
 				continue
 			}
 
 			if er := checkVarname(v.Match); er != nil {
-				slog.Errorf("%s match in cluster:%s instance:%s err:%s", fun, c, v.Instance, err)
+				slog.Errorf(context.TODO(), "%s match in cluster:%s instance:%s err:%s", fun, c, v.Instance, err)
 				continue
 			}
 
 			if er := checkVarname(v.Instance); er != nil {
-				slog.Errorf("%s instance name in cluster:%s instance:%s err:%s", fun, c, v.Instance, err)
+				slog.Errorf(context.TODO(), "%s instance name in cluster:%s instance:%s err:%s", fun, c, v.Instance, err)
 				continue
 			}
 

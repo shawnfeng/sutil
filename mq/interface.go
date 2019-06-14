@@ -28,7 +28,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 	//todo flag
 	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
 	if writer == nil {
-		slog.Errorf("%s getWriter err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
 	}
 
@@ -46,7 +46,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	//todo flag
 	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
 	if writer == nil {
-		slog.Errorf("%s getWriter err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
 	}
 
@@ -65,7 +65,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
 	if reader == nil {
-		slog.Errorf("%s getReader err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
@@ -84,7 +84,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
 	if reader == nil {
-		slog.Errorf("%s getReader err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
@@ -103,7 +103,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
 	if reader == nil {
-		slog.Errorf("%s getReader err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
