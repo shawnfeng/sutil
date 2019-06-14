@@ -41,7 +41,7 @@ func (m *Router) StatInfo() []*stat.QueryStat {
 func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []interface{}) error, tables ...string) error {
 	fun := "Router.SqlExec -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -93,7 +93,7 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 }
 
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
 	if span != nil {
 		defer span.Finish()
 	}
