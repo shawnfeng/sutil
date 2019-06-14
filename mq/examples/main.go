@@ -25,6 +25,7 @@ func main() {
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
+	ctx = context.WithValue(ctx, "Head", "hahahaha")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
 	if span != nil {
 		defer span.Finish()

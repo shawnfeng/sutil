@@ -14,6 +14,7 @@ import (
 type Payload struct {
 	Carrier opentracing.TextMapCarrier
 	Value   string
+	Head    interface{}
 }
 
 func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {
@@ -30,10 +31,12 @@ func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {
 	if err != nil {
 		return nil, err
 	}
+	head := ctx.Value("Head")
 
 	return &Payload{
 		Carrier: carrier,
 		Value:   string(msg),
+		Head:    head,
 	}, nil
 }
 
@@ -46,6 +49,7 @@ func generateMsgsPayload(ctx context.Context, msgs ...Message) ([]Message, error
 			opentracing.TextMap,
 			carrier)
 	}
+	head := ctx.Value("Head")
 
 	var nmsgs []Message
 	for _, msg := range msgs {
@@ -58,6 +62,7 @@ func generateMsgsPayload(ctx context.Context, msgs ...Message) ([]Message, error
 			Value: &Payload{
 				Carrier: carrier,
 				Value:   string(body),
+				Head:    head,
 			},
 		})
 	}
@@ -76,6 +81,7 @@ func parsePayload(payload *Payload, opName string, value interface{}) (context.C
 	}
 	ctx := context.Background()
 	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx = context.WithValue(ctx, "Head", payload.Head)
 
 	err = json.Unmarshal([]byte(payload.Value), value)
 	if err != nil {

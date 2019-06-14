@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	kafka "github.com/segmentio/kafka-go"
-	"github.com/shawnfeng/sutil/slog"
 	"time"
 )
 
@@ -59,7 +58,6 @@ func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	slog.Infof("%s ReadMsg, msg.Value: %s", "111", string(msg.Value))
 
 	return nil
 }
