@@ -27,12 +27,18 @@ func newContextKV() contextKV {
 func (ckv contextKV) String() string {
 	var parts []string
 
+	if v, ok := ckv[contextKeyTraceID]; ok {
+		parts = append(parts, fmt.Sprintf("%v", v))
+	}
+
 	if v, ok := ckv[contextKeyOpUid]; ok {
-		parts = append(parts, fmt.Sprintf("%s:%v", contextKeyNameOpUid, v), "  ")
+		if uid, uok := v.(uint64); uok {
+			parts = append(parts, fmt.Sprintf("%-10d", uid), "  ")
+		}
 	}
 
 	for k, v := range ckv {
-		if k != contextKeyOpUid {
+		if k != contextKeyOpUid && k != contextKeyTraceID {
 			parts = append(parts, fmt.Sprintf("%s:%v", k, v))
 		}
 	}
@@ -67,8 +73,10 @@ type contextHeader interface {
 	toKV() map[string]interface{}
 }
 
-func extractContext(ctx context.Context, fullHead bool) []interface{} {
-	var v []interface{}
+func extractContext(ctx context.Context, fullHead bool) (v []interface{}) {
+	if ctx == nil {
+		return
+	}
 
 	if err, ckv := extractTraceID(ctx); err == nil {
 		v = append(v, ckv)
@@ -78,7 +86,7 @@ func extractContext(ctx context.Context, fullHead bool) []interface{} {
 		v = append(v, ckv)
 	}
 
-	return v
+	return
 }
 
 func extractContextAsString(ctx context.Context, fullHead bool) (s string) {

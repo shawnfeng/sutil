@@ -155,6 +155,7 @@ func formatFromContext(ctx context.Context, includeHead bool, format string) str
 	if cs := extractContextAsString(ctx, includeHead); cs != "" {
 		return fmt.Sprintf("%s %s", cs, format)
 	}
+
 	return format
 }
 
