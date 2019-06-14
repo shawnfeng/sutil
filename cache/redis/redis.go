@@ -30,7 +30,7 @@ func NewClient(ctx context.Context, namespace string) (*Client, error) {
 
 	pong, err := client.Ping().Result()
 	if err != nil {
-		slog.Errorf("%s ping:%s err:%s", fun, pong, err)
+		slog.Errorf(ctx, "%s ping:%s err:%s", fun, pong, err)
 	}
 
 	return &Client{

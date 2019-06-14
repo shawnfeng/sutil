@@ -5,6 +5,7 @@
 package dbrouter
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -89,7 +90,7 @@ func NewSql(dbtype, dbname, addr, userName, passWord string, timeout time.Durati
 	var err error
 	info.db, err = dial(info)
 	if err != nil {
-		slog.Errorf("%s info:%v, err:%s", fun, *info, err.Error())
+		slog.Errorf(context.TODO(), "%s info:%v, err:%s", fun, *info, err.Error())
 		return nil, err
 	}
 	info.db.SetMaxIdleConns(8)
@@ -108,7 +109,7 @@ func dial(info *Sql) (db *DB, err error) {
 			info.userName, info.passWord, info.dbAddr, info.dbName)
 	}
 
-	slog.Infof("%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
+	slog.Infof(context.TODO(), "%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
 	sqlxdb, err := sqlx.Connect(info.dbType, dataSourceName)
 	return NewDB(sqlxdb), err
 }

@@ -7,6 +7,7 @@ package snetutil
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -38,7 +39,7 @@ func DoWriteResponse(w http.ResponseWriter, header http.Header, cookies []*http.
 
 	n, err := io.Copy(w, body)
 	if err != nil {
-		slog.Warnf("%s white response n:%d err:%s", fun, n, err)
+		slog.Warnf(context.TODO(), "%s white response n:%d err:%s", fun, n, err)
 	}
 
 	// WriteHeader 必须在Copy之前调用在起作用否则会出错误: http: multiple response.WriteHeader calls
@@ -67,7 +68,7 @@ func (m *HttpRespJson) WriteResponse(w http.ResponseWriter) {
 	resp, err := json.Marshal(m.Body)
 
 	if err != nil {
-		slog.Warnf("%s json unmarshal err:%s", fun, err)
+		slog.Warnf(context.TODO(), "%s json unmarshal err:%s", fun, err)
 		DoWriteResponse(w, m.Header, m.Cookies, m.Status, strings.NewReader(err.Error()))
 
 	} else {
@@ -162,7 +163,7 @@ func (m *reqArgs) Int(key string) int {
 
 	i, err := strconv.Atoi(v)
 	if err != nil {
-		slog.Warnf("%s parse int v:%s err:%s", fun, v, err)
+		slog.Warnf(context.TODO(), "%s parse int v:%s err:%s", fun, v, err)
 	}
 	return i
 
@@ -177,7 +178,7 @@ func (m *reqArgs) Int32(key string) int32 {
 
 	i, err := strconv.ParseInt(v, 10, 32)
 	if err != nil {
-		slog.Warnf("%s parse int32 v:%s err:%s", fun, v, err)
+		slog.Warnf(context.TODO(), "%s parse int32 v:%s err:%s", fun, v, err)
 	}
 
 	return int32(i)
@@ -192,7 +193,7 @@ func (m *reqArgs) Int64(key string) int64 {
 
 	i, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
-		slog.Warnf("%s parse int64 v:%s err:%s", fun, v, err)
+		slog.Warnf(context.TODO(), "%s parse int64 v:%s err:%s", fun, v, err)
 	}
 	return i
 
@@ -207,7 +208,7 @@ func (m *reqArgs) Bool(key string) bool {
 
 	i, err := strconv.ParseBool(v)
 	if err != nil {
-		slog.Warnf("%s parse int64 v:%s err:%s", fun, v, err)
+		slog.Warnf(context.TODO(), "%s parse int64 v:%s err:%s", fun, v, err)
 	}
 	return i
 
@@ -226,7 +227,7 @@ func (m *reqQuery) Get(key string) string {
 			var err error
 			m.q, err = url.ParseQuery(m.r.URL.RawQuery)
 			if err != nil {
-				slog.Warnf("%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, err)
+				slog.Warnf(context.TODO(), "%s parse query q:%s err:%s", fun, m.r.URL.RawQuery, err)
 			}
 		}
 
@@ -261,7 +262,7 @@ func (m *reqCookie) Get(key string) string {
 		return ""
 
 	} else if err != nil {
-		slog.Warnf("%s parse cookie key:%s err:%s", fun, key, err)
+		slog.Warnf(context.TODO(), "%s parse cookie key:%s err:%s", fun, key, err)
 		return ""
 	}
 
@@ -290,9 +291,9 @@ func (m *reqBody) Binary() []byte {
 		body, err := ioutil.ReadAll(m.r.Body)
 		if err != nil {
 			if err != io.EOF {
-				slog.Warnf("%s read body %s", fun, err.Error())
+				slog.Warnf(context.TODO(), "%s read body %s", fun, err.Error())
 			}
-			slog.Warnf("%s read body %s", fun, err.Error())
+			slog.Warnf(context.TODO(), "%s read body %s", fun, err.Error())
 		}
 		m.body = body
 	}
@@ -306,13 +307,13 @@ func (m *reqBody) BinaryUnGzip() []byte {
 
 		r, err := gzip.NewReader(m.r.Body)
 		if err != nil {
-			slog.Errorf("%s unzip body %s", fun, err.Error())
+			slog.Errorf(context.TODO(), "%s unzip body %s", fun, err.Error())
 		}
 		defer r.Close()
 
 		body, err := ioutil.ReadAll(r)
 		if err != nil {
-			slog.Errorf("%s read body %s", fun, err.Error())
+			slog.Errorf(context.TODO(), "%s read body %s", fun, err.Error())
 		}
 		m.body = body
 
@@ -376,7 +377,7 @@ func (m *reqBody) FormValue(key string) string {
 	var err error
 	ct, _, err = mime.ParseMediaType(ct)
 	if err != nil {
-		slog.Errorf("%s parsemediatype err:%s", fun, err)
+		slog.Errorf(context.TODO(), "%s parsemediatype err:%s", fun, err)
 	}
 
 	if ct == "application/x-www-form-urlencoded" {
@@ -386,7 +387,7 @@ func (m *reqBody) FormValue(key string) string {
 
 	} else if ct == "multipart/form-data" {
 		if m.r.MultipartForm == nil {
-			slog.Warnf("%s multipart/form-data parse nil", fun)
+			slog.Warnf(context.TODO(), "%s multipart/form-data parse nil", fun)
 			return ""
 		}
 
@@ -518,7 +519,7 @@ func HttpRequestWrapper(fac FactoryHandleRequest) func(http.ResponseWriter, *htt
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		req, err := NewHttpRequest(r, ps)
 		if err != nil {
-			slog.Warnf("%s new request err:%s", fun, err)
+			slog.Warnf(context.TODO(), "%s new request err:%s", fun, err)
 			http.Error(w, "new request err:"+err.Error(), 400)
 			return
 		}
@@ -538,7 +539,7 @@ func HttpRequestJsonBodyWrapper(fac FactoryHandleRequest) func(http.ResponseWrit
 		newme := fac()
 		req, err := NewHttpRequestJsonBody(r, ps, newme)
 		if err != nil {
-			slog.Warnf("%s body json err:%s", fun, err)
+			slog.Warnf(context.TODO(), "%s body json err:%s", fun, err)
 			http.Error(w, "json unmarshal err:"+err.Error(), 400)
 			return
 		}
@@ -558,7 +559,7 @@ func validStatusCode(code int) int {
 	if isValidStatusCode(code) {
 		return code
 	}
-	slog.Warnf("invalid code %d", code)
+	slog.Warnf(context.TODO(), "invalid code %d", code)
 	return http.StatusInternalServerError
 }
 

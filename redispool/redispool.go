@@ -5,6 +5,7 @@
 package redispool
 
 import (
+	"context"
 	"crypto/sha1"
 	"errors"
 	"fmt"
@@ -46,11 +47,11 @@ func (self *RedisEntry) Cmd(args []interface{}) *redis.Reply {
 
 func (self *RedisEntry) close() {
 	fun := "RedisEntry.close"
-	slog.Infof("%s re:%s", fun, self)
+	slog.Infof(context.TODO(), "%s re:%s", fun, self)
 
 	err := self.client.Close()
 	if err != nil {
-		slog.Infof("%s err re:%s err:%s", fun, self, err)
+		slog.Infof(context.TODO(), "%s err re:%s err:%s", fun, self, err)
 	}
 
 }
@@ -72,7 +73,7 @@ type RedisPool struct {
 
 func (self *RedisPool) add(addr string) (*RedisEntry, error) {
 	fun := "RedisPool.add"
-	slog.Infof("%s addr:%s", fun, addr)
+	slog.Infof(context.TODO(), "%s addr:%s", fun, addr)
 
 	c, err := redis.DialTimeout("tcp", addr, time.Duration(300)*time.Second)
 	if err != nil {
@@ -119,7 +120,7 @@ func (self *RedisPool) get(addr string) (*RedisEntry, error) {
 	var entry *RedisEntry
 	select {
 	case entry = <-po:
-		//slog.Infof("%s get:%s len:%d", fun, addr, len(po))
+		//slog.Infof(context.TODO(), "%s get:%s len:%d", fun, addr, len(po))
 	default:
 		entry, err = self.add(addr)
 	}
@@ -134,9 +135,9 @@ func (self *RedisPool) payback(addr string, re *RedisEntry) {
 
 	select {
 	case po <- re:
-		//slog.Infof("%s payback:%s len:%d", fun, addr, len(po))
+		//slog.Infof(context.TODO(), "%s payback:%s len:%d", fun, addr, len(po))
 	default:
-		slog.Errorf("%s full not payback:%s len:%d", fun, addr, len(po))
+		slog.Errorf(context.TODO(), "%s full not payback:%s len:%d", fun, addr, len(po))
 		re.close()
 	}
 }
@@ -147,16 +148,16 @@ func (self *RedisPool) CmdSingleRetry(addr string, cmd []interface{}, retrytimes
 	c, err := self.get(addr)
 	if err != nil {
 		es := fmt.Sprintf("get conn retrytimes:%d addr:%s err:%s", retrytimes, addr, err)
-		slog.Infoln(fun, es)
+		slog.Infoln(context.TODO(), fun, es)
 		return &redis.Reply{Type: redis.ErrorReply, Err: errors.New(es)}
 	}
 
 	rp := c.Cmd(cmd)
 	if rp.Type == redis.ErrorReply {
 		if retrytimes > 0 {
-			slog.Warnf("%s redis Cmd try:%d error %s", fun, retrytimes, rp)
+			slog.Warnf(context.TODO(), "%s redis Cmd try:%d error %s", fun, retrytimes, rp)
 		} else {
-			slog.Warnf("%s redis Cmd try:%d error %s", fun, retrytimes, rp)
+			slog.Warnf(context.TODO(), "%s redis Cmd try:%d error %s", fun, retrytimes, rp)
 		}
 		if rp.String() == "EOF" {
 			if retrytimes > 0 {
@@ -212,7 +213,7 @@ func (self *RedisPool) LoadLuaFile(key, file string) error {
 	h := sha1.Sum(data)
 	hex := fmt.Sprintf("%x", h)
 
-	slog.Infof("RedisPool.loadLuaFile key:%s sha1:%s file:%s", key, hex, file)
+	slog.Infof(context.TODO(), "RedisPool.loadLuaFile key:%s sha1:%s file:%s", key, hex, file)
 
 	self.muLua.Lock()
 	defer self.muLua.Unlock()
@@ -238,7 +239,7 @@ func (self *RedisPool) EvalSingle(addr string, key string, cmd_args []interface{
 	cmd := append([]interface{}{"evalsha", sha1}, cmd_args...)
 	rp := self.CmdSingle(addr, cmd)
 	if rp.Type == redis.ErrorReply && rp.String() == "NOSCRIPT No matching script. Please use EVAL." {
-		slog.Infoln(fun, "load lua", addr)
+		slog.Infoln(context.TODO(), fun, "load lua", addr)
 		cmd[0] = "eval"
 		cmd[1], _ = self.dataLua(key)
 		rp = self.CmdSingle(addr, cmd)

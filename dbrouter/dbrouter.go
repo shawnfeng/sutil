@@ -69,7 +69,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	defer func() {
 		dur := st.Duration()
 		m.report.IncQuery(cluster, table, st.Duration())
-		slog.Tracef("%s cls:%s table:%s dur:%d", fun, cluster, table, dur)
+		slog.Tracef(ctx, "%s cls:%s table:%s dur:%d", fun, cluster, table, dur)
 	}()
 
 	var tmptables []interface{}
@@ -129,7 +129,7 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 	defer func() {
 		dur := st.Duration()
 		m.report.IncQuery(cluster, table, st.Duration())
-		slog.Tracef("%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
+		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
 
 	return query(c)

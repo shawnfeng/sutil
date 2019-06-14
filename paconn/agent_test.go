@@ -6,6 +6,7 @@
 package paconn
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"time"
@@ -19,13 +20,13 @@ import (
 func serverNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 
 	fun := "serverNotify"
-	slog.Infof("%s %s %d %v %s", fun, a, btype, data, data)
+	slog.Infof(context.TODO(), "%s %s %d %v %s", fun, a, btype, data, data)
 
 	if "NT" == string(data) {
-		slog.Infof(">>>>%s use not timeout", fun)
+		slog.Infof(context.TODO(), ">>>>%s use not timeout", fun)
 		return btype+1, []byte("OK")
 	} else {
-		slog.Infof("%s use timeout", fun)
+		slog.Infof(context.TODO(), "%s use timeout", fun)
 		time.Sleep(time.Second * time.Duration(1))
 		return btype+1, []byte("TIMEOUT")
 	}
@@ -38,7 +39,7 @@ func serverNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 func serverNotifyOneway(a *Agent, btype int32, data []byte) {
 
 	fun := "serverNotifyOneway"
-	slog.Infof("%s %s %v %s", fun, a, data, data)
+	slog.Infof(context.TODO(), "%s %s %v %s", fun, a, data, data)
 
 
 }
@@ -47,7 +48,7 @@ func serverNotifyOneway(a *Agent, btype int32, data []byte) {
 func serverClose(a *Agent, data []byte, err error) {
 	fun := "serverClose"
 
-	slog.Infof("%s %s %v %s %s", fun, a, data, data, err)
+	slog.Infof(context.TODO(), "%s %s %v %s %s", fun, a, data, data, err)
 }
 
 func WaitLink(t *testing.T) string {
@@ -57,18 +58,18 @@ func WaitLink(t *testing.T) string {
 
 	tcpAddr, error := net.ResolveTCPAddr("tcp", addr)
 
-	slog.Infof("%s %s %v %s %s", fun, tcpAddr, error, tcpAddr.Network(), tcpAddr.String())
+	slog.Infof(context.TODO(), "%s %s %v %s %s", fun, tcpAddr, error, tcpAddr.Network(), tcpAddr.String())
 
 	if error != nil {
-		slog.Panicf("%s Error: Could not resolve address %s", fun, error)
+		slog.Panicf(context.TODO(), "%s Error: Could not resolve address %s", fun, error)
 	}
 
 
 	netListen, error := net.Listen(tcpAddr.Network(), tcpAddr.String())
 
-	slog.Infof("%s listen:%s", fun, netListen.Addr())
+	slog.Infof(context.TODO(), "%s listen:%s", fun, netListen.Addr())
 	if error != nil {
-		slog.Panicf("%s Error: Could not Listen %s", fun, error)
+		slog.Panicf(context.TODO(), "%s Error: Could not Listen %s", fun, error)
 
 	}
 
@@ -76,17 +77,17 @@ func WaitLink(t *testing.T) string {
 	addr = netListen.Addr().String()
 
 	port := snetutil.IpAddrPort(addr)
-	slog.Infoln(port)
+	slog.Infoln(context.TODO(), port)
 
 
 	usetestaddrPort := fmt.Sprintf("%s:%s", "127.0.0.1", port)
 	go func() {
 		defer netListen.Close()
 	for {
-		//slog.Infof("%s Waiting for clients", fun)
+		//slog.Infof(context.TODO(), "%s Waiting for clients", fun)
 		conn, error := netListen.Accept()
 		if error != nil {
-			slog.Warnf("%s Agent error: %s", fun, error)
+			slog.Warnf(context.TODO(), "%s Agent error: %s", fun, error)
 			t.Errorf("%s", error)
 			return
 		} else {
@@ -101,7 +102,7 @@ func WaitLink(t *testing.T) string {
 		
 			)
 
-			slog.Infoln("S:", ag)
+			slog.Infoln(context.TODO(), "S:", ag)
 
 		}
 	}
@@ -114,7 +115,7 @@ func WaitLink(t *testing.T) string {
 func clientNotifyOneway(a *Agent, btype int32, data []byte) {
 
 	fun := "clientNotifyOneway"
-	slog.Infof("%s %s %d %v %s", fun, a, btype, data, data)
+	slog.Infof(context.TODO(), "%s %s %d %v %s", fun, a, btype, data, data)
 
 }
 
@@ -122,7 +123,7 @@ func clientNotifyOneway(a *Agent, btype int32, data []byte) {
 func clientNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 
 	fun := "clientNotify"
-	slog.Infof("%s %s %d %v %s", fun, a, btype, data, data)
+	slog.Infof(context.TODO(), "%s %s %d %v %s", fun, a, btype, data, data)
 
 	return btype+1, []byte("OK")
 
@@ -132,7 +133,7 @@ func clientNotify(a *Agent, btype int32, data []byte) (int32, []byte) {
 func clientClose(a *Agent, data []byte, err error) {
 	fun := "clientClose"
 
-	slog.Infof("%s %s %v %s %s", fun, a, data, data, err)
+	slog.Infof(context.TODO(), "%s %s %v %s %s", fun, a, data, data, err)
 }
 
 
@@ -155,19 +156,19 @@ func clientAgent(t *testing.T, addrport string) {
 	}
 
 
-	slog.Infoln(ag)
+	slog.Infoln(context.TODO(), ag)
 
 
 	err = ag.Oneway(1, []byte("NT"), time.Millisecond*100)
 	if err != nil {
-		slog.Infoln(err)
+		slog.Infoln(context.TODO(), err)
 		t.Errorf("%s oneway %s", fun, err)
 	}
 
-	slog.Infof("%s ^^^^^^^^^^^^^^^^ oneway", fun)
+	slog.Infof(context.TODO(), "%s ^^^^^^^^^^^^^^^^ oneway", fun)
 	btype, res, err := ag.Twoway(2, []byte("NT"), time.Millisecond*100)
 	if err != nil {
-		slog.Warnln(err)
+		slog.Warnln(context.TODO(), err)
 		t.Errorf("%s twoway %s", fun, err)
 	}
 
@@ -175,7 +176,7 @@ func clientAgent(t *testing.T, addrport string) {
 		t.Errorf("%s twoway rv btype:%d ", fun, btype)
 	}
 
-	slog.Infof("%s twoway btype:%d res:%s", fun, btype, res)
+	slog.Infof(context.TODO(), "%s twoway btype:%d res:%s", fun, btype, res)
 
 	ag.Close()
 

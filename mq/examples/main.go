@@ -43,10 +43,10 @@ func main() {
 				Value: value,
 			})
 			err := mq.WriteMsg(ctx, topic, value.Body, value)
-			slog.Infof("in msg: %v, err:%v", value, err)
+			slog.Infof(ctx, "in msg: %v, err:%v", value, err)
 		}
 		err := mq.WriteMsgs(ctx, topic, msgs...)
-		slog.Infof("in msgs: %v, err:%v", msgs, err)
+		slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
 	}()
 
 	go func() {
@@ -54,7 +54,7 @@ func main() {
 			var msg Msg
 			ctx1 := context.Background()
 			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
-			slog.Infof("out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			slog.Infof(ctx, "out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 		}
 	}()
 

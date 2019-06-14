@@ -6,6 +6,7 @@
 package stext
 
 import (
+	"context"
 	"testing"
 	"unicode/utf8"
 	"github.com/shawnfeng/sutil/slog"
@@ -15,7 +16,7 @@ import (
 func TestSymb(t *testing.T) {
 	s, err := NewSymbolList("symbol.list")
 	if err != nil {
-		slog.Errorln("load symbol")
+		slog.Errorln(context.TODO(), "load symbol")
 	}
 
 
@@ -28,14 +29,14 @@ func TestSymb(t *testing.T) {
 	for len(b) > 0 {
 		r, size := utf8.DecodeRune(b)
 		if s.Is(r) {
-			slog.Infof("%c", r)
+			slog.Infof(context.TODO(), "%c", r)
 			pick += string(b[:size])
 		}
 		b = b[size:]
 	}
 
-	slog.Infoln("cmp:", cmp)
-	slog.Infoln("pick:", pick)
+	slog.Infoln(context.TODO(), "cmp:", cmp)
+	slog.Infoln(context.TODO(), "pick:", pick)
 
 	if cmp != pick {
 		t.Errorf("not ok")
@@ -43,20 +44,20 @@ func TestSymb(t *testing.T) {
 
 	rv := BytesToRunesNoSymb(s, bb)
 
-	slog.Infof("%s   %s", bb, rv)
+	slog.Infof(context.TODO(), "%s   %s", bb, rv)
 
 	for i := 0; i < len(rv); i++ {
-		slog.Infof("%c", rv[i])
+		slog.Infof(context.TODO(), "%c", rv[i])
 	}
 
 
 
 	rv = BytesToRunes(bb)
 
-	slog.Infof("%s   %s", bb, rv)
+	slog.Infof(context.TODO(), "%s   %s", bb, rv)
 
 	for i := 0; i < len(rv); i++ {
-		slog.Infof("%c", rv[i])
+		slog.Infof(context.TODO(), "%c", rv[i])
 	}
 
 	//s.Print()

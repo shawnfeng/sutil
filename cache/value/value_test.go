@@ -30,12 +30,12 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}
-	slog.Infof("test: %v", test)
+	slog.Infof(ctx, "test: %v", test)
 
 	//	cache.Del(ctx, 1)
 	err = cache.Get(ctx, 1, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}
-	slog.Infof("test: %v", test)
+	slog.Infof(ctx, "test: %v", test)
 }

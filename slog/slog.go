@@ -5,6 +5,7 @@
 package slog
 
 import (
+	"context"
 	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -150,77 +151,106 @@ func init() {
 	atomic.StoreInt64(&cnStamp, time.Now().Unix())
 }
 
-func Tracef(format string, v ...interface{}) {
+func formatFromContext(ctx context.Context, includeHead bool, format string) string {
+	if cs := extractContextAsString(ctx, includeHead); cs != "" {
+		return fmt.Sprintf("%s %s", cs, format)
+	}
+
+	return format
+}
+
+func vFromContext(ctx context.Context, includeHead bool, v ...interface{}) []interface{} {
+	if vv := extractContext(ctx, includeHead); len(vv) > 0 {
+		return append(vv, append([]interface{}{" "}, v...)...)
+	}
+	return v
+}
+
+func Tracef(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, false, format)
 	lg.Debugf(format, v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
-func Traceln(v ...interface{}) {
+func Traceln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, false, v...)
 	lg.Debug(v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
-func Debugf(format string, v ...interface{}) {
+func Debugf(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, false, format)
 	lg.Debugf(format, v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
-func Debugln(v ...interface{}) {
+func Debugln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, false, v...)
 	lg.Debug(v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
-func Infof(format string, v ...interface{}) {
+func Infof(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, false, format)
 	lg.Infof(format, v...)
 	atomic.AddInt64(&cnInfo, 1)
 }
 
-func Infoln(v ...interface{}) {
+func Infoln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, false, v...)
 	lg.Info(v...)
 	atomic.AddInt64(&cnInfo, 1)
 }
 
-func Warnf(format string, v ...interface{}) {
+func Warnf(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, false, format)
 	lg.Warnf(format, v...)
 	atomic.AddInt64(&cnWarn, 1)
 }
 
-func Warnln(v ...interface{}) {
+func Warnln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, false, v...)
 	lg.Warn(v...)
 	atomic.AddInt64(&cnWarn, 1)
 }
 
-func Errorf(format string, v ...interface{}) {
+func Errorf(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, true, format)
 	lg.Errorf(format, v...)
 	atomic.AddInt64(&cnError, 1)
 	addLogs("ERROR " + fmt.Sprintf(format, v...))
 }
 
-func Errorln(v ...interface{}) {
+func Errorln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, true, v...)
 	lg.Error(v...)
 	atomic.AddInt64(&cnError, 1)
 	addLogs("ERROR " + fmt.Sprintln(v...))
 }
 
-func Fatalf(format string, v ...interface{}) {
+func Fatalf(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, true, format)
 	lg.Fatalf(format, v...)
 	atomic.AddInt64(&cnFatal, 1)
 	addLogs("FATAL " + fmt.Sprintf(format, v...))
 }
 
-func Fatalln(v ...interface{}) {
+func Fatalln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, true, v...)
 	lg.Fatal(v...)
 	atomic.AddInt64(&cnFatal, 1)
 	addLogs("FATAL " + fmt.Sprintln(v...))
 }
 
-func Panicf(format string, v ...interface{}) {
+func Panicf(ctx context.Context, format string, v ...interface{}) {
+	format = formatFromContext(ctx, true, format)
 	lg.Panicf(format, v...)
 	atomic.AddInt64(&cnPanic, 1)
 	addLogs("PANIC " + fmt.Sprintf(format, v...))
 }
 
-func Panicln(v ...interface{}) {
+func Panicln(ctx context.Context, v ...interface{}) {
+	v = vFromContext(ctx, true, v...)
 	lg.Panic(v...)
 	atomic.AddInt64(&cnPanic, 1)
 	addLogs("PANIC " + fmt.Sprintln(v...))
@@ -251,6 +281,6 @@ func GetLogger() *Logger {
 	return &Logger{}
 }
 
-func (m *Logger) Printf(format string, items ...interface{}) {
-	Errorf(format, items...)
+func (m *Logger) Printf(ctx context.Context, format string, items ...interface{}) {
+	Errorf(ctx, format, items...)
 }
