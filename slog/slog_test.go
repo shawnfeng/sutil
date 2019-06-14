@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package slog
 
 import (
@@ -15,21 +14,21 @@ import (
 )
 
 type testHead struct {
-	uid uint64
-	source int32
-	ip string
-	region string
-	dt int32
+	uid     uint64
+	source  int32
+	ip      string
+	region  string
+	dt      int32
 	unionid string
 }
 
 func (th *testHead) toKV() map[string]interface{} {
 	return map[string]interface{}{
-		"uid": th.uid,
-		"source": th.source,
-		"ip": th.ip,
-		"region": th.region,
-		"dt": th.dt,
+		"uid":     th.uid,
+		"source":  th.source,
+		"ip":      th.ip,
+		"region":  th.region,
+		"dt":      th.dt,
 		"unionid": th.unionid,
 	}
 }
@@ -73,25 +72,25 @@ func TestInitLog(t *testing.T) {
 
 func startTestSuite(name string, t *testing.T) {
 	printBar(name)
-	lnCases := []struct{
+	lnCases := []struct {
 		ctx context.Context
-		v []interface{}
-	} {
-		{context.TODO(), []interface{}{"test"}},
-		{context.TODO(), []interface{}{"test", 1, false}},
-		{ctx, []interface{}{"test"}},
-		{ctx, []interface{}{"test", 1, false}},
+		v   []interface{}
+	}{
+		{context.TODO(), []interface{}{"user not found"}},
+		{context.TODO(), []interface{}{"user not found", 1, false}},
+		{ctx, []interface{}{"user not found"}},
+		{ctx, []interface{}{"user not found", 1, false}},
 	}
 
-	fCases := []struct{
-		ctx context.Context
+	fCases := []struct {
+		ctx    context.Context
 		format string
-		v []interface{}
-	} {
-		{context.TODO(), "not param", []interface{}{}},
-		{context.TODO(), "%s err:%v", []interface{}{"failed", errors.New("key not found")}},
+		v      []interface{}
+	}{
+		{context.TODO(), "dbcluster not found", []interface{}{}},
+		{context.TODO(), "%s err:%v", []interface{}{"CheckAuth-->", errors.New("key not found")}},
 		{ctx, "not param", []interface{}{}},
-		{ctx, "%s err:%v", []interface{}{"failed", errors.New("key not found")}},
+		{ctx, "%s err:%v", []interface{}{"CheckAuth-->", errors.New("key not found")}},
 	}
 
 	t.Run("Traceln", func(t *testing.T) {
@@ -196,25 +195,3 @@ func startTestSuite(name string, t *testing.T) {
 func printBar(title string) {
 	fmt.Printf("================= %s =================\n", title)
 }
-
-//func t1(t *testing.T) {
-//
-//	Init("./log", "tt", "TRACE")
-//	Init("./log", "tt", "TRACE")
-//	Init("./log", "tt", "TRACE")
-//
-//
-//	Infoln("log file")
-//
-//
-//	Init("./log", "tt2", "TRACE")
-//
-//
-//	Infoln("log file2")
-//
-//
-//	Init("", "", "TRACE")
-//
-//	Infoln("std out")
-//
-//}

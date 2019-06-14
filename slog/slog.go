@@ -151,97 +151,109 @@ func init() {
 	atomic.StoreInt64(&cnStamp, time.Now().Unix())
 }
 
+func formatFromContext(ctx context.Context, includeHead bool, format string) string {
+	if cs := extractContextAsString(ctx, includeHead); cs != "" {
+		return fmt.Sprintf("%s %s", cs, format)
+	}
+	return format
+}
+
+func vFromContext(ctx context.Context, includeHead bool, v ...interface{}) []interface{} {
+	if vv := extractContext(ctx, includeHead); len(vv) > 0 {
+		return append(vv, append([]interface{}{" "}, v...)...)
+	}
+	return v
+}
+
 func Tracef(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, false))
+	format = formatFromContext(ctx, false, format)
 	lg.Debugf(format, v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Traceln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, false)...)
+	v = vFromContext(ctx, false, v...)
 	lg.Debug(v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
 func Debugf(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, false))
+	format = formatFromContext(ctx, false, format)
 	lg.Debugf(format, v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Debugln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, false)...)
+	v = vFromContext(ctx, false, v...)
 	lg.Debug(v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
 func Infof(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, false))
+	format = formatFromContext(ctx, false, format)
 	lg.Infof(format, v...)
 	atomic.AddInt64(&cnInfo, 1)
 }
 
 func Infoln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, false)...)
+	v = vFromContext(ctx, false, v...)
 	lg.Info(v...)
 	atomic.AddInt64(&cnInfo, 1)
 }
 
 func Warnf(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, false))
+	format = formatFromContext(ctx, false, format)
 	lg.Warnf(format, v...)
 	atomic.AddInt64(&cnWarn, 1)
 }
 
 func Warnln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, false)...)
+	v = vFromContext(ctx, false, v...)
 	lg.Warn(v...)
 	atomic.AddInt64(&cnWarn, 1)
 }
 
 func Errorf(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, true))
+	format = formatFromContext(ctx, true, format)
 	lg.Errorf(format, v...)
 	atomic.AddInt64(&cnError, 1)
 	addLogs("ERROR " + fmt.Sprintf(format, v...))
 }
 
 func Errorln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, true)...)
+	v = vFromContext(ctx, true, v...)
 	lg.Error(v...)
 	atomic.AddInt64(&cnError, 1)
 	addLogs("ERROR " + fmt.Sprintln(v...))
 }
 
 func Fatalf(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, true))
+	format = formatFromContext(ctx, true, format)
 	lg.Fatalf(format, v...)
 	atomic.AddInt64(&cnFatal, 1)
 	addLogs("FATAL " + fmt.Sprintf(format, v...))
 }
 
 func Fatalln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, true)...)
+	v = vFromContext(ctx, true, v...)
 	lg.Fatal(v...)
 	atomic.AddInt64(&cnFatal, 1)
 	addLogs("FATAL " + fmt.Sprintln(v...))
 }
 
 func Panicf(ctx context.Context, format string, v ...interface{}) {
-	format = fmt.Sprintf("%s %s", format, extractContextAsString(ctx, true))
+	format = formatFromContext(ctx, true, format)
 	lg.Panicf(format, v...)
 	atomic.AddInt64(&cnPanic, 1)
 	addLogs("PANIC " + fmt.Sprintf(format, v...))
 }
 
 func Panicln(ctx context.Context, v ...interface{}) {
-	v = append(v, extractContext(ctx, true)...)
+	v = vFromContext(ctx, true, v...)
 	lg.Panic(v...)
 	atomic.AddInt64(&cnPanic, 1)
 	addLogs("PANIC " + fmt.Sprintln(v...))
 }
-
-
 
 func LogStat() (map[string]int64, []string) {
 
