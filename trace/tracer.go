@@ -3,7 +3,6 @@ package trace
 import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
-	"github.com/shawnfeng/sutil/slog"
 	"github.com/uber/jaeger-client-go/config"
 	"io"
 )
@@ -53,7 +52,7 @@ func initJaeger(serviceName string) error {
 		bt = &backTracer{tracer, closer}
 
 		opentracing.SetGlobalTracer(bt.tracer)
-		slog.Infof("%s succeed for %s", fun, serviceName)
+		fmt.Printf("%s succeed for %s\n", fun, serviceName)
 		return nil
 	}
 }
