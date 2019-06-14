@@ -17,8 +17,8 @@ type Handler interface {
 }
 
 type Reader interface {
-	FetchMsg(ctx context.Context, value interface{}) (Handler, error)
-	ReadMsg(ctx context.Context, value interface{}) error
+	FetchMsg(ctx context.Context, value interface{}, ovalue interface{}) (Handler, error)
+	ReadMsg(ctx context.Context, value interface{}, ovalue interface{}) error
 	Close() error
 }
 

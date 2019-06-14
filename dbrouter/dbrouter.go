@@ -41,7 +41,7 @@ func (m *Router) StatInfo() []*stat.QueryStat {
 func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []interface{}) error, tables ...string) error {
 	fun := "Router.SqlExec -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -69,7 +69,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	defer func() {
 		dur := st.Duration()
 		m.report.IncQuery(cluster, table, st.Duration())
-		slog.Infof(ctx, "%s type:%s instance:%s query:%d", fun, in.GetType(), instance, dur)
+		slog.Tracef(ctx, "%s cls:%s table:%s dur:%d", fun, cluster, table, dur)
 	}()
 
 	var tmptables []interface{}
@@ -93,7 +93,9 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 }
 
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
+	fun := "Router.mongoExec -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -127,7 +129,7 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 	defer func() {
 		dur := st.Duration()
 		m.report.IncQuery(cluster, table, st.Duration())
-		slog.Tracef(ctx, "[MONGO] const:%d cls:%s table:%s dur:%d", consistency, cluster, table, dur)
+		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
 
 	return query(c)

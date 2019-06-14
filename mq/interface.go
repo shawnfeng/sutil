@@ -20,7 +20,7 @@ type Message struct {
 func WriteMsg(ctx context.Context, topic string, key string, value interface{}) error {
 	fun := "WriteMsg -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -32,13 +32,19 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
 	}
 
-	return writer.WriteMsg(ctx, key, value)
+	payload, err := generatePayload(ctx, value)
+	if err != nil {
+		slog.Errorf("%s generatePayload err, topic: %s", fun, topic)
+		return fmt.Errorf("%s, generatePayload err, topic: %s", fun, topic)
+	}
+
+	return writer.WriteMsg(ctx, key, payload)
 }
 
 func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	fun := "WriteMsgs -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "mq.WriteMsgs")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsgs")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -50,52 +56,20 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
 	}
 
-	return writer.WriteMsgs(ctx, msgs...)
+	nmsgs, err := generateMsgsPayload(ctx, msgs...)
+	if err != nil {
+		slog.Errorf("%s generateMsgsPayload err, topic: %s", fun, topic)
+		return fmt.Errorf("%s, generateMsgsPayload err, topic: %s", fun, topic)
+	}
+
+	return writer.WriteMsgs(ctx, nmsgs...)
 }
 
 // 读完消息后会自动提交offset
-func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) error {
+func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (context.Context, error) {
 	fun := "ReadMsgByGroup -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
-	if span != nil {
-		defer span.Finish()
-	}
-
-	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
-	if reader == nil {
-		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
-		return fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
-	}
-
-	return reader.ReadMsg(ctx, value)
-}
-
-//
-func ReadMsgByPartition(ctx context.Context, topic string, partition int, value interface{}) error {
-	fun := "ReadMsgByPartition -->"
-
-	span, _ := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
-	if span != nil {
-		defer span.Finish()
-	}
-
-	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
-	if reader == nil {
-		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
-		return fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
-	}
-
-	return reader.ReadMsg(ctx, value)
-}
-
-// 读完消息后不会自动提交offset,需要手动调用Handle.CommitMsg方法来提交offset
-func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (Handler, error) {
-	fun := "FetchMsgByGroup -->"
-
-	span, _ := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -107,7 +81,93 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
-	return reader.FetchMsg(ctx, value)
+	var payload Payload
+	err := reader.ReadMsg(ctx, &payload, value)
+	if err != nil {
+		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
+		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
+	}
+
+	if len(payload.Value) == 0 {
+		return context.TODO(), nil
+	}
+
+	mctx, err := parsePayload(&payload, "mq.ReadMsgByGroup", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+	}
+	return mctx, err
+}
+
+//
+func ReadMsgByPartition(ctx context.Context, topic string, partition int, value interface{}) (context.Context, error) {
+	fun := "ReadMsgByPartition -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
+	if span != nil {
+		defer span.Finish()
+	}
+
+	//todo flag
+	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
+	if reader == nil {
+		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
+		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
+	}
+
+	var payload Payload
+	err := reader.ReadMsg(ctx, &payload, value)
+	if err != nil {
+		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
+		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
+	}
+
+	if len(payload.Value) == 0 {
+		return context.TODO(), nil
+	}
+
+	mctx, err := parsePayload(&payload, "mq.ReadMsgByPartition", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+	}
+	return mctx, err
+}
+
+// 读完消息后不会自动提交offset,需要手动调用Handle.CommitMsg方法来提交offset
+func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (context.Context, Handler, error) {
+	fun := "FetchMsgByGroup -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
+	if span != nil {
+		defer span.Finish()
+	}
+
+	//todo flag
+	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
+	if reader == nil {
+		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
+		return nil, nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
+	}
+
+	var payload Payload
+	handler, err := reader.FetchMsg(ctx, &payload, value)
+	if err != nil {
+		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
+		return nil, nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
+	}
+
+	if len(payload.Value) == 0 {
+		return context.TODO(), handler, nil
+	}
+
+	mctx, err := parsePayload(&payload, "mq.FetchMsgByGroup", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+	}
+	return mctx, handler, err
 }
 
 func Close() {
