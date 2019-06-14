@@ -37,7 +37,7 @@ func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Ca
 func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "redis.value.Get")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Get")
 	if span != nil {
 		defer span.Finish()
 	}
@@ -66,7 +66,7 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	fun := "Cache.Del -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "redis.value.Del")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Del")
 	if span != nil {
 		defer span.Finish()
 	}

@@ -7,8 +7,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
 	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/trace"
 	"time"
 )
 
@@ -18,9 +20,15 @@ type Msg struct {
 }
 
 func main() {
+
+	trace.InitDefaultTracer("mq.test")
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
+	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
+	if span != nil {
+		defer span.Finish()
+	}
 	go func() {
 		var msgs []mq.Message
 		for i := 0; i < 10; i++ {
@@ -40,13 +48,12 @@ func main() {
 		slog.Infof("in msgs: %v, err:%v", msgs, err)
 	}()
 
-	ctx1 := context.Background()
 	go func() {
 		for i := 0; i < 10000; i++ {
 			var msg Msg
-			handler, err := mq.FetchMsgByGroup(ctx1, topic, "group2", &msg)
-			slog.Infof("out msg: %v, err:%v", msg, err)
-			handler.CommitMsg(ctx1)
+			ctx1 := context.Background()
+			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
+			slog.Infof("out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 		}
 	}()
 
