@@ -91,6 +91,10 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	}
 
 	mctx, err := parsePayload(&payload, "mq.ReadMsgByGroup", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+	}
 	return mctx, err
 }
 
@@ -121,6 +125,10 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	}
 
 	mctx, err := parsePayload(&payload, "mq.ReadMsgByPartition", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+	}
 	return mctx, err
 }
 
@@ -149,6 +157,10 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	}
 
 	mctx, err := parsePayload(&payload, "mq.FetchMsgByGroup", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+	}
 	return mctx, handler, err
 }
 
