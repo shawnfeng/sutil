@@ -7,6 +7,7 @@ package mq
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/slog"
 	// kafka "github.com/segmentio/kafka-go"
 )
@@ -18,6 +19,11 @@ type Message struct {
 
 func WriteMsg(ctx context.Context, topic string, key string, value interface{}) error {
 	fun := "WriteMsg -->"
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
+	if span != nil {
+		defer span.Finish()
+	}
 
 	//todo flag
 	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
@@ -31,6 +37,11 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 
 func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	fun := "WriteMsgs -->"
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "mq.WriteMsgs")
+	if span != nil {
+		defer span.Finish()
+	}
 
 	//todo flag
 	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
@@ -46,6 +57,11 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) error {
 	fun := "ReadMsgByGroup -->"
 
+	span, _ := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
+	if span != nil {
+		defer span.Finish()
+	}
+
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
 	if reader == nil {
@@ -60,6 +76,11 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 func ReadMsgByPartition(ctx context.Context, topic string, partition int, value interface{}) error {
 	fun := "ReadMsgByPartition -->"
 
+	span, _ := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
+	if span != nil {
+		defer span.Finish()
+	}
+
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
 	if reader == nil {
@@ -73,6 +94,11 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 // 读完消息后不会自动提交offset,需要手动调用Handle.CommitMsg方法来提交offset
 func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (Handler, error) {
 	fun := "FetchMsgByGroup -->"
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
+	if span != nil {
+		defer span.Finish()
+	}
 
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)

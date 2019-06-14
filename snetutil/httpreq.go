@@ -52,7 +52,7 @@ type HttpResponse interface {
 	WriteResponse(http.ResponseWriter)
 }
 
-// 定义了几种产用的类型的response
+// 定义了几种常用的类型的response
 
 // json形式的response
 type HttpRespJson struct {
@@ -359,7 +359,7 @@ func (m *reqBody) JsonUnGzip(js interface{}) error {
 func (m *reqBody) FormValue(key string) string {
 	fun := "reqBody.FormValue -->"
 	// 获取到content-type，并根据其类型来决策是从r.MultipartForm，获取数据
-	// 还是r.PostForm中获取数据，r.Form实际上市把query中的postform中的，mutlpartform都搞到一起了
+	// 还是r.PostForm中获取数据，r.Form实际上是把query中的postform中的，mutlpartform都搞到一起了
 	// r.PostFrom 对应的content-type为 application/x-www-form-urlencoded
 	// r.MultipartForm 对应的 multipart/form-data
 
