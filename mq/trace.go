@@ -12,9 +12,9 @@ import (
 )
 
 type Payload struct {
-	Carrier opentracing.TextMapCarrier
-	Value   string
-	Head    interface{}
+	Carrier opentracing.TextMapCarrier `json:"c"`
+	Value   string                     `json:"v"`
+	Head    interface{}                `json:"h"`
 }
 
 func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {

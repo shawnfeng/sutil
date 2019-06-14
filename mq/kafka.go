@@ -48,7 +48,7 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 	}
 }
 
-func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}) error {
+func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}, ov interface{}) error {
 	msg, err := m.ReadMessage(ctx)
 	if err != nil {
 		return err
@@ -59,16 +59,26 @@ func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}) error {
 		return err
 	}
 
+	err = json.Unmarshal(msg.Value, ov)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (m *KafkaReader) FetchMsg(ctx context.Context, v interface{}) (Handler, error) {
+func (m *KafkaReader) FetchMsg(ctx context.Context, v interface{}, ov interface{}) (Handler, error) {
 	msg, err := m.FetchMessage(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	err = json.Unmarshal(msg.Value, v)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(msg.Value, ov)
 	if err != nil {
 		return nil, err
 	}
