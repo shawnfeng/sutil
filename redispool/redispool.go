@@ -19,7 +19,7 @@ import (
 
 	"github.com/fzzy/radix/redis"
 
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 const (

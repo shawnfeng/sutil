@@ -7,7 +7,7 @@ import (
 
 	"github.com/fzzy/radix/redis"
 	"github.com/shawnfeng/sutil"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/redispool"
 
 )

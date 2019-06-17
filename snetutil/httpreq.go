@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 func DoWriteResponse(w http.ResponseWriter, header http.Header, cookies []*http.Cookie, status int, body io.Reader) {

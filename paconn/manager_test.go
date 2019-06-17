@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 func newagentcb(ag *Agent) {

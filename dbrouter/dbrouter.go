@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	stat "github.com/shawnfeng/sutil/stat"
 	"github.com/shawnfeng/sutil/stime"
 	"gopkg.in/mgo.v2"

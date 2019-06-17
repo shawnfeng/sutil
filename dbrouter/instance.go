@@ -6,7 +6,7 @@ package dbrouter
 
 import (
 	"context"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
 )
 

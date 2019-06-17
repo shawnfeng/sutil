@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/trace"
 	"time"
 )

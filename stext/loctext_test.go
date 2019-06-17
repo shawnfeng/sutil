@@ -8,7 +8,7 @@ package stext
 import (
 	"context"
 	"testing"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 

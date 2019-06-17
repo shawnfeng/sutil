@@ -11,7 +11,7 @@ import (
 	"net/http"
 
     "github.com/julienschmidt/httprouter"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 

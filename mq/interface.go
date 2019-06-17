@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	// kafka "github.com/segmentio/kafka-go"
 )
 
