@@ -14,7 +14,7 @@ import (
 )
 
 type testHead struct {
-	uid     uint64
+	uid     int64
 	source  int32
 	ip      string
 	region  string
