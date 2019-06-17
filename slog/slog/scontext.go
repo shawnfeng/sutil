@@ -11,8 +11,12 @@ import (
 
 const (
 	contextKeyOpUid     = "uid"
-	contextKeyNameOpUid = "opuid"
 	contextKeyTraceID   = "traceID"
+)
+
+var (
+	emptyTrace = contextKV{contextKeyTraceID: jaeger.TraceID{0, 0}}
+	emptyHead = contextKV{contextKeyOpUid: int64(0)}
 )
 
 var ErrorTraceIDNotFound = errors.New("traceID not found")
@@ -32,7 +36,7 @@ func (ckv contextKV) String() string {
 	}
 
 	if v, ok := ckv[contextKeyOpUid]; ok {
-		if uid, uok := v.(uint64); uok {
+		if uid, uok := v.(int64); uok {
 			parts = append(parts, fmt.Sprintf("%-10d", uid), "  ")
 		}
 	}
@@ -80,10 +84,14 @@ func extractContext(ctx context.Context, fullHead bool) (v []interface{}) {
 
 	if err, ckv := extractTraceID(ctx); err == nil {
 		v = append(v, ckv)
+	} else {
+		v = append(v, emptyTrace)
 	}
 
 	if err, ckv := extractHead(ctx, fullHead); err == nil {
 		v = append(v, ckv)
+	} else {
+		v = append(v, emptyHead)
 	}
 
 	return
