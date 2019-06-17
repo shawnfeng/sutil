@@ -34,7 +34,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 
 	payload, err := generatePayload(ctx, value)
 	if err != nil {
-		slog.Errorf("%s generatePayload err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s generatePayload err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, generatePayload err, topic: %s", fun, topic)
 	}
 
@@ -58,7 +58,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 
 	nmsgs, err := generateMsgsPayload(ctx, msgs...)
 	if err != nil {
-		slog.Errorf("%s generateMsgsPayload err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s generateMsgsPayload err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, generateMsgsPayload err, topic: %s", fun, topic)
 	}
 
@@ -84,7 +84,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	var payload Payload
 	err := reader.ReadMsg(ctx, &payload, value)
 	if err != nil {
-		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
 	}
 
@@ -119,7 +119,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	var payload Payload
 	err := reader.ReadMsg(ctx, &payload, value)
 	if err != nil {
-		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
 	}
 
@@ -154,7 +154,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	var payload Payload
 	handler, err := reader.FetchMsg(ctx, &payload, value)
 	if err != nil {
-		slog.Errorf("%s ReadMsg err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
 	}
 
