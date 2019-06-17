@@ -7,7 +7,7 @@ package mq
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"strings"
 	"sync"
 )

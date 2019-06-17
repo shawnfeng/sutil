@@ -5,7 +5,7 @@ import (
 	"testing"
 	"encoding/json"
 
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 

@@ -20,7 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/shawnfeng/sutil"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
 	"github.com/shawnfeng/sutil/snetutil"
 

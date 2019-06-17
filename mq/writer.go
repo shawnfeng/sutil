@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 	// kafka "github.com/segmentio/kafka-go"
-	//"github.com/shawnfeng/sutil/slog"
+	//"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type Writer interface {

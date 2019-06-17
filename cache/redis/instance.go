@@ -7,7 +7,7 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
 )
 

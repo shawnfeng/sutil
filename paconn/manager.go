@@ -13,7 +13,7 @@ import (
 	"sync"
 
 	"github.com/shawnfeng/sutil/snetutil"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type AgentManager struct {

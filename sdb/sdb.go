@@ -7,7 +7,7 @@ package sdb
 
 import (
 	"context"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"gopkg.in/mgo.v2"
 )
 

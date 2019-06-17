@@ -9,7 +9,7 @@ import (
 	"context"
 	"testing"
 	"unicode/utf8"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 
