@@ -29,24 +29,29 @@ func newContextKV() contextKV {
 }
 
 func (ckv contextKV) String() string {
-	var parts []string
-
 	if v, ok := ckv[contextKeyTraceID]; ok {
-		parts = append(parts, fmt.Sprintf("%v", v))
+		return fmt.Sprintf("%v", v)
 	}
 
+	var parts []string
 	if v, ok := ckv[contextKeyOpUid]; ok {
 		if uid, uok := v.(int64); uok {
-			parts = append(parts, fmt.Sprintf("%-10d", uid), "  ")
+			parts = append(parts, fmt.Sprintf("%d", uid))
 		}
 	}
 
+	var restParts []string
 	for k, v := range ckv {
 		if k != contextKeyOpUid && k != contextKeyTraceID {
-			parts = append(parts, fmt.Sprintf("%s:%v", k, v))
+			restParts = append(restParts, fmt.Sprintf("%s:%v", k, v))
 		}
 	}
-	return strings.Join(parts, " ")
+	if len(restParts) > 0 {
+		parts = append(parts, strings.Join(restParts, " "))
+		return strings.Join(parts, "\t")
+	} else {
+		return strings.Join(parts, "\t") + "\t"
+	}
 }
 
 func extractTraceID(ctx context.Context) (error, contextKV) {
@@ -102,5 +107,5 @@ func extractContextAsString(ctx context.Context, fullHead bool) (s string) {
 	for _, kv := range extractContext(ctx, fullHead) {
 		parts = append(parts, fmt.Sprint(kv))
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(parts, "\t")
 }
