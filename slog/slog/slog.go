@@ -19,8 +19,8 @@ func formatFromContext(ctx context.Context, includeHead bool, format string) str
 }
 
 func vFromContext(ctx context.Context, includeHead bool, v ...interface{}) []interface{} {
-	if vv := extractContext(ctx, includeHead); len(vv) > 0 {
-		return append(vv, append([]interface{}{" "}, v...)...)
+	if cs := extractContextAsString(ctx, includeHead); len(cs) > 0 {
+		return append([]interface{}{cs}, v...)
 	}
 	return v
 }
