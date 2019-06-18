@@ -12,7 +12,7 @@ import (
 
 func formatFromContext(ctx context.Context, includeHead bool, format string) string {
 	if cs := extractContextAsString(ctx, includeHead); cs != "" {
-		return fmt.Sprintf("%s %s", cs, format)
+		return fmt.Sprintf("%s%s", cs, format)
 	}
 
 	return format
