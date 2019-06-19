@@ -12,6 +12,7 @@ import (
 const (
 	contextKeyOpUid     = "uid"
 	contextKeyTraceID   = "traceID"
+	contextKeyHead 		= "Head"
 )
 
 var (
@@ -67,7 +68,7 @@ func extractTraceID(ctx context.Context) (error, contextKV) {
 }
 
 func extractHead(ctx context.Context, fullHead bool) (error, contextKV) {
-	head := ctx.Value("Head")
+	head := ctx.Value(contextKeyHead)
 	if chd, ok := head.(contextHeader); ok {
 		kv := chd.toKV()
 		if fullHead {

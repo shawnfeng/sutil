@@ -14,6 +14,11 @@ import (
 	"gopkg.in/mgo.v2"
 )
 
+const (
+	SpanTagKeyCluster = "cluster"
+	SpanTagKeyTable = "table"
+)
+
 type Router struct {
 	configer  Configer
 	instances *InstanceManager
@@ -42,9 +47,8 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	fun := "Router.SqlExec -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.SetTag(SpanTagKeyCluster, cluster)
 
 	st := stime.NewTimeStat()
 
@@ -53,6 +57,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	table := tables[0]
+	span.SetTag(SpanTagKeyTable, table)
 	instance := m.configer.GetInstance(ctx, cluster, table)
 	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
@@ -96,9 +101,9 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 	fun := "Router.mongoExec -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.SetTag("cluster", cluster)
+	span.SetTag("table", table)
 
 	st := stime.NewTimeStat()
 
