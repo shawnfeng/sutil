@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	SpanTagKeyCluster = "cluster"
-	SpanTagKeyTable = "table"
+	spanTagKeyCluster = "cluster"
+	spanTagKeyTable   = "table"
 )
 
 type Router struct {
@@ -48,7 +48,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
 	defer span.Finish()
-	span.SetTag(SpanTagKeyCluster, cluster)
+	span.SetTag(spanTagKeyCluster, cluster)
 
 	st := stime.NewTimeStat()
 
@@ -57,7 +57,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	table := tables[0]
-	span.SetTag(SpanTagKeyTable, table)
+	span.SetTag(spanTagKeyTable, table)
 	instance := m.configer.GetInstance(ctx, cluster, table)
 	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
@@ -102,8 +102,8 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
 	defer span.Finish()
-	span.SetTag("cluster", cluster)
-	span.SetTag("table", table)
+	span.SetTag(spanTagKeyCluster, cluster)
+	span.SetTag(spanTagKeyTable, table)
 
 	st := stime.NewTimeStat()
 
