@@ -116,7 +116,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 	inss := cfg.Instances
 	for ins, db := range inss {
 		if er := checkVarname(ins); er != nil {
-			slog.Errorf(context.TODO(),"%s instances name config err:%s", fun, err.Error())
+			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, err.Error())
 			continue
 		}
 

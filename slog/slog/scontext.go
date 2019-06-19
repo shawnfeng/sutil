@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	contextKeyOpUid     = "uid"
-	contextKeyTraceID   = "traceID"
-	contextKeyHead 		= "Head"
+	contextKeyOpUid   = "uid"
+	contextKeyTraceID = "traceID"
+	contextKeyHead    = "Head"
 )
 
 var (
 	emptyTrace = contextKV{contextKeyTraceID: jaeger.TraceID{0, 0}}
-	emptyHead = contextKV{contextKeyOpUid: int64(0)}
+	emptyHead  = contextKV{contextKeyOpUid: int64(0)}
 )
 
 var ErrorTraceIDNotFound = errors.New("traceID not found")

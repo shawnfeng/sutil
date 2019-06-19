@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-
 package slog
 
 import "testing"
@@ -11,7 +10,6 @@ func TestShowLog(t *testing.T) {
 	t0(t)
 	t1(t)
 }
-
 
 func t0(t *testing.T) {
 
@@ -23,7 +21,6 @@ func t0(t *testing.T) {
 	Fatalf("Fatalf %s", "TT")
 	//Panicf("Panicf %s", "TT")
 
-
 	Traceln("Trace %s", "TT")
 	Debugln("Debug %s", "TT")
 	Infoln("Info %s", "TT")
@@ -32,12 +29,10 @@ func t0(t *testing.T) {
 	Fatalln("Fatal", "TT")
 	//Panicln("Panic %s", "TT")
 
-
 	Infoln("FF")
 	Infoln("FF")
 
 }
-
 
 func t1(t *testing.T) {
 
@@ -45,15 +40,11 @@ func t1(t *testing.T) {
 	Init("./log", "tt", "TRACE")
 	Init("./log", "tt", "TRACE")
 
-
 	Infoln("log file")
-
 
 	Init("./log", "tt2", "TRACE")
 
-
 	Infoln("log file2")
-
 
 	Init("", "", "TRACE")
 
