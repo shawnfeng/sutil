@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/slog/slog"
 	stat "github.com/shawnfeng/sutil/stat"
 	"github.com/shawnfeng/sutil/stime"
@@ -15,8 +16,8 @@ import (
 )
 
 const (
-	spanTagKeyCluster = "cluster"
-	spanTagKeyTable   = "table"
+	spanLogKeyCluster = "cluster"
+	spanLogKeyTable   = "table"
 )
 
 type Router struct {
@@ -48,7 +49,6 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
 	defer span.Finish()
-	span.SetTag(spanTagKeyCluster, cluster)
 
 	st := stime.NewTimeStat()
 
@@ -57,7 +57,9 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	table := tables[0]
-	span.SetTag(spanTagKeyTable, table)
+	span.LogFields(
+		log.String(spanLogKeyCluster, cluster),
+		log.String(spanLogKeyTable, table))
 	instance := m.configer.GetInstance(ctx, cluster, table)
 	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
@@ -102,8 +104,9 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
 	defer span.Finish()
-	span.SetTag(spanTagKeyCluster, cluster)
-	span.SetTag(spanTagKeyTable, table)
+	span.LogFields(
+		log.String(spanLogKeyCluster, cluster),
+		log.String(spanLogKeyTable, table))
 
 	st := stime.NewTimeStat()
 
