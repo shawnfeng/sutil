@@ -10,13 +10,14 @@ import (
 )
 
 const (
-	contextKeyOpUid     = "uid"
-	contextKeyTraceID   = "traceID"
+	contextKeyOpUid   = "uid"
+	contextKeyTraceID = "traceID"
+	contextKeyHead    = "Head"
 )
 
 var (
 	emptyTrace = contextKV{contextKeyTraceID: jaeger.TraceID{0, 0}}
-	emptyHead = contextKV{contextKeyOpUid: int64(0)}
+	emptyHead  = contextKV{contextKeyOpUid: int64(0)}
 )
 
 var ErrorTraceIDNotFound = errors.New("traceID not found")
@@ -67,7 +68,7 @@ func extractTraceID(ctx context.Context) (error, contextKV) {
 }
 
 func extractHead(ctx context.Context, fullHead bool) (error, contextKV) {
-	head := ctx.Value("Head")
+	head := ctx.Value(contextKeyHead)
 	if chd, ok := head.(contextHeader); ok {
 		kv := chd.toKV()
 		if fullHead {

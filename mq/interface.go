@@ -8,8 +8,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/slog/slog"
 	// kafka "github.com/segmentio/kafka-go"
+)
+
+const (
+	spanLogKeyKey       = "key"
+	spanLogKeyTopic     = "topic"
+	spanLogKeyGroupId   = "groupId"
+	spanLogKeyPartition = "partition"
 )
 
 type Message struct {
@@ -21,9 +29,10 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 	fun := "WriteMsg -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic),
+		log.String(spanLogKeyKey, key))
 
 	//todo flag
 	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
@@ -45,9 +54,8 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	fun := "WriteMsgs -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsgs")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.LogFields(log.String(spanLogKeyTopic, topic))
 
 	//todo flag
 	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
@@ -70,9 +78,10 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	fun := "ReadMsgByGroup -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic),
+		log.String(spanLogKeyGroupId, groupId))
 
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
@@ -96,6 +105,9 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	mspan := opentracing.SpanFromContext(mctx)
 	if mspan != nil {
 		defer mspan.Finish()
+		mspan.LogFields(
+			log.String(spanLogKeyTopic, topic),
+			log.String(spanLogKeyGroupId, groupId))
 	}
 	return mctx, err
 }
@@ -105,9 +117,10 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	fun := "ReadMsgByPartition -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic),
+		log.Int(spanLogKeyPartition, partition))
 
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
@@ -131,6 +144,9 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	mspan := opentracing.SpanFromContext(mctx)
 	if mspan != nil {
 		defer mspan.Finish()
+		mspan.LogFields(
+			log.String(spanLogKeyTopic, topic),
+			log.Int(spanLogKeyPartition, partition))
 	}
 	return mctx, err
 }
@@ -140,9 +156,10 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	fun := "FetchMsgByGroup -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic),
+		log.String(spanLogKeyGroupId, groupId))
 
 	//todo flag
 	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
@@ -166,6 +183,9 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	mspan := opentracing.SpanFromContext(mctx)
 	if mspan != nil {
 		defer mspan.Finish()
+		mspan.LogFields(
+			log.String(spanLogKeyTopic, topic),
+			log.String(spanLogKeyGroupId, groupId))
 	}
 	return mctx, handler, err
 }
