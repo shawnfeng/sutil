@@ -69,18 +69,18 @@ func extractTraceID(ctx context.Context) (error, contextKV) {
 
 func extractHead(ctx context.Context, fullHead bool) (error, contextKV) {
 	head := ctx.Value(contextKeyHead)
-	if chd, ok := head.(contextHeader); ok {
-		kv := chd.toKV()
+	if chd, ok := head.(ContextHeader); ok {
+		kv := chd.ToKV()
 		if fullHead {
-			return nil, contextKV(chd.toKV())
+			return nil, contextKV(chd.ToKV())
 		}
 		return nil, contextKV(map[string]interface{}{contextKeyOpUid: kv[contextKeyOpUid]})
 	}
 	return ErrorHeadKVNotFound, nil
 }
 
-type contextHeader interface {
-	toKV() map[string]interface{}
+type ContextHeader interface {
+	ToKV() map[string]interface{}
 }
 
 func extractContext(ctx context.Context, fullHead bool) (v []interface{}) {

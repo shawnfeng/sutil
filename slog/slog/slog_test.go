@@ -22,7 +22,7 @@ type testHead struct {
 	unionid string
 }
 
-func (th *testHead) toKV() map[string]interface{} {
+func (th *testHead) ToKV() map[string]interface{} {
 	return map[string]interface{}{
 		"uid":     th.uid,
 		"source":  th.source,
