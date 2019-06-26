@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	"github.com/shawnfeng/sutil/scontext"
 )
 
 type Payload struct {
@@ -31,7 +32,7 @@ func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {
 	if err != nil {
 		return nil, err
 	}
-	head := ctx.Value("Head")
+	head := ctx.Value(scontext.ContextKeyHead)
 
 	return &Payload{
 		Carrier: carrier,
@@ -49,7 +50,7 @@ func generateMsgsPayload(ctx context.Context, msgs ...Message) ([]Message, error
 			opentracing.TextMap,
 			carrier)
 	}
-	head := ctx.Value("Head")
+	head := ctx.Value(scontext.ContextKeyHead)
 
 	var nmsgs []Message
 	for _, msg := range msgs {
@@ -81,7 +82,7 @@ func parsePayload(payload *Payload, opName string, value interface{}) (context.C
 	}
 	ctx := context.Background()
 	ctx = opentracing.ContextWithSpan(ctx, span)
-	ctx = context.WithValue(ctx, "Head", payload.Head)
+	ctx = context.WithValue(ctx, scontext.ContextKeyHead, payload.Head)
 
 	err = json.Unmarshal([]byte(payload.Value), value)
 	if err != nil {
