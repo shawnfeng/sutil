@@ -1,4 +1,4 @@
-package salog
+package statlog
 
 import (
 	"context"
