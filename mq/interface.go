@@ -12,7 +12,6 @@ import (
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
 	"time"
-
 	// kafka "github.com/segmentio/kafka-go"
 )
 

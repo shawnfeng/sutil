@@ -16,7 +16,7 @@ type Payload struct {
 	Carrier opentracing.TextMapCarrier `json:"c"`
 	Value   string                     `json:"v"`
 	Head    interface{}                `json:"h"`
-	Control interface{}				   `json:"t"`
+	Control interface{}                `json:"t"`
 }
 
 func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {
