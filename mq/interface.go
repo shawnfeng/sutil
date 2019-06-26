@@ -55,7 +55,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 	defer func() {
 		dur := st.Duration()
 		if dur > mqOpDurationLimit {
-			slog.Infof(ctx, "%s topic:%s dur:%d", fun, topic, dur)
+			slog.Infof(ctx, "%s slow topic:%s dur:%d", fun, topic, dur)
 		}
 	}()
 
@@ -86,7 +86,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	defer func() {
 		dur := st.Duration()
 		if dur > mqOpDurationLimit {
-			slog.Infof(ctx, "%s topic:%s dur:%d", fun, topic, dur)
+			slog.Infof(ctx, "%s slow topic:%s dur:%d", fun, topic, dur)
 		}
 	}()
 
@@ -117,7 +117,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 
 	dur := st.Duration()
 	if dur > mqOpDurationLimit {
-		slog.Infof(ctx, "%s topic:%s groupId:%s dur:%d", fun, topic, groupId, dur)
+		slog.Infof(ctx, "%s slow topic:%s groupId:%s dur:%d", fun, topic, groupId, dur)
 	}
 
 	if err != nil {
@@ -164,7 +164,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 
 	dur := st.Duration()
 	if dur > mqOpDurationLimit {
-		slog.Infof(ctx, "%s topic:%s partition:%d dur:%d", fun, topic, partition, dur)
+		slog.Infof(ctx, "%s slow topic:%s partition:%d dur:%d", fun, topic, partition, dur)
 	}
 
 	if err != nil {
@@ -211,7 +211,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 
 	dur := st.Duration()
 	if dur > mqOpDurationLimit {
-		slog.Infof(ctx, "%s topic:%s groupId:%s dur:%d", fun, topic, groupId, dur)
+		slog.Infof(ctx, "%s slow topic:%s groupId:%s dur:%d", fun, topic, groupId, dur)
 	}
 
 	if err != nil {
