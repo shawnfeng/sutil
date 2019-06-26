@@ -58,4 +58,18 @@ func TestLog(t *testing.T) {
 			"k4", []int{1, 2, 3},
 			"k5", &sa{"world", 0})
 	})
+
+	t.Run("ignore non-equal keys and values", func(t *testing.T) {
+		LogKV(context.TODO(), "method3", "k1", 0,
+			"k2", "hello",
+			"k3", true,
+			"k4", []int{1, 2, 3},
+			"k5")
+	})
+
+	t.Run("fail-fast if key is not of string type", func(t *testing.T) {
+		LogKV(context.TODO(), "method4",
+			0, "k1",
+			"k2", 1)
+	})
 }

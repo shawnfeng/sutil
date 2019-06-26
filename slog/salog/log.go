@@ -61,16 +61,12 @@ func Init(logDir, logPref string, service string) {
 
 	w := zapcore.AddSync(out)
 	enc := zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-		MessageKey:     "",
-		LevelKey:       "",
-		TimeKey:        "",
-		NameKey:        "",
-		CallerKey:      "",
-		StacktraceKey:  "",
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.EpochMillisTimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+		MessageKey:    "",
+		LevelKey:      "",
+		TimeKey:       "",
+		NameKey:       "",
+		CallerKey:     "",
+		StacktraceKey: "",
 	})
 	core := zapcore.NewCore(enc, w, zap.InfoLevel)
 	lg = zap.New(core).Sugar()
