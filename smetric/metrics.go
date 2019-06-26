@@ -22,21 +22,6 @@ var (
 	DefaultMetrics = newMetrics()
 )
 
-const (
-	Name_space_palfish          = "palfish"
-	Name_server_req_total       = "server_request_total"
-	Name_server_duration_second = "server_duration_second"
-	Label_instance              = "instance"
-	Label_servname              = "servname"
-	Label_servid                = "servid"
-	Label_api                   = "api"
-	Label_type                  = "type"
-	Label_source                = "source"
-	Label_status                = "status"
-	Status_succ                 = 1
-	Status_fail                 = 0
-)
-
 // MetricsOpts is used to configure the Metrics
 type MetricsOpts struct {
 	DefBuckets  []float64
