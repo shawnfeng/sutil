@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/trace"
 	"time"
@@ -25,7 +26,7 @@ func main() {
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "Head", "hahahaha")
+	ctx = context.WithValue(ctx, scontext.ContextKeyHead, "hahahaha")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
 	if span != nil {
 		defer span.Finish()

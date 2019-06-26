@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/trace"
 	"testing"
 )
@@ -41,7 +42,7 @@ func init() {
 	span := tracer.StartSpan("testlog")
 	ctx = context.Background()
 	ctx = opentracing.ContextWithSpan(ctx, span)
-	ctx = context.WithValue(ctx, "Head", &testHead{
+	ctx = context.WithValue(ctx, scontext.ContextKeyHead, &testHead{
 		uid:     1234,
 		source:  5678,
 		ip:      "192.168.0.1",
@@ -54,7 +55,7 @@ func init() {
 	lspan := tracer.StartSpan("ltestlog")
 	lctx = context.Background()
 	lctx = opentracing.ContextWithSpan(lctx, lspan)
-	lctx = context.WithValue(lctx, "Head", &testHead{
+	lctx = context.WithValue(lctx, scontext.ContextKeyHead, &testHead{
 		uid:     1234567890,
 		source:  5678,
 		ip:      "192.168.0.1",

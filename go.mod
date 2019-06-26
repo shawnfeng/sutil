@@ -16,7 +16,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v0.0.0-20170603225454-8837942c3e09
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.8.0 // indirect
+	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
 	github.com/segmentio/kafka-go v0.2.4

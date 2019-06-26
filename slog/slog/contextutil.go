@@ -5,23 +5,18 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/uber/jaeger-client-go"
 	"strings"
 )
 
-const (
-	contextKeyOpUid   = "uid"
-	contextKeyTraceID = "traceID"
-	contextKeyHead    = "Head"
-)
-
 var (
-	emptyTrace = contextKV{contextKeyTraceID: jaeger.TraceID{0, 0}}
-	emptyHead  = contextKV{contextKeyOpUid: int64(0)}
+	emptyTrace = contextKV{scontext.ContextKeyTraceID: jaeger.TraceID{0, 0}}
+	emptyHead  = contextKV{scontext.ContextKeyHeadUid: int64(0)}
 )
 
-var ErrorTraceIDNotFound = errors.New("traceID not found")
-var ErrorHeadKVNotFound = errors.New("valid context head not found")
+var errorTraceIDNotFound = errors.New("traceID not found")
+var errorHeadKVNotFound = errors.New("valid context head not found")
 
 type contextKV map[string]interface{}
 
@@ -30,12 +25,12 @@ func newContextKV() contextKV {
 }
 
 func (ckv contextKV) String() string {
-	if v, ok := ckv[contextKeyTraceID]; ok {
+	if v, ok := ckv[scontext.ContextKeyTraceID]; ok {
 		return fmt.Sprintf("%v", v)
 	}
 
 	var parts []string
-	if v, ok := ckv[contextKeyOpUid]; ok {
+	if v, ok := ckv[scontext.ContextKeyHeadUid]; ok {
 		if uid, uok := v.(int64); uok {
 			parts = append(parts, fmt.Sprintf("%d", uid))
 		}
@@ -43,7 +38,7 @@ func (ckv contextKV) String() string {
 
 	var restParts []string
 	for k, v := range ckv {
-		if k != contextKeyOpUid && k != contextKeyTraceID {
+		if k != scontext.ContextKeyHeadUid && k != scontext.ContextKeyTraceID {
 			restParts = append(restParts, fmt.Sprintf("%s:%v", k, v))
 		}
 	}
@@ -60,27 +55,23 @@ func extractTraceID(ctx context.Context) (error, contextKV) {
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
 		if sc, ok := span.Context().(jaeger.SpanContext); ok {
-			ckv[contextKeyTraceID] = sc.TraceID()
+			ckv[scontext.ContextKeyTraceID] = sc.TraceID()
 			return nil, ckv
 		}
 	}
-	return ErrorTraceIDNotFound, nil
+	return errorTraceIDNotFound, nil
 }
 
 func extractHead(ctx context.Context, fullHead bool) (error, contextKV) {
-	head := ctx.Value(contextKeyHead)
-	if chd, ok := head.(ContextHeader); ok {
+	head := ctx.Value(scontext.ContextKeyHead)
+	if chd, ok := head.(scontext.ContextHeader); ok {
 		kv := chd.ToKV()
 		if fullHead {
 			return nil, contextKV(chd.ToKV())
 		}
-		return nil, contextKV(map[string]interface{}{contextKeyOpUid: kv[contextKeyOpUid]})
+		return nil, contextKV(map[string]interface{}{scontext.ContextKeyHeadUid: kv[scontext.ContextKeyHeadUid]})
 	}
-	return ErrorHeadKVNotFound, nil
-}
-
-type ContextHeader interface {
-	ToKV() map[string]interface{}
+	return errorHeadKVNotFound, nil
 }
 
 func extractContext(ctx context.Context, fullHead bool) (v []interface{}) {
