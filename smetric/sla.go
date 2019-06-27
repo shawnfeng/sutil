@@ -41,6 +41,7 @@ func CollectServ(instance, servkey string, servid int, processor string, duratio
 }
 func buildSerLabels(instance, servkey string, servid int, processor string, source int, funcName string) []Label {
 	targetServerName := SafePromethuesValue(servkey)
+	instance = SafePromethuesValue(instance)
 	sid := strconv.Itoa(servid)
 	return []Label{
 		{Name: Label_instance, Value: instance},
