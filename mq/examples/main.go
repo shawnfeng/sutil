@@ -27,6 +27,7 @@ func main() {
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, scontext.ContextKeyHead, "hahahaha")
+	ctx = context.WithValue(ctx, scontext.ContextKeyControl, "{\"group\": \"g1\"}")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
 	if span != nil {
 		defer span.Finish()

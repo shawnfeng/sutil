@@ -10,6 +10,8 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"github.com/shawnfeng/sutil/stime"
+	"time"
 	// kafka "github.com/segmentio/kafka-go"
 )
 
@@ -19,6 +21,8 @@ const (
 	spanLogKeyGroupId   = "groupId"
 	spanLogKeyPartition = "partition"
 )
+
+var mqOpDurationLimit = 10 * time.Millisecond
 
 type Message struct {
 	Key   string
@@ -47,6 +51,14 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		return fmt.Errorf("%s, generatePayload err, topic: %s", fun, topic)
 	}
 
+	st := stime.NewTimeStat()
+	defer func() {
+		dur := st.Duration()
+		if dur > mqOpDurationLimit {
+			slog.Infof(ctx, "%s slow topic:%s dur:%d", fun, topic, dur)
+		}
+	}()
+
 	return writer.WriteMsg(ctx, key, payload)
 }
 
@@ -70,6 +82,14 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 		return fmt.Errorf("%s, generateMsgsPayload err, topic: %s", fun, topic)
 	}
 
+	st := stime.NewTimeStat()
+	defer func() {
+		dur := st.Duration()
+		if dur > mqOpDurationLimit {
+			slog.Infof(ctx, "%s slow topic:%s dur:%d", fun, topic, dur)
+		}
+	}()
+
 	return writer.WriteMsgs(ctx, nmsgs...)
 }
 
@@ -91,7 +111,15 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	}
 
 	var payload Payload
+	st := stime.NewTimeStat()
+
 	err := reader.ReadMsg(ctx, &payload, value)
+
+	dur := st.Duration()
+	if dur > mqOpDurationLimit {
+		slog.Infof(ctx, "%s slow topic:%s groupId:%s dur:%d", fun, topic, groupId, dur)
+	}
+
 	if err != nil {
 		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
@@ -130,7 +158,15 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	}
 
 	var payload Payload
+	st := stime.NewTimeStat()
+
 	err := reader.ReadMsg(ctx, &payload, value)
+
+	dur := st.Duration()
+	if dur > mqOpDurationLimit {
+		slog.Infof(ctx, "%s slow topic:%s partition:%d dur:%d", fun, topic, partition, dur)
+	}
+
 	if err != nil {
 		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
@@ -169,7 +205,15 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	}
 
 	var payload Payload
+	st := stime.NewTimeStat()
+
 	handler, err := reader.FetchMsg(ctx, &payload, value)
+
+	dur := st.Duration()
+	if dur > mqOpDurationLimit {
+		slog.Infof(ctx, "%s slow topic:%s groupId:%s dur:%d", fun, topic, groupId, dur)
+	}
+
 	if err != nil {
 		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
