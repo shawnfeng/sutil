@@ -38,7 +38,7 @@ func NewConfiger(configType int) (Configer, error) {
 		return NewEtcdConfiger(), nil
 
 	default:
-		return nil, fmt.Errorf("configType %s error", configType)
+		return nil, fmt.Errorf("configType %d error", configType)
 	}
 }
 

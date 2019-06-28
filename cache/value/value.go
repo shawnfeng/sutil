@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/cache/redis"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
 )
 
@@ -47,15 +47,15 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 		return nil
 	}
 	if err != nil && err.Error() != redis.RedisNil {
-		slog.Errorf("%s cache key: %s err: %s", fun, key, err)
+		slog.Errorf(ctx, "%s cache key: %s err: %s", fun, key, err)
 		return fmt.Errorf("%s cache key: %s err: %s", fun, key, err)
 	}
 
-	slog.Infof("%s miss key: %v, err: %s", fun, key, err)
+	slog.Infof(ctx, "%s miss key: %v, err: %s", fun, key, err)
 
 	err = m.loadValueToCache(ctx, key)
 	if err != nil {
-		slog.Errorf("%s loadValueToCache key: %s err: %s", fun, key, err)
+		slog.Errorf(ctx, "%s loadValueToCache key: %s err: %s", fun, key, err)
 		return err
 	}
 
@@ -73,13 +73,13 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 
 	skey, err := m.fixKey(key)
 	if err != nil {
-		slog.Errorf("%s fixkey, key: %v err: %s", fun, key, err)
+		slog.Errorf(ctx, "%s fixkey, key: %v err: %s", fun, key, err)
 		return err
 	}
 
 	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
 	if client == nil {
-		slog.Errorf("%s get instance err, namespace: %s", fun, m.namespace)
+		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
 	}
 
@@ -123,7 +123,7 @@ func (m *Cache) fixKey(key interface{}) (string, error) {
 
 	skey, err := m.keyToString(key)
 	if err != nil {
-		slog.Errorf("%s key: %v err:%s", fun, key, err)
+		slog.Errorf(context.TODO(), "%s key: %v err:%s", fun, key, err)
 		return "", err
 	}
 
@@ -144,7 +144,7 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 
 	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
 	if client == nil {
-		slog.Errorf("%s get instance err, namespace: %s", fun, m.namespace)
+		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
 	}
 
@@ -153,7 +153,7 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 		return err
 	}
 
-	slog.Infof("%s key: %v data: %s", fun, key, string(data))
+	slog.Infof(ctx, "%s key: %v data: %s", fun, key, string(data))
 
 	err = json.Unmarshal(data, value)
 	if err != nil {
@@ -169,32 +169,32 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 	var data []byte
 	value, err := m.load(key)
 	if err != nil {
-		slog.Warnf("%s load err, cache key:%s err:%s", fun, key, err)
+		slog.Warnf(ctx, "%s load err, cache key:%s err:%s", fun, key, err)
 		data = []byte(err.Error())
 
 	} else {
 		data, err = json.Marshal(value)
 		if err != nil {
-			slog.Errorf("%s marshal err, cache key: %s err:%s", fun, key, err)
+			slog.Errorf(ctx, "%s marshal err, cache key: %s err:%s", fun, key, err)
 			data = []byte(err.Error())
 		}
 	}
 
 	skey, err := m.fixKey(key)
 	if err != nil {
-		slog.Errorf("%s fixkey, key: %s err:%s", fun, key, err)
+		slog.Errorf(ctx, "%s fixkey, key: %s err:%s", fun, key, err)
 		return err
 	}
 
 	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
 	if client == nil {
-		slog.Errorf("%s get instance err, namespace: %s", fun, m.namespace)
+		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
 	}
 
 	rerr := client.Set(skey, data, m.expire*time.Second).Err()
 	if rerr != nil {
-		slog.Errorf("%s set err, cache key: %v rerr: %s", fun, key, rerr)
+		slog.Errorf(ctx, "%s set err, cache key: %v rerr: %s", fun, key, rerr)
 	}
 
 	if err != nil {

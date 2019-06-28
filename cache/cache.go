@@ -1,8 +1,9 @@
 package cache
 
 import (
+	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
 )
 
@@ -28,7 +29,7 @@ func NewCommonCache(serverName, prefix string, poolSize, expire int) (*Cache, er
 
 	redisClient, err := NewCommonRedis(serverName, poolSize)
 	if err != nil {
-		slog.Errorf("%s NewCommonRedis, serverNam:%s err:%s", fun, serverName, err)
+		slog.Errorf(context.TODO(), "%s NewCommonRedis, serverNam:%s err:%s", fun, serverName, err)
 	}
 
 	return &Cache{
@@ -43,7 +44,7 @@ func NewCoreCache(serverName, prefix string, poolSize, expire int) (*Cache, erro
 
 	redisClient, err := NewCoreRedis(serverName, poolSize)
 	if err != nil {
-		slog.Errorf("%s NewCoreRedis, serverNam:%s err:%s", fun, serverName, err)
+		slog.Errorf(context.TODO(), "%s NewCoreRedis, serverNam:%s err:%s", fun, serverName, err)
 	}
 
 	return &Cache{
@@ -58,13 +59,13 @@ func (m *Cache) setData(key string, data CacheData) error {
 
 	sdata, merr := data.Marshal()
 	if merr != nil {
-		slog.Errorf("%s marshal err, cache key:%s err:%s", fun, key, merr)
+		slog.Errorf(context.TODO(), "%s marshal err, cache key:%s err:%s", fun, key, merr)
 		sdata = []byte(merr.Error())
 	}
 
 	err := m.redisClient.Set(m.fixKey(key), sdata, time.Duration(m.expire)*time.Second).Err()
 	if err != nil {
-		slog.Errorf("%s set err, cache key:%s err:%s", fun, key, err)
+		slog.Errorf(context.TODO(), "%s set err, cache key:%s err:%s", fun, key, err)
 	}
 
 	if merr != nil {
@@ -109,7 +110,7 @@ func (m *Cache) GetCache(key string, data CacheData) error {
 		return nil
 
 	} else if err != nil {
-		slog.Warnf("%s cache key:%s err:%s", fun, key, err)
+		slog.Warnf(context.TODO(), "%s cache key:%s err:%s", fun, key, err)
 		return err
 	}
 
@@ -125,15 +126,15 @@ func (m *Cache) Get(key string, data CacheData) error {
 	}
 
 	if err != nil && err.Error() != RedisNil {
-		slog.Errorf("%s cache key:%s err:%s", fun, key, err)
+		slog.Errorf(context.TODO(), "%s cache key:%s err:%s", fun, key, err)
 		return fmt.Errorf("%s cache key:%s err:%s", fun, key, err)
 	}
 
-	slog.Infof("%s miss key:%s", fun, key)
+	slog.Infof(context.TODO(), "%s miss key:%s", fun, key)
 
 	err = data.Load(key)
 	if err != nil {
-		slog.Warnf("%s load err, cache key:%s err:%s", fun, key, err)
+		slog.Warnf(context.TODO(), "%s load err, cache key:%s err:%s", fun, key, err)
 	}
 
 	return m.setData(key, data)

@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/scontext"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/trace"
 	"time"
 )
@@ -25,7 +26,8 @@ func main() {
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, "Head", "hahahaha")
+	ctx = context.WithValue(ctx, scontext.ContextKeyHead, "hahahaha")
+	ctx = context.WithValue(ctx, scontext.ContextKeyControl, "{\"group\": \"g1\"}")
 	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
 	if span != nil {
 		defer span.Finish()
@@ -43,10 +45,10 @@ func main() {
 				Value: value,
 			})
 			err := mq.WriteMsg(ctx, topic, value.Body, value)
-			slog.Infof("in msg: %v, err:%v", value, err)
+			slog.Infof(ctx, "in msg: %v, err:%v", value, err)
 		}
 		err := mq.WriteMsgs(ctx, topic, msgs...)
-		slog.Infof("in msgs: %v, err:%v", msgs, err)
+		slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
 	}()
 
 	go func() {
@@ -54,7 +56,7 @@ func main() {
 			var msg Msg
 			ctx1 := context.Background()
 			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
-			slog.Infof("out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			slog.Infof(ctx, "out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 		}
 	}()
 

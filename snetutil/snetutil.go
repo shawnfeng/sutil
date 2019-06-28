@@ -475,7 +475,7 @@ func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Dura
 	}
 	defer output.Close()
 
-	//slog.Infof("repali geturl:%s filename:%s", geturl, fileName)
+	//slog.Infof(context.TODO(), "repali geturl:%s filename:%s", geturl, fileName)
 
 	resHead, err := http.Head(geturl)
 	if err != nil {
@@ -489,7 +489,7 @@ func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Dura
 
 	requrl := resHead.Request.URL.String()
 
-	//slog.Infof("len:%d requrl:%s status:%d", contlen, requrl, resHead.StatusCode)
+	//slog.Infof(context.TODO(), "len:%d requrl:%s status:%d", contlen, requrl, resHead.StatusCode)
 
 	reqest, err := http.NewRequest("GET", requrl, nil)
 	if err != nil {
@@ -504,7 +504,7 @@ func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Dura
 	reqest.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.110 Safari/537.36")
 
 	doGet := func(rge string) (int, error) {
-		//slog.Infof("get file range:%s", rge)
+		//slog.Infof(context.TODO(), "get file range:%s", rge)
 		if len(rge) > 0 {
 			reqest.Header.Set("Range", rge)
 		}
@@ -520,7 +520,7 @@ func HttpRangeDownload(geturl, fileName string, splitSize int, timeout time.Dura
 			return 0, fmt.Errorf("write file geturl:%s regurl:%s range:%s err:%s", geturl, requrl, rge, err)
 		}
 
-		//slog.Infof("write file range:%s n:%d", rge, n)
+		//slog.Infof(context.TODO(), "write file range:%s n:%d", rge, n)
 		return int(n), nil
 	}
 

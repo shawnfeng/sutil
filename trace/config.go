@@ -61,7 +61,7 @@ func NewSimpleConfigurator() Configurator {
 
 func (m *SimpleConfig) GetConfig(serviceName string) *Config {
 	// 测试环境
-	var agentHost = "10.111.209.211"
+	var agentHost = "127.0.0.1"
 	var agentPort = "6831"
 
 	if h := os.Getenv(ENV_JAEGER_AGENT_HOST); h != "" {
@@ -80,7 +80,7 @@ func (m *SimpleConfig) GetConfig(serviceName string) *Config {
 			Disabled:    false,
 			RPCMetrics:  false,
 			Sampler: &config.SamplerConfig{
-				Type:  "const",
+				Type:  jaeger.SamplerTypeRateLimiting,
 				Param: 1,
 			},
 			Reporter: &config.ReporterConfig{

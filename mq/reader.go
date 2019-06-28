@@ -9,7 +9,7 @@ import (
 	"fmt"
 	//"time"
 	// kafka "github.com/segmentio/kafka-go"
-	//"github.com/shawnfeng/sutil/slog"
+	//"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type Handler interface {
@@ -33,7 +33,7 @@ func NewGroupReader(topic, groupId string) (Reader, error) {
 		return NewKafkaReader(config.MQAddr, topic, groupId, 0, 1, 10e6, config.CommitInterval), nil
 
 	default:
-		return nil, fmt.Errorf("mqType %s error", mqType)
+		return nil, fmt.Errorf("mqType %d error", mqType)
 	}
 }
 
@@ -58,6 +58,6 @@ func NewPartitionReader(topic string, partition int) (Reader, error) {
 		return reader, err
 
 	default:
-		return nil, fmt.Errorf("mqType %s error", mqType)
+		return nil, fmt.Errorf("mqType %d error", mqType)
 	}
 }
