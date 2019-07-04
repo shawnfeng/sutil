@@ -10,9 +10,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
+)
+
+const (
+	spanLogKeyKey = "key"
 )
 
 // key类型只支持int（包含有无符号，8，16，32，64位）和string
@@ -38,8 +43,10 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Get")
-	if span != nil {
-		defer span.Finish()
+	defer span.Finish()
+	if skey, err := m.fixKey(key); err != nil {
+		span.LogFields(
+			log.String(spanLogKeyKey, skey))
 	}
 
 	err := m.getValueFromCache(ctx, key, value)
@@ -67,15 +74,15 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	fun := "Cache.Del -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Del")
-	if span != nil {
-		defer span.Finish()
-	}
+	defer span.Finish()
 
 	skey, err := m.fixKey(key)
 	if err != nil {
 		slog.Errorf(ctx, "%s fixkey, key: %v err: %s", fun, key, err)
 		return err
 	}
+
+	span.LogFields(log.String(spanLogKeyKey, skey))
 
 	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
 	if client == nil {
