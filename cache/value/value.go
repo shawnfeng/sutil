@@ -44,7 +44,7 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Get")
 	defer span.Finish()
-	if skey, err := m.fixKey(key); err != nil {
+	if skey, err := m.fixKey(key); err == nil {
 		span.LogFields(
 			log.String(spanLogKeyKey, skey))
 	}
