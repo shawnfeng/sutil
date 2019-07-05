@@ -192,7 +192,7 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
 	}
 
-	rerr := client.Set(skey, data, m.expire*time.Second).Err()
+	rerr := client.Set(skey, data, m.expire).Err()
 	if rerr != nil {
 		slog.Errorf("%s set err, cache key: %v rerr: %s", fun, key, rerr)
 	}
