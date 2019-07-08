@@ -9,9 +9,8 @@ import (
 )
 
 const (
-	envApolloCluster  = "APOLLO_CLUSTER"
-	envApolloHostPort = "APOLLO_HOST_PORT"
-
+	envApolloCluster            = "APOLLO_CLUSTER"
+	envApolloHostPort           = "APOLLO_HOST_PORT"
 	defaultCluster              = "default"
 	defaultHostPort             = "apollo-meta.ibanyu.com:30002"
 	defaultCacheDir             = "/tmp/sconfcenter"
