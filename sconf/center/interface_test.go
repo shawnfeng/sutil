@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	testService = "authapi"
-	testKey 	= "key1"
+	testService   = "authapi"
+	testKey       = "key1"
 	testNamespace = "db"
 )
 

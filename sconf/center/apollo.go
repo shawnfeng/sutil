@@ -12,9 +12,8 @@ const (
 	envApolloCluster  = "APOLLO_CLUSTER"
 	envApolloHostPort = "APOLLO_HOST_PORT"
 
-	defaultCluster = "default"
-	// TODO: change it after hostname registered
-	defaultHostPort             = "10.111.203.142:30002"
+	defaultCluster              = "default"
+	defaultHostPort             = "apollo-meta.ibanyu.com:30002"
 	defaultCacheDir             = "/tmp/sconfcenter"
 	defaultNamespaceApplication = "application"
 
