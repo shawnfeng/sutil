@@ -1,6 +1,14 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DataDog/zstd v1.4.0/go.mod h1:1jcaCB/ufaK+sKp1NBhlGmpz41jOoPQ35bpF36t7BBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190627120519-95b44a9bb40d h1:jtlyo7sqR9eq7QnB+FIKF9AQ2DXd+WljaJ22PXzXko8=
+github.com/ZhengHe-MD/agollo v0.0.0-20190627120519-95b44a9bb40d/go.mod h1:3nCOHt6JzjftW3DsYSYjB7E5+86wKvIPnXz966XtmZI=
+github.com/ZhengHe-MD/agollo v0.0.0-20190628020917-4bb64506aa66 h1:8UR6OxvKbJWkRON97uKtzV9mO5gO7R1/gMG5IwNMiZo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190628020917-4bb64506aa66/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190628115251-54dbf652ddb0 h1:X1j4xK5oVmx6fO1/mDFsgjqd6412tMViXDn34nsmrsE=
+github.com/ZhengHe-MD/agollo v0.0.0-20190628115251-54dbf652ddb0/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v2.1.0+incompatible h1:NqugIJRTEPNLBtzg3TkM2rfUnpwNRgkhy0Mhk3yJ0Es=
+github.com/ZhengHe-MD/agollo v2.1.0+incompatible/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
 github.com/bitly/go-simplejson v0.5.0 h1:6IH+V8/tVMab511d5bn4M7EwGXZf9Hj6i2xSwkNEM+Y=
 github.com/bitly/go-simplejson v0.5.0/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
