@@ -5,6 +5,7 @@ import (
 	"github.com/ZhengHe-MD/agollo"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -50,9 +51,16 @@ func confFromEnv() *agollo.Conf {
 	}
 }
 
+// NOTE: apollo 不支持在项目名称中使用 '/'，因此规定用 '.' 代替 '/'
+//       base/authapi => base.authapi
+func normalizeServiceName(serviceName string) string {
+	return strings.Replace(serviceName, "/", ".", -1)
+}
+
 func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, namespaceNames []string) error {
+	fun := "apollo.Init-->"
 	conf := confFromEnv()
-	conf.AppID = serviceName
+	conf.AppID = normalizeServiceName(serviceName)
 
 	if len(namespaceNames) > 0 {
 		conf.NameSpaceNames = namespaceNames
@@ -61,7 +69,12 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 	}
 
 	ap.conf = conf
-	return agollo.StartWithConf(ap.conf)
+	go func() {
+		if err := agollo.StartWithConf(ap.conf); err != nil {
+			slog.Warnf(ctx, "%s agollo starts err:%v", fun, err)
+		}
+	}()
+	return nil
 }
 
 func (ap *apolloConfigCenter) Stop(ctx context.Context) error {
