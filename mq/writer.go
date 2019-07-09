@@ -22,7 +22,7 @@ func NewWriter(topic string) (Writer, error) {
 
 	mqType := config.MQType
 	switch mqType {
-	case MQ_TYPE_KAFKA:
+	case MqTypeKafka:
 		return NewKafkaWriter(config.MQAddr, topic), nil
 
 	default:

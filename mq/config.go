@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	MQ_TYPE_KAFKA = iota
+	MqTypeKafka = iota
 )
 
 const (
-	CONFIG_TYPE_SIMPLE = iota
-	CONFIG_TYPE_ETCD
+	ConfigTypeSimple = iota
+	ConfigTypeEtcd
 )
 
 type Config struct {
@@ -36,10 +36,10 @@ type Configer interface {
 func NewConfiger(configType int) (Configer, error) {
 
 	switch configType {
-	case CONFIG_TYPE_SIMPLE:
+	case ConfigTypeSimple:
 		return NewSimpleConfiger(), nil
 
-	case CONFIG_TYPE_ETCD:
+	case ConfigTypeEtcd:
 		return NewEtcdConfiger(), nil
 
 	default:
@@ -59,7 +59,7 @@ func NewSimpleConfiger() Configer {
 
 func (m *SimpleConfig) GetConfig(topic string) *Config {
 	return &Config{
-		MQType:         MQ_TYPE_KAFKA,
+		MQType:         MqTypeKafka,
 		MQAddr:         m.mqAddr,
 		Topic:          topic,
 		TimeOut:        3 * time.Second,
@@ -81,7 +81,7 @@ func NewEtcdConfiger() Configer {
 func (m *EtcdConfig) GetConfig(topic string) *Config {
 	//todo etcd router
 	return &Config{
-		MQType:  MQ_TYPE_KAFKA,
+		MQType:  MqTypeKafka,
 		MQAddr:  []string{},
 		Topic:   topic,
 		TimeOut: 3 * time.Second,
