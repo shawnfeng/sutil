@@ -6,9 +6,9 @@
 package sdb
 
 import (
+	"context"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
-	"github.com/shawnfeng/sutil/slog"
 )
 
 
@@ -21,18 +21,18 @@ func (m *MgoDb) LoadDb(addr string) error {
 	fun := "MgoDb.LoadDb"
 	if m.mgoSession != nil {
 		m.mgoSession.Close()
-		slog.Warnf("%s old mongodb load close", fun)
+		slog.Warnf(context.TODO(), "%s old mongodb load close", fun)
 	}
 
 	session, err := mgo.Dial(addr)
 	if err != nil {
-		slog.Warnf("%s mongodb load err:%s", fun, err)
+		slog.Warnf(context.TODO(), "%s mongodb load err:%s", fun, err)
 		return err
 	}
 	session.SetMode(mgo.Monotonic, true)
 	m.mgoSession = session
 
-	slog.Infof("%s load mongo:%s", fun, addr)
+	slog.Infof(context.TODO(), "%s load mongo:%s", fun, addr)
 	return nil
 
 }

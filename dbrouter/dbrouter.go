@@ -8,10 +8,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/opentracing/opentracing-go/log"
+	"github.com/shawnfeng/sutil/slog/slog"
 	stat "github.com/shawnfeng/sutil/stat"
 	"github.com/shawnfeng/sutil/stime"
 	"gopkg.in/mgo.v2"
+)
+
+const (
+	spanLogKeyCluster = "cluster"
+	spanLogKeyTable   = "table"
 )
 
 type Router struct {
@@ -41,10 +47,8 @@ func (m *Router) StatInfo() []*stat.QueryStat {
 func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []interface{}) error, tables ...string) error {
 	fun := "Router.SqlExec -->"
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
-	if span != nil {
-		defer span.Finish()
-	}
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.SqlExec")
+	defer span.Finish()
 
 	st := stime.NewTimeStat()
 
@@ -53,6 +57,9 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	table := tables[0]
+	span.LogFields(
+		log.String(spanLogKeyCluster, cluster),
+		log.String(spanLogKeyTable, table))
 	instance := m.configer.GetInstance(ctx, cluster, table)
 	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
@@ -69,7 +76,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	defer func() {
 		dur := st.Duration()
 		m.report.IncQuery(cluster, table, st.Duration())
-		slog.Infof("%s type:%s instance:%s query:%d", fun, in.GetType(), instance, dur)
+		slog.Tracef(ctx, "%s cls:%s table:%s dur:%d", fun, cluster, table, dur)
 	}()
 
 	var tmptables []interface{}
@@ -93,10 +100,13 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 }
 
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
-	if span != nil {
-		defer span.Finish()
-	}
+	fun := "Router.mongoExec -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyCluster, cluster),
+		log.String(spanLogKeyTable, table))
 
 	st := stime.NewTimeStat()
 
@@ -127,7 +137,7 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 	defer func() {
 		dur := st.Duration()
 		m.report.IncQuery(cluster, table, st.Duration())
-		slog.Tracef("[MONGO] const:%d cls:%s table:%s dur:%d", consistency, cluster, table, dur)
+		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
 
 	return query(c)

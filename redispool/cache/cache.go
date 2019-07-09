@@ -1,12 +1,13 @@
 package rediscache
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"github.com/fzzy/radix/redis"
 	"github.com/shawnfeng/sutil"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/redispool"
 
 )
@@ -120,7 +121,7 @@ func (m *Cache) GetCache(key string, data CacheData) error {
 		return nil
 
 	} else if err != nil {
-		slog.Warnf("%s cache key:%s err:%s", fun, key, err)
+		slog.Warnf(context.TODO(), "%s cache key:%s err:%s", fun, key, err)
 		return err
 	}
 
@@ -137,10 +138,10 @@ func (m *Cache) Get(key string, data CacheData) error {
 	if err == nil {
 		return nil
 	} else if err == errNilReply {
-		slog.Infof("%s miss key:%s", fun, key)
+		slog.Infof(context.TODO(), "%s miss key:%s", fun, key)
 
 	} else if err != nil {
-		slog.Warnf("%s cache key:%s err:%s", fun, key, err)
+		slog.Warnf(context.TODO(), "%s cache key:%s err:%s", fun, key, err)
 
 	}
 
@@ -179,7 +180,7 @@ func (m *Cache) Del(key string) error {
 		return fmt.Errorf("del cache err:%s", rp.String())
 	}
 
-	//slog.Infof("%s", rp)
+	//slog.Infof(context.TODO(), "%s", rp)
 
 	return nil
 

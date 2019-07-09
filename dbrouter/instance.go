@@ -6,7 +6,7 @@ package dbrouter
 
 import (
 	"context"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
 )
 
@@ -38,10 +38,10 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 	in, ok := m.instances.Load(key)
 	if ok == false {
 
-		slog.Infof("%s newInstance, key: %s", fun, key)
+		slog.Infof(ctx, "%s newInstance, key: %s", fun, key)
 		in, err = m.factory(ctx, key)
 		if err != nil {
-			slog.Errorf("%s NewInstance err, key: %s, err: %s", fun, key, err.Error())
+			slog.Errorf(ctx, "%s NewInstance err, key: %s, err: %s", fun, key, err.Error())
 			return nil
 		}
 
@@ -50,7 +50,7 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 
 	tmp, ok := in.(Instancer)
 	if ok == false {
-		slog.Errorf("%s in.(Instancer) false, key: %s", fun, key)
+		slog.Errorf(ctx, "%s in.(Instancer) false, key: %s", fun, key)
 		return nil
 	}
 
@@ -61,11 +61,11 @@ func (m *InstanceManager) Close() {
 	fun := "InstanceManager.Close -->"
 
 	m.instances.Range(func(key, value interface{}) bool {
-		slog.Infof("%s key:%v", fun, key)
+		slog.Infof(context.TODO(), "%s key:%v", fun, key)
 
 		in, ok := value.(Instancer)
 		if ok == false {
-			slog.Errorf("%s value.(Instancer) false, key: %v", fun, key)
+			slog.Errorf(context.TODO(), "%s value.(Instancer) false, key: %v", fun, key)
 			return false
 		}
 

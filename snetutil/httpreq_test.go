@@ -6,17 +6,18 @@
 package snetutil
 
 import (
+	"context"
 	"testing"
 	"net/http"
 
     "github.com/julienschmidt/httprouter"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 
 func TestDo(t *testing.T) {
 
-	slog.Infoln("INIT")
+	slog.Infoln(context.TODO(), "INIT")
 	router := httprouter.New()
 	router.GET("/test0", HttpRequestWrapper(FactoryReq0))
 	router.GET("/test1", HttpRequestWrapper(FactoryReq1))
@@ -40,7 +41,7 @@ func FactoryReq0() HandleRequest {
 func (m *Req0) Handle(r *HttpRequest) HttpResponse {
 	fun := "Req0.Handle -->"
 
-	slog.Infof("%s url:%s method:%s body:%s", fun, r.URL(), r.Method(), r.Body().Binary())
+	slog.Infof(context.TODO(), "%s url:%s method:%s body:%s", fun, r.URL(), r.Method(), r.Body().Binary())
 
 	return  NewHttpRespString(http.StatusOK, "OK\n")
 
@@ -61,7 +62,7 @@ func FactoryReq1() HandleRequest {
 func (m *Req1) Handle(r *HttpRequest) HttpResponse {
 	fun := "Req1.Handle -->"
 
-	slog.Infof("%s url:%s method:%s body:%s", fun, r.URL(), r.Method(), r.Body().Binary())
+	slog.Infof(context.TODO(), "%s url:%s method:%s body:%s", fun, r.URL(), r.Method(), r.Body().Binary())
 
 	h := make(http.Header)
 	h.Set("set", "setv")
@@ -109,7 +110,7 @@ func FactoryReq2() HandleRequest {
 func (m *Req2) Handle(r *HttpRequest) HttpResponse {
 	fun := "Req2.Handle -->"
 
-	slog.Infof("%s url:%s method:%s body:%s", fun, r.URL(), r.Method(), r.Body().Binary())
+	slog.Infof(context.TODO(), "%s url:%s method:%s body:%s", fun, r.URL(), r.Method(), r.Body().Binary())
 
 	return &HttpRespString{
 		Status: 202,

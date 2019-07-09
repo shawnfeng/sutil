@@ -7,6 +7,7 @@ package paconn
 
 
 import (
+	"context"
 	"net"
 	"fmt"
 	"sync"
@@ -19,7 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/shawnfeng/sutil"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
 	"github.com/shawnfeng/sutil/snetutil"
 
@@ -89,7 +90,7 @@ func (m *Agent) Close() {
 	m.conn.Close()
 	//err := m.conn.Close()
 	//if err != nil {
-	//	slog.Warnf("Agent.Close Close err:%s", err)
+	//	slog.Warnf(context.TODO(), "Agent.Close Close err:%s", err)
 	//}
 
 	atomic.StoreInt32(&m.isConn, 0)
@@ -184,10 +185,10 @@ func (m *Agent) recvACK(pb *connproto.ConnProto) {
 		select {
 		case c <-an:
 		default:
-			slog.Warnf("%s agent:%s msgid:%d no wait notify", fun, m, msgid)
+			slog.Warnf(context.TODO(), "%s agent:%s msgid:%d no wait notify", fun, m, msgid)
 		}
 	} else {
-		slog.Warnf("%s agent:%s msgid:%d not found", fun, m, msgid)
+		slog.Warnf(context.TODO(), "%s agent:%s msgid:%d not found", fun, m, msgid)
 	}
 
 }
@@ -216,7 +217,7 @@ func (m *Agent) recvCALL(pb *connproto.ConnProto) {
 		sdata, _ := proto.Marshal(ack)
 		err := m.send(sdata, DEFAULT_SEND_TIMEOUT)
 		if err != nil {
-			slog.Warnf("%s agent:%s ack error:%s", fun, m, err)
+			slog.Warnf(context.TODO(), "%s agent:%s ack error:%s", fun, m, err)
 		}
 
 	} else {
@@ -235,11 +236,11 @@ func (m *Agent) proto(data []byte) {
 	err := proto.Unmarshal(data, pb)
 	if err != nil {
 		m.Close()
-		slog.Warnf("%s agent:%s unmarshaling error: %s data:%v sd:%s", fun, m, err, data, data)
+		slog.Warnf(context.TODO(), "%s agent:%s unmarshaling error: %s data:%v sd:%s", fun, m, err, data, data)
 		return
 	}
 
-	slog.Infof("%s a:%s %s", fun, m, pb)
+	slog.Infof(context.TODO(), "%s a:%s %s", fun, m, pb)
 
 
 	pb_type := pb.GetType()
@@ -252,7 +253,7 @@ func (m *Agent) proto(data []byte) {
 		m.recvHEART()
 	} else {
 		m.Close()
-		slog.Warnf("%s agent:%s type error: %s data:%v sd:%s", fun, m, err, data, data)
+		slog.Warnf(context.TODO(), "%s agent:%s type error: %s data:%v sd:%s", fun, m, err, data, data)
 	}
 
 }
@@ -269,7 +270,7 @@ func (m *Agent) send(data []byte, timeout time.Duration) error {
 	defer m.sendLock.Unlock()
 	m.conn.SetWriteDeadline(time.Now().Add(timeout))
 	a, err := m.conn.Write(s)
-	//slog.Infof("%s agent:%s Send Write %d rv %d", fun, m, len(s), a)
+	//slog.Infof(context.TODO(), "%s agent:%s Send Write %d rv %d", fun, m, len(s), a)
 
 	if err != nil {
 		m.Close()
@@ -296,7 +297,7 @@ func (m *Agent) sendHEART() {
 	err := m.send(data, DEFAULT_SEND_TIMEOUT)
 
 	if err != nil {
-		slog.Warnf("%s agent:%s error:%s", fun, m, err)
+		slog.Warnf(context.TODO(), "%s agent:%s error:%s", fun, m, err)
 	}
 
 
@@ -316,7 +317,7 @@ func (m *Agent) heart() {
 	fun := "Agent.heart"
 	if m.heartIntv > 0 {
 		// 主动心跳
-		slog.Infof("%s agent:%s heart:%d", fun, m, m.heartIntv)
+		slog.Infof(context.TODO(), "%s agent:%s heart:%d", fun, m, m.heartIntv)
 		ticker := time.NewTicker(m.heartIntv)
 		for {
 			select {
@@ -328,7 +329,7 @@ func (m *Agent) heart() {
 		}
 
 	} else {
-		slog.Infof("%s agent:%s noheart:%d", fun, m, m.heartIntv)
+		slog.Infof(context.TODO(), "%s agent:%s noheart:%d", fun, m, m.heartIntv)
 	}
 
 }
@@ -366,7 +367,7 @@ func NewAgent(
 
 	aid, err := sutil.GetUniqueMd5()
 	if err != nil {
-		slog.Errorf("%s new err:%s", fun, err)
+		slog.Errorf(context.TODO(), "%s new err:%s", fun, err)
 		return nil
 	}
 
@@ -386,7 +387,7 @@ func NewAgent(
 	go a.recv()
 	go a.heart()
 
-	slog.Infof("%s a:%s", fun, a)
+	slog.Infof(context.TODO(), "%s a:%s", fun, a)
 
 	return a
 }

@@ -35,12 +35,12 @@ func NewSymbolList(file string) (*SymbolList, error) {
 		if size == len(it) {
 			_, ok := m.list[r]
 			if ok {
-				//slog.Warnf("same %c %d %s %v", r, size, it, it)
+				//slog.Warnf(context.TODO(), "same %c %d %s %v", r, size, it, it)
 			} else {
 				m.list[r] = it
 			}
 		} else {
-			//slog.Warnf("illigal %s %d %s %v", r, size, it, it)
+			//slog.Warnf(context.TODO(), "illigal %s %d %s %v", r, size, it, it)
 		}
 	}
 
