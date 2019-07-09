@@ -94,3 +94,13 @@ func Panicln(ctx context.Context, v ...interface{}) {
 	v = vFromContext(ctx, true, v...)
 	slog.Panicln(v...)
 }
+
+type Logger struct {}
+
+func GetLogger() *Logger {
+	return &Logger{}
+}
+
+func (m *Logger) Printf(format string, v ...interface{}) {
+	Errorf(context.Background(), format, v...)
+}

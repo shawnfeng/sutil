@@ -59,6 +59,9 @@ func normalizeServiceName(serviceName string) string {
 
 func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, namespaceNames []string) error {
 	fun := "apollo.Init-->"
+
+	agollo.SetLogger(slog.GetLogger())
+
 	conf := confFromEnv()
 	conf.AppID = normalizeServiceName(serviceName)
 
@@ -71,9 +74,12 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 	ap.conf = conf
 	go func() {
 		if err := agollo.StartWithConf(ap.conf); err != nil {
-			slog.Warnf(ctx, "%s agollo starts err:%v", fun, err)
+			slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
+		} else {
+			slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
 		}
 	}()
+
 	return nil
 }
 
