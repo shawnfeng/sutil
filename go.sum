@@ -7,6 +7,12 @@ github.com/ZhengHe-MD/agollo v0.0.0-20190628020917-4bb64506aa66 h1:8UR6OxvKbJWkR
 github.com/ZhengHe-MD/agollo v0.0.0-20190628020917-4bb64506aa66/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/agollo v0.0.0-20190628115251-54dbf652ddb0 h1:X1j4xK5oVmx6fO1/mDFsgjqd6412tMViXDn34nsmrsE=
 github.com/ZhengHe-MD/agollo v0.0.0-20190628115251-54dbf652ddb0/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190708124604-e8da9d07faaf h1:t/XhU7I0KMlvpX0chOWRm5aJ+5GR/v5dxQqSd+/AQQo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190708124604-e8da9d07faaf/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190708133309-acc5196ddef0 h1:cOrzO76bwkbROS0c8Z6IBcpJ4rdnNIwVxxrs+SiMI1k=
+github.com/ZhengHe-MD/agollo v0.0.0-20190708133309-acc5196ddef0/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56 h1:y5QtREe6LiwDv8oGRNp0pag0bfcQocX1JNr4DxDAOZA=
+github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible h1:NqugIJRTEPNLBtzg3TkM2rfUnpwNRgkhy0Mhk3yJ0Es=
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
