@@ -39,7 +39,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		log.String(spanLogKeyKey, key))
 
 	//todo flag
-	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
+	writer := DefaultInstanceManager.getWriter("", RoleTypeWriter, topic, "", 0)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -70,7 +70,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	span.LogFields(log.String(spanLogKeyTopic, topic))
 
 	//todo flag
-	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
+	writer := DefaultInstanceManager.getWriter("", RoleTypeWriter, topic, "", 0)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -104,7 +104,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 		log.String(spanLogKeyGroupId, groupId))
 
 	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
+	reader := DefaultInstanceManager.getReader("", RoleTypeReader, topic, groupId, 0)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -151,7 +151,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		log.Int(spanLogKeyPartition, partition))
 
 	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
+	reader := DefaultInstanceManager.getReader("", RoleTypeReader, topic, "", partition)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -198,7 +198,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		log.String(spanLogKeyGroupId, groupId))
 
 	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
+	reader := DefaultInstanceManager.getReader("", RoleTypeReader, topic, groupId, 0)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)

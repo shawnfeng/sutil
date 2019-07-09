@@ -115,15 +115,10 @@ func (m *KafkaWriter) WriteMsg(ctx context.Context, k string, v interface{}) err
 		return err
 	}
 
-	err = m.WriteMessages(ctx, kafka.Message{
+	return m.WriteMessages(ctx, kafka.Message{
 		Key:   []byte(k),
 		Value: msg,
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *KafkaWriter) WriteMsgs(ctx context.Context, msgs ...Message) error {
@@ -139,12 +134,7 @@ func (m *KafkaWriter) WriteMsgs(ctx context.Context, msgs ...Message) error {
 		})
 	}
 
-	err := m.WriteMessages(ctx, kmsgs...)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return m.WriteMessages(ctx, kmsgs...)
 }
 
 func (m *KafkaWriter) Close() error {

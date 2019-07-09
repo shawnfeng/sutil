@@ -29,7 +29,7 @@ func NewGroupReader(topic, groupId string) (Reader, error) {
 
 	mqType := config.MQType
 	switch mqType {
-	case MQ_TYPE_KAFKA:
+	case MqTypeKafka:
 		return NewKafkaReader(config.MQAddr, topic, groupId, 0, 1, 10e6, config.CommitInterval), nil
 
 	default:
@@ -48,7 +48,7 @@ func NewPartitionReader(topic string, partition int) (Reader, error) {
 	offset := config.Offset
 	mqType := config.MQType
 	switch mqType {
-	case MQ_TYPE_KAFKA:
+	case MqTypeKafka:
 		reader := NewKafkaReader(config.MQAddr, topic, "", partition, 1, 10e6, 0)
 		err := reader.SetOffset(offset)
 		if err != nil {

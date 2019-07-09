@@ -15,8 +15,8 @@ import (
 var DefaultInstanceManager = NewInstanceManager()
 
 const (
-	ROLE_TYPE_READER = iota
-	ROLE_TYPE_WRITER
+	RoleTypeReader = iota
+	RoleTypeWriter
 )
 
 type InstanceManager struct {
@@ -42,11 +42,11 @@ func (m *InstanceManager) getRole(key string) (int, error) {
 	}
 
 	if items[1] == "0" {
-		return ROLE_TYPE_READER, nil
+		return RoleTypeReader, nil
 	}
 
 	if items[1] == "1" {
-		return ROLE_TYPE_WRITER, nil
+		return RoleTypeWriter, nil
 	}
 
 	return 0, fmt.Errorf("key error, key:%s", key)
@@ -55,14 +55,14 @@ func (m *InstanceManager) getRole(key string) (int, error) {
 func (m *InstanceManager) newInstance(flag string, role int, topic, groupId string, partition int) (interface{}, error) {
 
 	switch role {
-	case ROLE_TYPE_READER:
+	case RoleTypeReader:
 		if len(groupId) > 0 {
 			return NewGroupReader(topic, groupId)
 		} else {
 			return NewPartitionReader(topic, partition)
 		}
 
-	case ROLE_TYPE_WRITER:
+	case RoleTypeWriter:
 		return NewWriter(topic)
 
 	default:
@@ -143,7 +143,7 @@ func (m *InstanceManager) Close() {
 			return false
 		}
 
-		if role == ROLE_TYPE_READER {
+		if role == RoleTypeReader {
 			reader, ok := value.(Reader)
 			if ok == false {
 				slog.Errorf(context.TODO(), "%s value.(Reader), key:%v", fun, key)
@@ -153,7 +153,7 @@ func (m *InstanceManager) Close() {
 			reader.Close()
 		}
 
-		if role == ROLE_TYPE_WRITER {
+		if role == RoleTypeWriter {
 			writer, ok := value.(Writer)
 			if ok == false {
 				slog.Errorf(context.TODO(), "%s value.(Writer), key:%v", fun, key)
