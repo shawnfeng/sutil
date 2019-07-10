@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
 	"time"
@@ -38,8 +39,14 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		log.String(spanLogKeyTopic, topic),
 		log.String(spanLogKeyKey, key))
 
-	//todo flag
-	writer := DefaultInstanceManager.getWriter(ctx, RoleTypeWriter, topic, "", 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroup(ctx),
+		role:      RoleTypeWriter,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	writer := DefaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -69,8 +76,14 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	defer span.Finish()
 	span.LogFields(log.String(spanLogKeyTopic, topic))
 
-	//todo flag
-	writer := DefaultInstanceManager.getWriter(ctx, RoleTypeWriter, topic, "", 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroup(ctx),
+		role:      RoleTypeWriter,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	writer := DefaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -103,8 +116,14 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 		log.String(spanLogKeyTopic, topic),
 		log.String(spanLogKeyGroupId, groupId))
 
-	//todo flag
-	reader := DefaultInstanceManager.getReader(ctx, RoleTypeReader, topic, groupId, 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroup(ctx),
+		role:      RoleTypeReader,
+		topic:     topic,
+		groupId:   groupId,
+		partition: 0,
+	}
+	reader := DefaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -151,7 +170,14 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		log.Int(spanLogKeyPartition, partition))
 
 	//todo flag
-	reader := DefaultInstanceManager.getReader(ctx, RoleTypeReader, topic, "", partition)
+	conf := &instanceConf{
+		group:     scontext.GetGroup(ctx),
+		role:      RoleTypeReader,
+		topic:     topic,
+		groupId:   "",
+		partition: partition,
+	}
+	reader := DefaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -198,7 +224,14 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		log.String(spanLogKeyGroupId, groupId))
 
 	//todo flag
-	reader := DefaultInstanceManager.getReader(ctx, RoleTypeReader, topic, groupId, 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroup(ctx),
+		role:      RoleTypeReader,
+		topic:     topic,
+		groupId:   groupId,
+		partition: 0,
+	}
+	reader := DefaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
