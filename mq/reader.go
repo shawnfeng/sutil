@@ -24,8 +24,8 @@ type Reader interface {
 
 //CommitInterval indicates the interval at which offsets are committed to
 // the broker.  If 0, commits will be handled synchronously.
-func NewGroupReader(topic, groupId string) (Reader, error) {
-	config := DefaultConfiger.GetConfig(topic)
+func NewGroupReader(ctx context.Context, topic, groupId string) (Reader, error) {
+	config := DefaultConfiger.GetConfig(ctx, topic)
 
 	mqType := config.MQType
 	switch mqType {
@@ -42,8 +42,8 @@ const (
 	FirstOffset       = -2 // The least recent offset available for a partition.
 )
 
-func NewPartitionReader(topic string, partition int) (Reader, error) {
-	config := DefaultConfiger.GetConfig(topic)
+func NewPartitionReader(ctx context.Context, topic string, partition int) (Reader, error) {
+	config := DefaultConfiger.GetConfig(ctx, topic)
 
 	offset := config.Offset
 	mqType := config.MQType

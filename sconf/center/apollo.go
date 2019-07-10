@@ -72,13 +72,12 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 	}
 
 	ap.conf = conf
-	go func() {
-		if err := agollo.StartWithConf(ap.conf); err != nil {
-			slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
-		} else {
-			slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
-		}
-	}()
+
+	if err := agollo.StartWithConf(ap.conf); err != nil {
+		slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
+	} else {
+		slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
+	}
 
 	return nil
 }
