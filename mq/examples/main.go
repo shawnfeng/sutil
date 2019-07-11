@@ -70,35 +70,5 @@ func main() {
 
 	defer mq.Close()
 
-	time.Sleep(20 * time.Second)
-
-	go func() {
-		var msgs []mq.Message
-		for i := 0; i < 10; i++ {
-			value := &Msg{
-				Id:   1,
-				Body: fmt.Sprintf("%d", i),
-			}
-
-			msgs = append(msgs, mq.Message{
-				Key:   value.Body,
-				Value: value,
-			})
-			err := mq.WriteMsg(ctx, topic, value.Body, value)
-			slog.Infof(ctx, "in msg: %v, err:%v", value, err)
-		}
-		err := mq.WriteMsgs(ctx, topic, msgs...)
-		slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
-	}()
-
-	go func() {
-		for i := 0; i < 10000; i++ {
-			var msg Msg
-			ctx1 := context.Background()
-			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
-			slog.Infof(ctx, "out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-		}
-	}()
-
-	time.Sleep(20 * time.Second)
+	time.Sleep(3 * time.Second)
 }
