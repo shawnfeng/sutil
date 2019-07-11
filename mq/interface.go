@@ -171,7 +171,6 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		log.String(spanLogKeyTopic, topic),
 		log.Int(spanLogKeyPartition, partition))
 
-	//todo flag
 	conf := &instanceConf{
 		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeReader,
@@ -225,7 +224,6 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		log.String(spanLogKeyTopic, topic),
 		log.String(spanLogKeyGroupId, groupId))
 
-	//todo flag
 	conf := &instanceConf{
 		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeReader,

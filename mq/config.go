@@ -138,6 +138,7 @@ func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) 
 }
 
 const defaultApolloNamespace = "infra.mq"
+const apolloConfigSep = "."
 
 type ApolloConfig struct {
 	watchOnce sync.Once
@@ -207,7 +208,7 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 
 func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
 	fun := "ApolloConfig.ParseKey-->"
-	parts := strings.Split(key, ".")
+	parts := strings.Split(key, apolloConfigSep)
 	numParts := len(parts)
 	if numParts < 4 {
 		errMsg := fmt.Sprintf("%s invalid key:%s", fun, key)
@@ -216,7 +217,7 @@ func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, err
 	}
 
 	return &KeyParts{
-		Topic: strings.Join(parts[:numParts-3], "."),
+		Topic: strings.Join(parts[:numParts-3], apolloConfigSep),
 		Group: parts[numParts-3],
 	}, nil
 }
@@ -227,5 +228,5 @@ func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string 
 		scontext.GetGroupWithDefault(ctx, defaultGroup),
 		fmt.Sprint(MqTypeKafka),
 		item,
-	}, ".")
+	}, apolloConfigSep)
 }
