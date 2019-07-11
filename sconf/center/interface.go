@@ -7,6 +7,10 @@ import (
 
 var defaultConfigCenter ConfigCenter
 
+type ConfigObserver interface {
+	HandleChangeEvent(event *ChangeEvent)
+}
+
 type ConfigCenter interface {
 	Init(ctx context.Context, serviceName string, namespaceNames []string) error
 	Stop(ctx context.Context) error
@@ -18,7 +22,8 @@ type ConfigCenter interface {
 	GetInt(ctx context.Context, key string) int
 	GetIntWithNamespace(ctx context.Context, namespace, key string) int
 
-	WatchUpdate(ctx context.Context) <-chan *ChangeEvent
+	StartWatchUpdate(ctx context.Context)
+	RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func())
 }
 
 func Init(ctx context.Context, serviceName string, namespaceNames []string) error {
@@ -78,9 +83,10 @@ func GetIntWithNamespace(ctx context.Context, namespace, key string) int {
 	return defaultConfigCenter.GetIntWithNamespace(ctx, namespace, key)
 }
 
-func WatchUpdate(ctx context.Context) <-chan *ChangeEvent {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.WatchUpdate")
-	defer span.Finish()
+func StartWatchUpdate(ctx context.Context) {
+	defaultConfigCenter.StartWatchUpdate(ctx)
+}
 
-	return defaultConfigCenter.WatchUpdate(ctx)
+func RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func()) {
+	return defaultConfigCenter.RegisterObserver(ctx, observer)
 }

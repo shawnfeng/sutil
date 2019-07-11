@@ -6,11 +6,13 @@ package mq
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -32,6 +34,7 @@ func (t MQType) String() string {
 const (
 	ConfigTypeSimple = iota
 	ConfigTypeEtcd
+	ConfigTypeApollo
 )
 
 const (
@@ -47,21 +50,27 @@ type Config struct {
 	Offset         int64
 }
 
+type KeyParts struct {
+	Topic string
+	Group string
+}
+
 var DefaultConfiger = NewSimpleConfiger()
 
 type Configer interface {
-	GetConfig(ctx context.Context, topic string) *Config
+	GetConfig(ctx context.Context, topic string) (*Config, error)
+	ParseKey(ctx context.Context, k string) (*KeyParts, error)
+	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
 
 func NewConfiger(configType int) (Configer, error) {
-
 	switch configType {
 	case ConfigTypeSimple:
 		return NewSimpleConfiger(), nil
-
 	case ConfigTypeEtcd:
 		return NewEtcdConfiger(), nil
-
+	case ConfigTypeApollo:
+		return NewApolloConfig(), nil
 	default:
 		return nil, fmt.Errorf("configType %d error", configType)
 	}
@@ -77,7 +86,7 @@ func NewSimpleConfiger() Configer {
 	}
 }
 
-func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) *Config {
+func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "SimpleConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get simple config topic:%s", fun, topic)
 
@@ -88,7 +97,17 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) *Config {
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
-	}
+	}, nil
+}
+
+func (m *SimpleConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
+	// noop
+	return nil
+}
+
+func (m *SimpleConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
+	fun := "SimpleConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 type EtcdConfig struct {
@@ -101,45 +120,49 @@ func NewEtcdConfiger() Configer {
 	}
 }
 
-func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) *Config {
+func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "EtcdConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get etcd config topic:%s", fun, topic)
 
-	//todo etcd router
-	return &Config{
-		MQType:  MqTypeKafka,
-		MQAddr:  []string{},
-		Topic:   topic,
-		TimeOut: defaultTimeout,
-	}
+	return nil, fmt.Errorf("%s etcd config not supported", fun)
+}
+
+func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
+	// TODO:
+	return nil
+}
+
+func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
+	fun := "EtcdConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 const defaultApolloNamespace = "infra.mq"
 
-func getApolloMQConfigKey(topic, group, mqType, key string) string {
-	return strings.Join([]string{
-		topic,
-		group,
-		mqType,
-		key,
-	}, ".")
+type ApolloConfig struct {
+	watchOnce sync.Once
+	ch        chan *center.ChangeEvent
 }
 
-type ApolloConfig struct {}
+func NewApolloConfig() Configer {
+	return &ApolloConfig{
+		ch: make(chan *center.ChangeEvent),
+	}
+}
 
-func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) *Config {
+func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "ApolloConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get mq config topic:%s", fun, topic)
 
-	group := scontext.GetGroup(ctx)
-	if group == "" {
-		group = "default"
+	brokerKey := m.buildKey(ctx, topic, "brokers")
+	var brokers []string
+	for _, broker := range strings.Split(center.GetStringWithNamespace(ctx, defaultApolloNamespace, brokerKey), ",") {
+		brokers = append(brokers, strings.TrimSpace(broker))
 	}
 
-	brokerKey := getApolloMQConfigKey(topic, group, fmt.Sprint(MqTypeKafka), "brokers")
-	var brokers []string
-	for _, broker := range strings.Split(center.GetStringWithNamespace(context.TODO(), defaultApolloNamespace, brokerKey), ",") {
-		brokers = append(brokers, strings.TrimSpace(broker))
+	// validate config
+	if len(brokers) == 0 {
+		return nil, fmt.Errorf("%s no brokers config found")
 	}
 
 	return &Config{
@@ -149,9 +172,60 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) *Config {
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
-	}
+	}, nil
 }
 
-func NewApolloConfig() Configer {
-	return &ApolloConfig{}
+type apolloObserver struct {
+	ch chan<- *center.ChangeEvent
+}
+
+func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
+	if event.Namespace != defaultApolloNamespace {
+		return
+	}
+
+	// TODO: filter different mq types
+	var changes = map[string]*center.Change{}
+	for k, ce := range event.Changes {
+		if strings.Contains(k, fmt.Sprint(MqTypeKafka)) {
+			changes[k] = ce
+		}
+	}
+
+	event.Changes = changes
+
+	ob.ch <- event
+}
+
+func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
+	m.watchOnce.Do(func() {
+		center.StartWatchUpdate(ctx)
+		center.RegisterObserver(ctx, &apolloObserver{m.ch})
+	})
+	return m.ch
+}
+
+func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "ApolloConfig.ParseKey-->"
+	parts := strings.Split(key, ".")
+	numParts := len(parts)
+	if numParts < 4 {
+		errMsg := fmt.Sprintf("%s invalid key:%s", fun, key)
+		slog.Errorln(ctx, errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+	return &KeyParts{
+		Topic: strings.Join(parts[:numParts-3], "."),
+		Group: parts[numParts-3],
+	}, nil
+}
+
+func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string {
+	return strings.Join([]string{
+		topic,
+		scontext.GetGroupWithDefault(ctx, defaultGroup),
+		fmt.Sprint(MqTypeKafka),
+		item,
+	}, ".")
 }

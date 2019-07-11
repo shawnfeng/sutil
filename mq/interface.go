@@ -21,6 +21,8 @@ const (
 	spanLogKeyTopic     = "topic"
 	spanLogKeyGroupId   = "groupId"
 	spanLogKeyPartition = "partition"
+
+	defaultGroup = "default"
 )
 
 var mqOpDurationLimit = 10 * time.Millisecond
@@ -40,7 +42,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		log.String(spanLogKeyKey, key))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroup(ctx),
+		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeWriter,
 		topic:     topic,
 		groupId:   "",
@@ -77,7 +79,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	span.LogFields(log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroup(ctx),
+		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeWriter,
 		topic:     topic,
 		groupId:   "",
@@ -117,7 +119,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 		log.String(spanLogKeyGroupId, groupId))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroup(ctx),
+		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   groupId,
@@ -171,7 +173,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 
 	//todo flag
 	conf := &instanceConf{
-		group:     scontext.GetGroup(ctx),
+		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   "",
@@ -225,7 +227,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 
 	//todo flag
 	conf := &instanceConf{
-		group:     scontext.GetGroup(ctx),
+		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   groupId,
@@ -269,6 +271,10 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 
 func SetConfiger(configer Configer) {
 	DefaultConfiger = configer
+}
+
+func WatchUpdate(ctx context.Context) {
+	go DefaultInstanceManager.watch(ctx)
 }
 
 func Close() {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"strconv"
 	"strings"
@@ -51,10 +52,10 @@ func MQRoleTypeFromInt(it int) (t MQRoleType, err error) {
 }
 
 type instanceConf struct {
-	group string
-	role MQRoleType
-	topic string
-	groupId string
+	group     string
+	role      MQRoleType
+	topic     string
+	groupId   string
 	partition int
 }
 
@@ -70,8 +71,8 @@ func instanceConfFromString(s string) (conf *instanceConf, err error) {
 	}
 
 	conf = &instanceConf{
-		group: items[0],
-		topic: items[2],
+		group:   items[0],
+		topic:   items[2],
 		groupId: items[3],
 	}
 
@@ -93,6 +94,7 @@ func instanceConfFromString(s string) (conf *instanceConf, err error) {
 
 type InstanceManager struct {
 	instances sync.Map
+	watchOnce sync.Once
 }
 
 func NewInstanceManager() *InstanceManager {
@@ -150,8 +152,76 @@ func (m *InstanceManager) get(ctx context.Context, conf *instanceConf) interface
 	return in
 }
 
-func (m *InstanceManager) watchInstance(ctx context.Context) {
+func (m *InstanceManager) applyChange(ctx context.Context, k string, change *center.Change) {
+	fun := "InstanceManager.applyChange-->"
+	slog.Infof(ctx, "%s apply change:%v to key:%s", fun, change, k)
+	m.instances.Range(func(key, val interface{}) (ret bool) {
+		ret = true
 
+		sk, ok := key.(string)
+		if !ok {
+			slog.Errorf(ctx, "%s key:%v should be string", fun, key)
+			return
+		}
+
+		conf, err := m.confFromKey(sk)
+		if err != nil {
+			slog.Errorf(ctx, "%s failed to convert key:%s to conf", fun, sk)
+			return
+		}
+
+		keyParts, err := DefaultConfiger.ParseKey(ctx, k)
+		if err != nil {
+			slog.Errorf(ctx, "%s parse key:%s failed", fun, k)
+			return
+		}
+
+		if keyParts.Group == conf.group && keyParts.Topic == conf.topic {
+			slog.Infof(ctx, "%s update instance:%v", fun, val)
+			// NOTE: 关闭旧实例，重新载入新实例，若旧实例关闭失败打印日志
+			if err = m.closeInstance(ctx, val, conf); err != nil {
+				slog.Errorf(ctx, "%s close instance err:%v", fun, err)
+			}
+
+			in, err := m.newInstance(ctx, conf)
+			if err != nil {
+				m.instances.Delete(key)
+				return
+			}
+			m.instances.Store(key, in)
+		}
+		return
+	})
+}
+
+func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.ChangeEvent) {
+	slog.Infoln(ctx, "got new change event:%v", ce)
+
+	for key, change := range ce.Changes {
+		// NOTE: 只需关心 MODIFY 与 DELETE 类型改变
+		if change.ChangeType != center.MODIFY && change.ChangeType != center.DELETE {
+			continue
+		}
+
+		m.applyChange(ctx, key, change)
+	}
+}
+
+func (m *InstanceManager) watch(ctx context.Context) {
+	fun := "InstanceManager.watch-->"
+	m.watchOnce.Do(func() {
+		ceChan := DefaultConfiger.Watch(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				slog.Infof(ctx, "%s context err:%v", fun, ctx.Err())
+				return
+			case ce := <-ceChan:
+				slog.Infof(ctx, "%s got change event:%v", fun, ce)
+				m.applyChangeEvent(ctx, ce)
+			}
+		}
+	})
 }
 
 func (m *InstanceManager) getReader(ctx context.Context, conf *instanceConf) Reader {
@@ -208,27 +278,32 @@ func (m *InstanceManager) Close() {
 			return false
 		}
 
-		if conf.role == RoleTypeReader {
-			reader, ok := value.(Reader)
-			if ok == false {
-				slog.Errorf(ctx, "%s value.(Reader), key:%v", fun, key)
-				return false
-			}
-
-			reader.Close()
-		}
-
-		if conf.role == RoleTypeWriter {
-			writer, ok := value.(Writer)
-			if ok == false {
-				slog.Errorf(ctx, "%s value.(Writer), key:%v", fun, key)
-				return false
-			}
-
-			writer.Close()
+		err = m.closeInstance(ctx, value, conf)
+		if err != nil {
+			slog.Errorf(ctx, "%s close instance err:%v", fun, err)
 		}
 
 		m.instances.Delete(key)
 		return true
 	})
+}
+
+func (m *InstanceManager) closeInstance(ctx context.Context, instance interface{}, conf *instanceConf) error {
+	fun := "InstanceManager.closeInstance-->"
+	if conf.role == RoleTypeReader {
+		reader, ok := instance.(Reader)
+		if !ok {
+			return fmt.Errorf("%s instance:%#v should be reader", fun, instance)
+		}
+		return reader.Close()
+	}
+
+	if conf.role == RoleTypeWriter {
+		writer, ok := instance.(Writer)
+		if !ok {
+			return fmt.Errorf("%s instance:%#v should be writer", fun, instance)
+		}
+		return writer.Close()
+	}
+	return nil
 }

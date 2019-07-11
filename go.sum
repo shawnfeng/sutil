@@ -13,6 +13,8 @@ github.com/ZhengHe-MD/agollo v0.0.0-20190708133309-acc5196ddef0 h1:cOrzO76bwkbRO
 github.com/ZhengHe-MD/agollo v0.0.0-20190708133309-acc5196ddef0/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56 h1:y5QtREe6LiwDv8oGRNp0pag0bfcQocX1JNr4DxDAOZA=
 github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190710125726-8aacd739399e h1:PNO8OTYRzh16UqTO1cWark6n5H6lThqX3IdBz6hkvno=
+github.com/ZhengHe-MD/agollo v0.0.0-20190710125726-8aacd739399e/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible h1:NqugIJRTEPNLBtzg3TkM2rfUnpwNRgkhy0Mhk3yJ0Es=
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=

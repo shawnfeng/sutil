@@ -39,3 +39,10 @@ func GetGroup(ctx context.Context) string {
 
 	return control.GetGroup()
 }
+
+func GetGroupWithDefault(ctx context.Context, dv string) string {
+	if group := GetGroup(ctx); group != "" {
+		return group
+	}
+	return dv
+}
