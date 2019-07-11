@@ -48,7 +48,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		groupId:   "",
 		partition: 0,
 	}
-	writer := DefaultInstanceManager.getWriter(ctx, conf)
+	writer := defaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -85,7 +85,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 		groupId:   "",
 		partition: 0,
 	}
-	writer := DefaultInstanceManager.getWriter(ctx, conf)
+	writer := defaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -125,7 +125,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 		groupId:   groupId,
 		partition: 0,
 	}
-	reader := DefaultInstanceManager.getReader(ctx, conf)
+	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -178,7 +178,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		groupId:   "",
 		partition: partition,
 	}
-	reader := DefaultInstanceManager.getReader(ctx, conf)
+	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -231,7 +231,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		groupId:   groupId,
 		partition: 0,
 	}
-	reader := DefaultInstanceManager.getReader(ctx, conf)
+	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -272,9 +272,9 @@ func SetConfiger(configer Configer) {
 }
 
 func WatchUpdate(ctx context.Context) {
-	go DefaultInstanceManager.watch(ctx)
+	go defaultInstanceManager.watch(ctx)
 }
 
 func Close() {
-	DefaultInstanceManager.Close()
+	defaultInstanceManager.Close()
 }

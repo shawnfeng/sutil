@@ -18,12 +18,11 @@ require (
 	github.com/lib/pq v0.0.0-20170603225454-8837942c3e09
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.0
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v0.9.2
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
 	github.com/segmentio/kafka-go v0.2.4
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
-	github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c // indirect
+	github.com/stretchr/testify v1.3.0
 	github.com/stretchrcom/testify v1.2.2 // indirect
 	github.com/uber/jaeger-client-go v2.16.0+incompatible
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect

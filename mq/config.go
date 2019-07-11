@@ -55,7 +55,7 @@ type KeyParts struct {
 	Group string
 }
 
-var DefaultConfiger = NewSimpleConfiger()
+var DefaultConfiger Configer = NewSimpleConfiger()
 
 type Configer interface {
 	GetConfig(ctx context.Context, topic string) (*Config, error)
@@ -80,7 +80,7 @@ type SimpleConfig struct {
 	mqAddr []string
 }
 
-func NewSimpleConfiger() Configer {
+func NewSimpleConfiger() *SimpleConfig {
 	return &SimpleConfig{
 		mqAddr: []string{"prod.kafka1.ibanyu.com:9092", "prod.kafka2.ibanyu.com:9092", "prod.kafka3.ibanyu.com:9092"},
 	}
@@ -114,7 +114,7 @@ type EtcdConfig struct {
 	etcdAddr []string
 }
 
-func NewEtcdConfiger() Configer {
+func NewEtcdConfiger() *EtcdConfig {
 	return &EtcdConfig{
 		etcdAddr: []string{}, //todo
 	}
@@ -137,15 +137,18 @@ func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) 
 	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
-const defaultApolloNamespace = "infra.mq"
-const apolloConfigSep = "."
+const (
+	defaultApolloNamespace = "infra.mq"
+	apolloConfigSep        = "."
+	apolloBrokerSep        = ","
+)
 
 type ApolloConfig struct {
 	watchOnce sync.Once
 	ch        chan *center.ChangeEvent
 }
 
-func NewApolloConfig() Configer {
+func NewApolloConfig() *ApolloConfig {
 	return &ApolloConfig{
 		ch: make(chan *center.ChangeEvent),
 	}
@@ -157,13 +160,15 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 
 	brokerKey := m.buildKey(ctx, topic, "brokers")
 	var brokers []string
-	for _, broker := range strings.Split(center.GetStringWithNamespace(ctx, defaultApolloNamespace, brokerKey), ",") {
-		brokers = append(brokers, strings.TrimSpace(broker))
+	for _, broker := range strings.Split(center.GetStringWithNamespace(ctx, defaultApolloNamespace, brokerKey), apolloBrokerSep) {
+		if broker != "" {
+			brokers = append(brokers, strings.TrimSpace(broker))
+		}
 	}
 
 	// validate config
 	if len(brokers) == 0 {
-		return nil, fmt.Errorf("%s no brokers config found")
+		return nil, fmt.Errorf("%s no brokers config found", fun)
 	}
 
 	return &Config{
