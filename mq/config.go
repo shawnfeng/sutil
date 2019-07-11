@@ -5,21 +5,41 @@
 package mq
 
 import (
+	"context"
 	"fmt"
+	"github.com/shawnfeng/sutil/sconf/center"
+	"github.com/shawnfeng/sutil/scontext"
+	"github.com/shawnfeng/sutil/slog/slog"
+	"strings"
 	"time"
 )
 
+type MQType int
+
 const (
-	MqTypeKafka = iota
+	MqTypeKafka MQType = iota
 )
+
+func (t MQType) String() string {
+	switch t {
+	case MqTypeKafka:
+		return "kafka"
+	default:
+		return ""
+	}
+}
 
 const (
 	ConfigTypeSimple = iota
 	ConfigTypeEtcd
 )
 
+const (
+	defaultTimeout = 3 * time.Second
+)
+
 type Config struct {
-	MQType         int
+	MQType         MQType
 	MQAddr         []string
 	Topic          string
 	TimeOut        time.Duration
@@ -30,7 +50,7 @@ type Config struct {
 var DefaultConfiger = NewSimpleConfiger()
 
 type Configer interface {
-	GetConfig(topic string) *Config
+	GetConfig(ctx context.Context, topic string) *Config
 }
 
 func NewConfiger(configType int) (Configer, error) {
@@ -57,12 +77,15 @@ func NewSimpleConfiger() Configer {
 	}
 }
 
-func (m *SimpleConfig) GetConfig(topic string) *Config {
+func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) *Config {
+	fun := "SimpleConfig.GetConfig-->"
+	slog.Infof(ctx, "%s get simple config topic:%s", fun, topic)
+
 	return &Config{
 		MQType:         MqTypeKafka,
 		MQAddr:         m.mqAddr,
 		Topic:          topic,
-		TimeOut:        3 * time.Second,
+		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
 	}
@@ -78,12 +101,57 @@ func NewEtcdConfiger() Configer {
 	}
 }
 
-func (m *EtcdConfig) GetConfig(topic string) *Config {
+func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) *Config {
+	fun := "EtcdConfig.GetConfig-->"
+	slog.Infof(ctx, "%s get etcd config topic:%s", fun, topic)
+
 	//todo etcd router
 	return &Config{
 		MQType:  MqTypeKafka,
 		MQAddr:  []string{},
 		Topic:   topic,
-		TimeOut: 3 * time.Second,
+		TimeOut: defaultTimeout,
 	}
+}
+
+const defaultApolloNamespace = "infra.mq"
+
+func getApolloMQConfigKey(topic, group, mqType, key string) string {
+	return strings.Join([]string{
+		topic,
+		group,
+		mqType,
+		key,
+	}, ".")
+}
+
+type ApolloConfig struct {}
+
+func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) *Config {
+	fun := "ApolloConfig.GetConfig-->"
+	slog.Infof(ctx, "%s get mq config topic:%s", fun, topic)
+
+	group := scontext.GetGroup(ctx)
+	if group == "" {
+		group = "default"
+	}
+
+	brokerKey := getApolloMQConfigKey(topic, group, fmt.Sprint(MqTypeKafka), "brokers")
+	var brokers []string
+	for _, broker := range strings.Split(center.GetStringWithNamespace(context.TODO(), defaultApolloNamespace, brokerKey), ",") {
+		brokers = append(brokers, strings.TrimSpace(broker))
+	}
+
+	return &Config{
+		MQType:         MqTypeKafka,
+		MQAddr:         brokers,
+		Topic:          topic,
+		TimeOut:        defaultTimeout,
+		CommitInterval: 1 * time.Second,
+		Offset:         FirstOffset,
+	}
+}
+
+func NewApolloConfig() Configer {
+	return &ApolloConfig{}
 }

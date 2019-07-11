@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
+	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/trace"
@@ -32,6 +33,11 @@ func main() {
 	if span != nil {
 		defer span.Finish()
 	}
+
+	center.Init(ctx, "test/test", []string{"application", "infra.mq"})
+
+	mq.SetConfiger(mq.NewApolloConfig())
+
 	go func() {
 		var msgs []mq.Message
 		for i := 0; i < 10; i++ {
