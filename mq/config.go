@@ -101,6 +101,8 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 }
 
 func (m *SimpleConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
+	fun := "SimpleConfig.Watch-->"
+	slog.Infof(ctx, "%s start", fun)
 	// noop
 	return nil
 }
@@ -128,6 +130,8 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) (*Config, erro
 }
 
 func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
+	fun := "EtcdConfig.Watch-->"
+	slog.Infof(ctx, "%s start", fun)
 	// TODO:
 	return nil
 }
@@ -224,7 +228,9 @@ func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
 }
 
 func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
+	fun := "ApolloConfig.Watch-->"
 	m.watchOnce.Do(func() {
+		slog.Infof(ctx, "%s start", fun)
 		center.StartWatchUpdate(ctx)
 		center.RegisterObserver(ctx, &apolloObserver{m.ch})
 	})
