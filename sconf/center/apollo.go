@@ -110,26 +110,18 @@ func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace
 	return agollo.GetIntWithNamespace(namespace, key, 0)
 }
 
-func (ap *apolloConfigCenter) WatchUpdate(ctx context.Context) <-chan *ChangeEvent {
-	fun := "sconfcenter.WatchUpdate-->"
+func (ap *apolloConfigCenter) StartWatchUpdate(ctx context.Context) {
+	agollo.StartWatchUpdate()
+}
 
-	ap.watchUpdateOnce.Do(func() {
-		agolloChangeEventChan := agollo.WatchUpdate()
-		go func() {
-		WatchUpdateLoop:
-			for {
-				select {
-				case <-ctx.Done():
-					close(ap.changeEventChan)
-					break WatchUpdateLoop
-				case ace := <-agolloChangeEventChan:
-					ce := fromAgolloChangeEvent(ace)
-					slog.Infof(ctx, "%s receive change event:%v", fun, ce)
-					ap.changeEventChan <- ce
-				}
-			}
-		}()
-	})
+type agolloObserver struct {
+	observer ConfigObserver
+}
 
-	return ap.changeEventChan
+func (o *agolloObserver) HandleChangeEvent(ce *agollo.ChangeEvent) {
+	o.observer.HandleChangeEvent(fromAgolloChangeEvent(ce))
+}
+
+func (ap *apolloConfigCenter) RegisterObserver(ctx context.Context, observer ConfigObserver) func() {
+	return agollo.RegisterObserver(&agolloObserver{observer})
 }

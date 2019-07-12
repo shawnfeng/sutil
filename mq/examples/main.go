@@ -36,7 +36,9 @@ func main() {
 
 	center.Init(ctx, "test/test", []string{"application", "infra.mq"})
 
-	mq.SetConfiger(mq.NewApolloConfig())
+	configer, _ := mq.NewConfiger(mq.ConfigTypeApollo)
+	mq.SetConfiger(configer)
+	mq.WatchUpdate(ctx)
 
 	go func() {
 		var msgs []mq.Message

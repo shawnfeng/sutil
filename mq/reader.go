@@ -7,9 +7,6 @@ package mq
 import (
 	"context"
 	"fmt"
-	//"time"
-	// kafka "github.com/segmentio/kafka-go"
-	//"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type Handler interface {
@@ -25,7 +22,10 @@ type Reader interface {
 //CommitInterval indicates the interval at which offsets are committed to
 // the broker.  If 0, commits will be handled synchronously.
 func NewGroupReader(ctx context.Context, topic, groupId string) (Reader, error) {
-	config := DefaultConfiger.GetConfig(ctx, topic)
+	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	if err != nil {
+		return nil, err
+	}
 
 	mqType := config.MQType
 	switch mqType {
@@ -43,7 +43,10 @@ const (
 )
 
 func NewPartitionReader(ctx context.Context, topic string, partition int) (Reader, error) {
-	config := DefaultConfiger.GetConfig(ctx, topic)
+	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	if err != nil {
+		return nil, err
+	}
 
 	offset := config.Offset
 	mqType := config.MQType
