@@ -15,6 +15,8 @@ type ConfigCenter interface {
 	Init(ctx context.Context, serviceName string, namespaceNames []string) error
 	Stop(ctx context.Context) error
 
+	SubscribeNamespaces(ctx context.Context, namespaceNames []string) error
+
 	GetString(ctx context.Context, key string) string
 	GetStringWithNamespace(ctx context.Context, namespace, key string) string
 	GetBool(ctx context.Context, key string) bool
@@ -39,6 +41,13 @@ func Stop(ctx context.Context) error {
 	defer span.Finish()
 
 	return defaultConfigCenter.Stop(ctx)
+}
+
+func SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.SubscribeNamespaces")
+	defer span.Finish()
+
+	return defaultConfigCenter.SubscribeNamespaces(ctx, namespaceNames)
 }
 
 func GetString(ctx context.Context, key string) string {

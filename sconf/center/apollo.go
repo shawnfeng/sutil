@@ -88,6 +88,10 @@ func (ap *apolloConfigCenter) Stop(ctx context.Context) error {
 	return agollo.Stop()
 }
 
+func (ap *apolloConfigCenter) SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
+	return agollo.SubscribeToNamespaces(namespaceNames...)
+}
+
 func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) string {
 	return agollo.GetString(key, "")
 }
