@@ -42,7 +42,7 @@ func TestApolloConfig_GetConfig(t *testing.T) {
 		topic := defaultTestTopic
 		config, err := conf.GetConfig(ctx, topic)
 		assert.Equal(t, err, nil)
-		assert.Equal(t, config.MQType, MqTypeKafka)
+		assert.Equal(t, config.MQType, MQTypeKafka)
 		assert.Equal(t, config.Topic, topic)
 		assert.True(t, len(config.MQAddr) > 0)
 	})

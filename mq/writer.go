@@ -23,7 +23,7 @@ func NewWriter(ctx context.Context, topic string) (Writer, error) {
 
 	mqType := config.MQType
 	switch mqType {
-	case MqTypeKafka:
+	case MQTypeKafka:
 		return NewKafkaWriter(config.MQAddr, topic), nil
 
 	default:
