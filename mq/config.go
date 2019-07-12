@@ -140,7 +140,8 @@ func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) 
 const (
 	defaultApolloNamespace = "infra.mq"
 	apolloConfigSep        = "."
-	apolloBrokerSep        = ","
+	apolloBrokersSep       = ","
+	apolloBrokersKey       = "brokers"
 )
 
 type ApolloConfig struct {
@@ -154,13 +155,29 @@ func NewApolloConfig() *ApolloConfig {
 	}
 }
 
+type simpleContextController struct {
+	group string
+}
+func (s simpleContextController) GetGroup() string {
+	return s.group
+}
+
+func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) string {
+	val := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, topic, name))
+	if val == "" {
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
+		val = center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(defaultCtx, topic, name))
+	}
+	return val
+}
+
 func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "ApolloConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get mq config topic:%s", fun, topic)
 
-	brokerKey := m.buildKey(ctx, topic, "brokers")
+	brokersVal := m.getConfigItemWithFallback(ctx, topic, apolloBrokersKey)
 	var brokers []string
-	for _, broker := range strings.Split(center.GetStringWithNamespace(ctx, defaultApolloNamespace, brokerKey), apolloBrokerSep) {
+	for _, broker := range strings.Split(brokersVal, apolloBrokersSep) {
 		if broker != "" {
 			brokers = append(brokers, strings.TrimSpace(broker))
 		}

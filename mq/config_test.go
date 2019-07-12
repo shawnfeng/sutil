@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/kaneshin/go-pkg/testing/assert"
 	"github.com/shawnfeng/sutil/sconf/center"
+	"github.com/shawnfeng/sutil/scontext"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"os"
 	"testing"
 )
@@ -107,4 +109,37 @@ func TestApolloConfig_ParseKey(t *testing.T) {
 		assert.Equal(t, c.expectError, err != nil)
 		assert.Equal(t, c.expectedKeyParts, keyParts)
 	}
+}
+
+func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
+	t.Run("empty ctx should get default value", func(t *testing.T) {
+		ctx := context.TODO()
+		conf := NewApolloConfig()
+
+		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
+		slog.Infof(ctx, "got brokers:%s", brokersVal)
+	})
+
+	t.Run("ctx with unknown group should get default value", func(t *testing.T) {
+		ctx := context.TODO()
+		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{"unknown"})
+
+		conf := NewApolloConfig()
+
+		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
+		slog.Infof(ctx, "got brokers:%s", brokersVal)
+	})
+
+	t.Run("ctx with known group should get its value", func(t *testing.T) {
+		ctx := context.TODO()
+		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{"testgroup"})
+
+		conf := NewApolloConfig()
+
+		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
+		slog.Infof(ctx, "got brokers:%s", brokersVal)
+	})
 }
