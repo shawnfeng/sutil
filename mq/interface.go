@@ -17,10 +17,12 @@ import (
 )
 
 const (
-	spanLogKeyKey       = "key"
-	spanLogKeyTopic     = "topic"
-	spanLogKeyGroupId   = "groupId"
-	spanLogKeyPartition = "partition"
+	spanLogKeyKey            = "key"
+	spanLogKeyTopic          = "topic"
+	spanLogKeyMQType         = "mq"
+	spanLogKeyKafkaGroupID   = "groupid"
+	spanLogKeyKafkaPartition = "partition"
+	spanLogKeyKafkaBrokers   = "brokers"
 
 	defaultGroup = "default"
 )
@@ -115,8 +117,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
 	defer span.Finish()
 	span.LogFields(
-		log.String(spanLogKeyTopic, topic),
-		log.String(spanLogKeyGroupId, groupId))
+		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
 		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
@@ -155,8 +156,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	if mspan != nil {
 		defer mspan.Finish()
 		mspan.LogFields(
-			log.String(spanLogKeyTopic, topic),
-			log.String(spanLogKeyGroupId, groupId))
+			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, err
 }
@@ -168,8 +168,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
 	defer span.Finish()
 	span.LogFields(
-		log.String(spanLogKeyTopic, topic),
-		log.Int(spanLogKeyPartition, partition))
+		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
 		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
@@ -208,8 +207,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	if mspan != nil {
 		defer mspan.Finish()
 		mspan.LogFields(
-			log.String(spanLogKeyTopic, topic),
-			log.Int(spanLogKeyPartition, partition))
+			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, err
 }
@@ -221,8 +219,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
 	defer span.Finish()
 	span.LogFields(
-		log.String(spanLogKeyTopic, topic),
-		log.String(spanLogKeyGroupId, groupId))
+		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
 		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
@@ -261,8 +258,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	if mspan != nil {
 		defer mspan.Finish()
 		mspan.LogFields(
-			log.String(spanLogKeyTopic, topic),
-			log.String(spanLogKeyGroupId, groupId))
+			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, handler, err
 }

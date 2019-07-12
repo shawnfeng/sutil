@@ -19,12 +19,12 @@ import (
 type MQType int
 
 const (
-	MqTypeKafka MQType = iota
+	MQTypeKafka MQType = iota
 )
 
 func (t MQType) String() string {
 	switch t {
-	case MqTypeKafka:
+	case MQTypeKafka:
 		return "kafka"
 	default:
 		return ""
@@ -91,7 +91,7 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 	slog.Infof(ctx, "%s get simple config topic:%s", fun, topic)
 
 	return &Config{
-		MQType:         MqTypeKafka,
+		MQType:         MQTypeKafka,
 		MQAddr:         m.mqAddr,
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
@@ -158,6 +158,7 @@ func NewApolloConfig() *ApolloConfig {
 type simpleContextController struct {
 	group string
 }
+
 func (s simpleContextController) GetGroup() string {
 	return s.group
 }
@@ -189,7 +190,7 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 	}
 
 	return &Config{
-		MQType:         MqTypeKafka,
+		MQType:         MQTypeKafka,
 		MQAddr:         brokers,
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
@@ -210,7 +211,7 @@ func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
 	// TODO: filter different mq types
 	var changes = map[string]*center.Change{}
 	for k, ce := range event.Changes {
-		if strings.Contains(k, fmt.Sprint(MqTypeKafka)) {
+		if strings.Contains(k, fmt.Sprint(MQTypeKafka)) {
 			changes[k] = ce
 		}
 	}
@@ -248,7 +249,7 @@ func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string 
 	return strings.Join([]string{
 		topic,
 		scontext.GetGroupWithDefault(ctx, defaultGroup),
-		fmt.Sprint(MqTypeKafka),
+		fmt.Sprint(MQTypeKafka),
 		item,
 	}, apolloConfigSep)
 }
