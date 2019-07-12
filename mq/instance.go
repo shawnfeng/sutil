@@ -178,7 +178,7 @@ func (m *InstanceManager) applyChange(ctx context.Context, k string, change *cen
 
 		// NOTE: 只要 group 和 topic 相同，即认为相关的配置发生了变化
 		//       为了逻辑简单，不论什么变化，都重新载入一次 instance, 不对不同的 ChangeType 单独处理
-		if keyParts.Group == conf.group && keyParts.Topic == conf.topic {
+		if (keyParts.Group == conf.group || keyParts.Group == defaultGroup) && keyParts.Topic == conf.topic {
 			slog.Infof(ctx, "%s update instance:%v", fun, val)
 			// NOTE: 关闭旧实例，重新载入新实例，若旧实例关闭失败打印日志
 			if err = m.closeInstance(ctx, val, conf); err != nil {
