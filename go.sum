@@ -15,6 +15,8 @@ github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56 h1:y5QtREe6LiwDv
 github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/agollo v0.0.0-20190710125726-8aacd739399e h1:PNO8OTYRzh16UqTO1cWark6n5H6lThqX3IdBz6hkvno=
 github.com/ZhengHe-MD/agollo v0.0.0-20190710125726-8aacd739399e/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
+github.com/ZhengHe-MD/agollo v0.0.0-20190711130552-44a6f590a51c h1:PcCai3ucqrNtMy77KrIeDShxKNr827OreWvuBUtFRS0=
+github.com/ZhengHe-MD/agollo v0.0.0-20190711130552-44a6f590a51c/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible h1:NqugIJRTEPNLBtzg3TkM2rfUnpwNRgkhy0Mhk3yJ0Es=
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
@@ -22,6 +24,7 @@ github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb/go.mod h1:cX
 github.com/bitly/go-simplejson v0.5.0 h1:6IH+V8/tVMab511d5bn4M7EwGXZf9Hj6i2xSwkNEM+Y=
 github.com/bitly/go-simplejson v0.5.0/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
 github.com/coreos/etcd v3.0.0-beta.0.0.20160712024141-cc26f2c8892e+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594 h1:oNI7duAqnx59p+HQvLXlVcACWG50vb0QhH1JVdhnqCk=
@@ -77,8 +80,12 @@ github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb h1:8XB3GJL
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb/go.mod h1:9u5PFfVGpGVlGplh2jWs0UqjcY3ptVZ/v5iXpsRGg9M=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8 h1:UEgIO+GShCTkSTPdQj+5UODyJi2FpwMnyZ982jpABs8=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8/go.mod h1:9u5PFfVGpGVlGplh2jWs0UqjcY3ptVZ/v5iXpsRGg9M=
+github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c h1:03OmljzZYsezlgAfa+f/cY8E8XXPiFh5bgANMhUlDI4=
 github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
+github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
+github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchrcom/testify v1.2.2 h1:R5L+N9NKlaO/Q0Dvq8kBEV/uRKEa/Mt2Wt2WNtMqKTw=
 github.com/stretchrcom/testify v1.2.2/go.mod h1:zUrQijuLcfRPyrWG6SBFjct9CuJZz2Ybtack4DGF2Jo=
 github.com/uber/jaeger-client-go v2.16.0+incompatible h1:Q2Pp6v3QYiocMxomCaJuwQGFt7E53bPYqEgug/AoBtY=
