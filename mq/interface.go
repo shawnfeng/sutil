@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
@@ -35,7 +36,7 @@ type Message struct {
 }
 
 func WriteMsg(ctx context.Context, topic string, key string, value interface{}) error {
-	fun := "WriteMsg -->"
+	fun := "mq.WriteMsg -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
 	defer span.Finish()
@@ -74,7 +75,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 }
 
 func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
-	fun := "WriteMsgs -->"
+	fun := "mq.WriteMsgs -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsgs")
 	defer span.Finish()
@@ -112,7 +113,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 
 // 读完消息后会自动提交offset
 func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (context.Context, error) {
-	fun := "ReadMsgByGroup -->"
+	fun := "mq.ReadMsgByGroup -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
 	defer span.Finish()
@@ -163,7 +164,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 
 //
 func ReadMsgByPartition(ctx context.Context, topic string, partition int, value interface{}) (context.Context, error) {
-	fun := "ReadMsgByPartition -->"
+	fun := "mq.ReadMsgByPartition -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
 	defer span.Finish()
@@ -214,7 +215,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 
 // 读完消息后不会自动提交offset,需要手动调用Handle.CommitMsg方法来提交offset
 func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (context.Context, Handler, error) {
-	fun := "FetchMsgByGroup -->"
+	fun := "mq.FetchMsgByGroup -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
 	defer span.Finish()
@@ -263,8 +264,18 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	return mctx, handler, err
 }
 
-func SetConfiger(configer Configer) {
+func SetConfiger(ctx context.Context, configer Configer) error {
+	fun := "mq.SetConfiger-->"
 	DefaultConfiger = configer
+	switch DefaultConfiger.(type) {
+	case *ApolloConfig:
+		err := center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
+		if err != nil {
+			slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
+			return err
+		}
+	}
+	return nil
 }
 
 func WatchUpdate(ctx context.Context) {

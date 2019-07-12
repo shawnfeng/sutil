@@ -2,9 +2,7 @@ package center
 
 import (
 	"context"
-	"fmt"
 	"testing"
-	"time"
 )
 
 const (
@@ -57,24 +55,3 @@ func TestGetTypedVarWithNamespace(t *testing.T) {
 	}
 }
 
-func TestWatchUpdate(t *testing.T) {
-	ctx := context.Background()
-	_ = Init(ctx, "authapi", []string{"application"})
-	defer Stop(ctx)
-
-	ctx, cancel := context.WithCancel(ctx)
-	go func() {
-		time.Sleep(20 * time.Second)
-		cancel()
-	}()
-
-	changeEventChan := WatchUpdate(ctx)
-
-	for {
-		ce, ok := <-changeEventChan
-		if !ok {
-			break
-		}
-		fmt.Println(ce)
-	}
-}

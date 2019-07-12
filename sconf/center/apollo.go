@@ -73,6 +73,8 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 
 	ap.conf = conf
 
+	slog.Infof(ctx, "%s start agollo with conf:%v", fun, ap.conf)
+
 	if err := agollo.StartWithConf(ap.conf); err != nil {
 		slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
 	} else {
@@ -84,6 +86,10 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 
 func (ap *apolloConfigCenter) Stop(ctx context.Context) error {
 	return agollo.Stop()
+}
+
+func (ap *apolloConfigCenter) SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
+	return agollo.SubscribeToNamespaces(namespaceNames...)
 }
 
 func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) string {
