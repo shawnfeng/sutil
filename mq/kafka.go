@@ -146,6 +146,11 @@ func (m *KafkaWriter) logConfigToSpan(span opentracing.Span) {
 }
 
 func (m *KafkaWriter) WriteMsg(ctx context.Context, k string, v interface{}) error {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		m.logConfigToSpan(span)
+	}
+
 	msg, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -158,6 +163,11 @@ func (m *KafkaWriter) WriteMsg(ctx context.Context, k string, v interface{}) err
 }
 
 func (m *KafkaWriter) WriteMsgs(ctx context.Context, msgs ...Message) error {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		m.logConfigToSpan(span)
+	}
+
 	var kmsgs []kafka.Message
 	for _, msg := range msgs {
 		body, err := json.Marshal(msg.Value)
