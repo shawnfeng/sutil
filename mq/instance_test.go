@@ -101,11 +101,43 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 		m.applyChangeEvent(ctx, ce)
 	})
 
-	t.Run("modify/delete current instance", func(t *testing.T) {
+	t.Run("modify/delete instance", func(t *testing.T) {
 		m := NewInstanceManager()
 
 		conf := &instanceConf{
 			group:     "default",
+			role:      0,
+			topic:     defaultTestTopic,
+			groupId:   "g1",
+			partition: 0,
+		}
+
+		in, err := m.newInstance(ctx, conf)
+		assert.Equal(t, nil, err)
+		m.add(conf, in)
+
+		ce := &center.ChangeEvent{
+			Source:    center.Apollo,
+			Namespace: defaultApolloNamespace,
+			Changes: map[string]*center.Change{
+				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers"): {
+					ChangeType: center.MODIFY,
+				},
+			},
+		}
+
+		assert.Equal(t, 1, getSyncMapSizeUnSafe(m.instances))
+		m.applyChangeEvent(ctx, ce)
+		assert.Equal(t, 1, getSyncMapSizeUnSafe(m.instances))
+		modifiedIn := m.get(ctx, conf)
+		assert.NotEqual(t, modifiedIn, in)
+	})
+
+	t.Run("modify/delete default config", func(t *testing.T) {
+		m := NewInstanceManager()
+
+		conf := &instanceConf{
+			group:     "unknown",
 			role:      0,
 			topic:     defaultTestTopic,
 			groupId:   "g1",
