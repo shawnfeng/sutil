@@ -189,6 +189,8 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 		return nil, fmt.Errorf("%s no brokers config found", fun)
 	}
 
+	slog.Infof(ctx, "%s got config brokers:%s", fun, brokers)
+
 	return &Config{
 		MQType:         MQTypeKafka,
 		MQAddr:         brokers,

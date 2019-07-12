@@ -212,13 +212,19 @@ func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.Chang
 func (m *InstanceManager) watch(ctx context.Context) {
 	fun := "InstanceManager.watch-->"
 	m.watchOnce.Do(func() {
+		slog.Infof(ctx, "%s start watching updates", fun)
 		ceChan := DefaultConfiger.Watch(ctx)
+		Loop:
 		for {
 			select {
 			case <-ctx.Done():
 				slog.Infof(ctx, "%s context err:%v", fun, ctx.Err())
 				return
-			case ce := <-ceChan:
+			case ce, ok := <-ceChan:
+				if !ok {
+					slog.Infof(ctx, "%s change event channel closed", fun)
+					break Loop
+				}
 				slog.Infof(ctx, "%s got change event:%v", fun, ce)
 				m.applyChangeEvent(ctx, ce)
 			}
