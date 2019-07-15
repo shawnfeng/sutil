@@ -74,13 +74,7 @@ func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 		tkeys = append(tkeys, m.fixKey(key))
 	}
 
-	// NOTE: only log the first key
-	if len(tkeys) > 1 {
-		m.logSpan(ctx, "Del", strings.Join([]string{tkeys[0], "..."}, ","))
-	} else if len(tkeys) > 0 {
-		m.logSpan(ctx, "Del", tkeys[0])
-	}
-
+	m.logSpan(ctx, "Del", strings.Join(tkeys, ","))
 	return m.client.Del(tkeys...)
 }
 

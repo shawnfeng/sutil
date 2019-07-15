@@ -9,7 +9,7 @@ const (
 type CacheType int
 
 const (
-	CacheTypeRedis = iota
+	CacheTypeRedis CacheType = iota
 )
 
 func (t CacheType) String() string {
