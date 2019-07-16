@@ -71,9 +71,8 @@ func getSyncMapSizeUnSafe(m sync.Map) (ret int) {
 
 func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 	ctx := context.TODO()
-	configer, _ := NewConfiger(ConfigerTypeApollo)
-	apolloConfig, _ := configer.(*ApolloConfig)
-	SetConfiger(configer)
+	_ = SetConfiger(ctx, ConfigerTypeApollo)
+	apolloConfig, _ := DefaultConfiger.(*ApolloConfig)
 
 	t.Run("ignore add event", func(t *testing.T) {
 		m := NewInstanceManager()
@@ -88,7 +87,7 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 
 		ce := &center.ChangeEvent{
 			Source:    center.Apollo,
-			Namespace: defaultApolloNamespace,
+			Namespace: center.DefaultApolloMQNamespace,
 			Changes: map[string]*center.Change{
 				m.buildKey(conf): {
 					NewValue:   "localhost:9092",
@@ -118,7 +117,7 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 
 		ce := &center.ChangeEvent{
 			Source:    center.Apollo,
-			Namespace: defaultApolloNamespace,
+			Namespace: center.DefaultApolloMQNamespace,
 			Changes: map[string]*center.Change{
 				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers"): {
 					ChangeType: center.MODIFY,
@@ -150,7 +149,7 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 
 		ce := &center.ChangeEvent{
 			Source:    center.Apollo,
-			Namespace: defaultApolloNamespace,
+			Namespace: center.DefaultApolloMQNamespace,
 			Changes: map[string]*center.Change{
 				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers"): {
 					ChangeType: center.MODIFY,

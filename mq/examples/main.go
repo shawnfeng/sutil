@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
-	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/trace"
@@ -34,7 +33,6 @@ func main() {
 		defer span.Finish()
 	}
 
-	_ = center.Init(ctx, "test/test", nil)
 	_ = mq.SetConfiger(ctx, mq.ConfigerTypeApollo)
 	mq.WatchUpdate(ctx)
 

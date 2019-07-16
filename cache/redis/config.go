@@ -132,7 +132,6 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 }
 
 const (
-	defaultApolloNamespace = "infra.cache"
 	apolloConfigSep        = "."
 
 	apolloConfigKeyAddr     = "addr"
@@ -153,9 +152,9 @@ func NewApolloConfiger() *ApolloConfig {
 
 func (m *ApolloConfig) Init(ctx context.Context) error {
 	fun := "ApolloConfig.Init-->"
-	err := center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
+	err := center.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloCacheNamespace})
 	if err != nil {
-		slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
+		slog.Errorf(ctx, "%s init config center err:%v", fun, err)
 	}
 	return err
 }
@@ -169,19 +168,19 @@ func (s simpleContextController) GetGroup() string {
 }
 
 func (m *ApolloConfig) getConfigStringItemWithFallback(ctx context.Context, namespace, name string) (string, bool) {
-	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, namespace, name))
+	val, ok := center.GetStringWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
-		val, ok = center.GetStringWithNamespace(defaultCtx, defaultApolloNamespace, m.buildKey(defaultCtx, namespace, name))
+		val, ok = center.GetStringWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
 	}
 	return val, ok
 }
 
 func (m *ApolloConfig) getConfigIntItemWithFallback(ctx context.Context, namespace, name string) (int, bool) {
-	val, ok := center.GetIntWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, namespace, name))
+	val, ok := center.GetIntWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
-		val, ok = center.GetIntWithNamespace(defaultCtx, defaultApolloNamespace, m.buildKey(defaultCtx, namespace, name))
+		val, ok = center.GetIntWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
 	}
 	return val, ok
 }
@@ -241,7 +240,7 @@ type apolloObserver struct {
 }
 
 func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
-	if event.Namespace != defaultApolloNamespace {
+	if event.Namespace != center.DefaultApolloCacheNamespace {
 		return
 	}
 

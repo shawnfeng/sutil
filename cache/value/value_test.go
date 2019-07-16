@@ -3,7 +3,6 @@ package value
 import (
 	"context"
 	cache2 "github.com/shawnfeng/sutil/cache"
-	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/trace"
 
 	//"fmt"
@@ -27,7 +26,6 @@ func load(key interface{}) (value interface{}, err error) {
 func TestGet(t *testing.T) {
 	ctx := context.Background()
 	_ = trace.InitDefaultTracer("cache.test")
-	_ = center.Init(ctx, "base/report", []string{"application", "infra.cache"})
 
 	cache := NewCache("base/report", "test", 60*time.Second, load)
 	_ = SetConfiger(ctx, cache2.ConfigerTypeApollo)

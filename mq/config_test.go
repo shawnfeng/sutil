@@ -116,7 +116,8 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 		ctx := context.TODO()
 		conf := NewApolloConfiger()
 
-		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		assert.True(t, ok)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
 		slog.Infof(ctx, "got brokers:%s", brokersVal)
 	})
@@ -127,7 +128,8 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 
 		conf := NewApolloConfiger()
 
-		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		assert.True(t, ok)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
 		slog.Infof(ctx, "got brokers:%s", brokersVal)
 	})
@@ -138,7 +140,8 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 
 		conf := NewApolloConfiger()
 
-		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		assert.True(t, ok)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
 		slog.Infof(ctx, "got brokers:%s", brokersVal)
 	})
