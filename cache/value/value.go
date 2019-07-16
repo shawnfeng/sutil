@@ -18,7 +18,6 @@ import (
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
-	"strings"
 	"time"
 )
 
@@ -34,7 +33,7 @@ type Cache struct {
 
 func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Cache {
 	return &Cache{
-		namespace: strings.Replace(namespace, "/", ".", -1),
+		namespace: namespace,
 		prefix:    prefix,
 		load:      load,
 		expire:    expire,
