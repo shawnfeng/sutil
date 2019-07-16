@@ -42,3 +42,4 @@ func (c ConfigerType) String() string {
 	}
 }
 
+const DefaultRouteGroup = "default"

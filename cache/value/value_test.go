@@ -31,6 +31,7 @@ func TestGet(t *testing.T) {
 
 	cache := NewCache("base/report", "test", 60*time.Second, load)
 	_ = SetConfiger(ctx, cache2.ConfigerTypeApollo)
+	WatchUpdate(ctx)
 
 	var test Test
 	err := cache.Get(ctx, 7, &test)

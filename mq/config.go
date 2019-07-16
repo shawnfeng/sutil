@@ -123,16 +123,16 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 	}, nil
 }
 
+func (m *SimpleConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
+	fun := "SimpleConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
+}
+
 func (m *SimpleConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	fun := "SimpleConfig.Watch-->"
 	slog.Infof(ctx, "%s start", fun)
 	// noop
 	return nil
-}
-
-func (m *SimpleConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
-	fun := "SimpleConfig.ParseKey-->"
-	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 type EtcdConfig struct {
@@ -159,16 +159,16 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) (*Config, erro
 	return nil, fmt.Errorf("%s etcd config not supported", fun)
 }
 
+func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
+	fun := "EtcdConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
+}
+
 func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	fun := "EtcdConfig.Watch-->"
 	slog.Infof(ctx, "%s start", fun)
 	// TODO:
 	return nil
-}
-
-func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
-	fun := "EtcdConfig.ParseKey-->"
-	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 const (
@@ -210,7 +210,7 @@ func (s simpleContextController) GetGroup() string {
 func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) (string, bool) {
 	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, topic, name))
 	if !ok {
-		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultRouteGroup})
 		val, ok = center.GetStringWithNamespace(defaultCtx, defaultApolloNamespace, m.buildKey(defaultCtx, topic, name))
 	}
 	return val, ok
@@ -241,6 +241,22 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
+	}, nil
+}
+
+func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "ApolloConfig.ParseKey-->"
+	parts := strings.Split(key, apolloConfigSep)
+	numParts := len(parts)
+	if numParts < 4 {
+		errMsg := fmt.Sprintf("%s invalid key:%s", fun, key)
+		slog.Errorln(ctx, errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+	return &KeyParts{
+		Topic: strings.Join(parts[:numParts-3], apolloConfigSep),
+		Group: parts[numParts-3],
 	}, nil
 }
 
@@ -276,28 +292,11 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	return m.ch
 }
 
-func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
-	fun := "ApolloConfig.ParseKey-->"
-	parts := strings.Split(key, apolloConfigSep)
-	numParts := len(parts)
-	if numParts < 4 {
-		errMsg := fmt.Sprintf("%s invalid key:%s", fun, key)
-		slog.Errorln(ctx, errMsg)
-		return nil, errors.New(errMsg)
-	}
-
-	return &KeyParts{
-		Topic: strings.Join(parts[:numParts-3], apolloConfigSep),
-		Group: parts[numParts-3],
-	}, nil
-}
-
 func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string {
 	return strings.Join([]string{
 		topic,
-		scontext.GetGroupWithDefault(ctx, defaultGroup),
+		scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		fmt.Sprint(MQTypeKafka),
 		item,
 	}, apolloConfigSep)
 }
-

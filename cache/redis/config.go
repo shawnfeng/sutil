@@ -28,11 +28,17 @@ type Config struct {
 	timeout   time.Duration
 }
 
+type KeyParts struct {
+	Namespace string
+	Group     string
+}
+
 var DefaultConfiger Configer
 
 type Configer interface {
 	Init(ctx context.Context) error
 	GetConfig(ctx context.Context, namespace string) (*Config, error)
+	ParseKey(ctx context.Context, key string) (*KeyParts, error)
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
 
@@ -77,6 +83,11 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, namespace string) (*Config
 	}, nil
 }
 
+func (m *SimpleConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "SimpleConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
+}
+
 func (m *SimpleConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	fun := "SimpleConfig.Watch-->"
 	slog.Infof(ctx, "%s start", fun)
@@ -106,6 +117,11 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, namespace string) (*Config, 
 	slog.Infof(ctx, "%s get etcd config namespace:%s", fun, namespace)
 	//todo etcd router
 	return nil, fmt.Errorf("%s etcd config not supported", fun)
+}
+
+func (m *EtcdConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "EtcdConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
@@ -203,6 +219,23 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, namespace string) (*Config
 	}, nil
 }
 
+func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "ApolloConfig.ParseKey-->"
+	parts := strings.Split(key, apolloConfigSep)
+	numParts := len(parts)
+
+	if numParts < 4 {
+		err := fmt.Errorf("%s invalid key:%s", fun, key)
+		slog.Errorf(ctx, "%s err:%v", fun, err)
+		return nil, err
+	}
+
+	return &KeyParts{
+		Namespace: strings.Join(parts[:numParts-3], apolloConfigSep),
+		Group:     parts[numParts-3],
+	}, nil
+}
+
 type apolloObserver struct {
 	ch chan<- *center.ChangeEvent
 }
@@ -220,7 +253,7 @@ func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
 	}
 
 	event.Changes = changes
-	ob.ch<- event
+	ob.ch <- event
 }
 
 func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
@@ -241,4 +274,3 @@ func (m *ApolloConfig) buildKey(ctx context.Context, namespace, item string) str
 		item,
 	}, apolloConfigSep)
 }
-
