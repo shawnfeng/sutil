@@ -214,7 +214,7 @@ func (m *InstanceManager) watch(ctx context.Context) {
 	m.watchOnce.Do(func() {
 		slog.Infof(ctx, "%s start watching updates", fun)
 		ceChan := DefaultConfiger.Watch(ctx)
-		Loop:
+	Loop:
 		for {
 			select {
 			case <-ctx.Done():

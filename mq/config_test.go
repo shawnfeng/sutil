@@ -36,7 +36,7 @@ func teardown() {
 func TestApolloConfig_GetConfig(t *testing.T) {
 	ctx := context.TODO()
 
-	conf := NewApolloConfig()
+	conf := NewApolloConfiger()
 
 	t.Run("valid topic", func(t *testing.T) {
 		topic := defaultTestTopic
@@ -57,7 +57,7 @@ func TestApolloConfig_GetConfig(t *testing.T) {
 
 func TestApolloConfig_buildKey(t *testing.T) {
 	ctx := context.TODO()
-	conf := NewApolloConfig()
+	conf := NewApolloConfiger()
 
 	cases := []struct {
 		topic          string
@@ -75,7 +75,7 @@ func TestApolloConfig_buildKey(t *testing.T) {
 
 func TestApolloConfig_ParseKey(t *testing.T) {
 	ctx := context.TODO()
-	conf := NewApolloConfig()
+	conf := NewApolloConfiger()
 
 	cases := []struct {
 		key              string
@@ -114,7 +114,7 @@ func TestApolloConfig_ParseKey(t *testing.T) {
 func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 	t.Run("empty ctx should get default value", func(t *testing.T) {
 		ctx := context.TODO()
-		conf := NewApolloConfig()
+		conf := NewApolloConfiger()
 
 		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
@@ -125,7 +125,7 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 		ctx := context.TODO()
 		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{"unknown"})
 
-		conf := NewApolloConfig()
+		conf := NewApolloConfiger()
 
 		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
@@ -136,7 +136,7 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 		ctx := context.TODO()
 		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{"testgroup"})
 
-		conf := NewApolloConfig()
+		conf := NewApolloConfiger()
 
 		brokersVal := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)

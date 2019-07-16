@@ -70,7 +70,7 @@ func NewConfiger(configType int) (Configer, error) {
 	case ConfigTypeEtcd:
 		return NewEtcdConfiger(), nil
 	case ConfigTypeApollo:
-		return NewApolloConfig(), nil
+		return NewApolloConfiger(), nil
 	default:
 		return nil, fmt.Errorf("configType %d error", configType)
 	}
@@ -153,7 +153,7 @@ type ApolloConfig struct {
 	ch        chan *center.ChangeEvent
 }
 
-func NewApolloConfig() *ApolloConfig {
+func NewApolloConfiger() *ApolloConfig {
 	return &ApolloConfig{
 		ch: make(chan *center.ChangeEvent),
 	}
@@ -167,30 +167,29 @@ func (s simpleContextController) GetGroup() string {
 	return s.group
 }
 
-func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) string {
-	val := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, topic, name))
-	if val == "" {
+func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) (string, bool) {
+	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, topic, name))
+	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
-		val = center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(defaultCtx, topic, name))
+		val, ok = center.GetStringWithNamespace(defaultCtx, defaultApolloNamespace, m.buildKey(defaultCtx, topic, name))
 	}
-	return val
+	return val, ok
 }
 
 func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "ApolloConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get mq config topic:%s", fun, topic)
 
-	brokersVal := m.getConfigItemWithFallback(ctx, topic, apolloBrokersKey)
+	brokersVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloBrokersKey)
+	if !ok {
+		return nil, fmt.Errorf("%s no brokers config found", fun)
+	}
+
 	var brokers []string
 	for _, broker := range strings.Split(brokersVal, apolloBrokersSep) {
 		if broker != "" {
 			brokers = append(brokers, strings.TrimSpace(broker))
 		}
-	}
-
-	// validate config
-	if len(brokers) == 0 {
-		return nil, fmt.Errorf("%s no brokers config found", fun)
 	}
 
 	slog.Infof(ctx, "%s got config brokers:%s", fun, brokers)

@@ -92,28 +92,28 @@ func (ap *apolloConfigCenter) SubscribeNamespaces(ctx context.Context, namespace
 	return agollo.SubscribeToNamespaces(namespaceNames...)
 }
 
-func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) string {
-	return agollo.GetString(key, "")
+func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) (string, bool) {
+	return agollo.GetString(key)
 }
 
-func (ap *apolloConfigCenter) GetStringWithNamespace(ctx context.Context, namespace, key string) string {
-	return agollo.GetStringWithNamespace(namespace, key, "")
+func (ap *apolloConfigCenter) GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool) {
+	return agollo.GetStringWithNamespace(namespace, key)
 }
 
-func (ap *apolloConfigCenter) GetBool(ctx context.Context, key string) bool {
-	return agollo.GetBool(key, false)
+func (ap *apolloConfigCenter) GetBool(ctx context.Context, key string) (bool, bool) {
+	return agollo.GetBool(key)
 }
 
-func (ap *apolloConfigCenter) GetBoolWithNamespace(ctx context.Context, namespace, key string) bool {
-	return agollo.GetBoolWithNamespace(namespace, key, false)
+func (ap *apolloConfigCenter) GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool) {
+	return agollo.GetBoolWithNamespace(namespace, key)
 }
 
-func (ap *apolloConfigCenter) GetInt(ctx context.Context, key string) int {
-	return agollo.GetInt(key, 0)
+func (ap *apolloConfigCenter) GetInt(ctx context.Context, key string) (int, bool) {
+	return agollo.GetInt(key)
 }
 
-func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace, key string) int {
-	return agollo.GetIntWithNamespace(namespace, key, 0)
+func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool) {
+	return agollo.GetIntWithNamespace(namespace, key)
 }
 
 func (ap *apolloConfigCenter) StartWatchUpdate(ctx context.Context) {

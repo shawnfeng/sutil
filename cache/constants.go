@@ -3,7 +3,7 @@ package cache
 const (
 	SpanLogKeyKey    = "key"
 	SpanLogCacheType = "cache"
-	SpanLogOp 		 = "op"
+	SpanLogOp        = "op"
 )
 
 type CacheType int
@@ -18,5 +18,26 @@ func (t CacheType) String() string {
 		return "redis"
 	default:
 		return ""
+	}
+}
+
+type ConfigerType int
+
+const (
+	ConfigerTypeSimple ConfigerType = iota
+	ConfigerTypeEtcd
+	ConfigerTypeApollo
+)
+
+func (c ConfigerType) String() string {
+	switch c {
+	case ConfigerTypeSimple:
+		return "simple"
+	case ConfigerTypeEtcd:
+		return "etcd"
+	case ConfigerTypeApollo:
+		return "apollo"
+	default:
+		return "unkown"
 	}
 }

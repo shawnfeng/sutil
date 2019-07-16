@@ -22,7 +22,11 @@ type Client struct {
 func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	fun := "NewClient -->"
 
-	config := DefaultConfiger.GetConfig(ctx, namespace)
+	config, err := DefaultConfiger.GetConfig(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	client := redis.NewClient(&redis.Options{
 		Addr:         config.addr,
 		DialTimeout:  3 * config.timeout,
