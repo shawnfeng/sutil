@@ -31,11 +31,26 @@ func (t MQType) String() string {
 	}
 }
 
+type ConfigerType int
+
 const (
-	ConfigTypeSimple = iota
-	ConfigTypeEtcd
-	ConfigTypeApollo
+	ConfigerTypeSimple ConfigerType = iota
+	ConfigerTypeEtcd
+	ConfigerTypeApollo
 )
+
+func (c ConfigerType) String() string {
+	switch c {
+	case ConfigerTypeSimple:
+		return "simple"
+	case ConfigerTypeEtcd:
+		return "etcd"
+	case ConfigerTypeApollo:
+		return "apollo"
+	default:
+		return "unknown"
+	}
+}
 
 const (
 	defaultTimeout = 3 * time.Second
@@ -55,21 +70,22 @@ type KeyParts struct {
 	Group string
 }
 
-var DefaultConfiger Configer = NewSimpleConfiger()
+var DefaultConfiger Configer
 
 type Configer interface {
+	Init(ctx context.Context) error
 	GetConfig(ctx context.Context, topic string) (*Config, error)
 	ParseKey(ctx context.Context, k string) (*KeyParts, error)
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
 
-func NewConfiger(configType int) (Configer, error) {
+func NewConfiger(configType ConfigerType) (Configer, error) {
 	switch configType {
-	case ConfigTypeSimple:
+	case ConfigerTypeSimple:
 		return NewSimpleConfiger(), nil
-	case ConfigTypeEtcd:
+	case ConfigerTypeEtcd:
 		return NewEtcdConfiger(), nil
-	case ConfigTypeApollo:
+	case ConfigerTypeApollo:
 		return NewApolloConfiger(), nil
 	default:
 		return nil, fmt.Errorf("configType %d error", configType)
@@ -86,6 +102,13 @@ func NewSimpleConfiger() *SimpleConfig {
 	}
 }
 
+func (m *SimpleConfig) Init(ctx context.Context) error {
+	fun := "SimpleConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	// noop
+	return nil
+}
+
 func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "SimpleConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get simple config topic:%s", fun, topic)
@@ -100,16 +123,16 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 	}, nil
 }
 
+func (m *SimpleConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
+	fun := "SimpleConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
+}
+
 func (m *SimpleConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	fun := "SimpleConfig.Watch-->"
 	slog.Infof(ctx, "%s start", fun)
 	// noop
 	return nil
-}
-
-func (m *SimpleConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
-	fun := "SimpleConfig.ParseKey-->"
-	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 type EtcdConfig struct {
@@ -122,11 +145,23 @@ func NewEtcdConfiger() *EtcdConfig {
 	}
 }
 
+func (m *EtcdConfig) Init(ctx context.Context) error {
+	fun := "EtcdConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	// TODO
+	return nil
+}
+
 func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
 	fun := "EtcdConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get etcd config topic:%s", fun, topic)
-
+	// TODO
 	return nil, fmt.Errorf("%s etcd config not supported", fun)
+}
+
+func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
+	fun := "EtcdConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
@@ -134,11 +169,6 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	slog.Infof(ctx, "%s start", fun)
 	// TODO:
 	return nil
-}
-
-func (m *EtcdConfig) ParseKey(ctx context.Context, k string) (*KeyParts, error) {
-	fun := "EtcdConfig.ParseKey-->"
-	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 const (
@@ -159,6 +189,16 @@ func NewApolloConfiger() *ApolloConfig {
 	}
 }
 
+func (m *ApolloConfig) Init(ctx context.Context) (err error) {
+	fun := "ApolloConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	err = center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
+	if err != nil {
+		slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
+	}
+	return
+}
+
 type simpleContextController struct {
 	group string
 }
@@ -170,7 +210,7 @@ func (s simpleContextController) GetGroup() string {
 func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) (string, bool) {
 	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, topic, name))
 	if !ok {
-		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultRouteGroup})
 		val, ok = center.GetStringWithNamespace(defaultCtx, defaultApolloNamespace, m.buildKey(defaultCtx, topic, name))
 	}
 	return val, ok
@@ -201,6 +241,22 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
+	}, nil
+}
+
+func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "ApolloConfig.ParseKey-->"
+	parts := strings.Split(key, apolloConfigSep)
+	numParts := len(parts)
+	if numParts < 4 {
+		errMsg := fmt.Sprintf("%s invalid key:%s", fun, key)
+		slog.Errorln(ctx, errMsg)
+		return nil, errors.New(errMsg)
+	}
+
+	return &KeyParts{
+		Topic: strings.Join(parts[:numParts-3], apolloConfigSep),
+		Group: parts[numParts-3],
 	}, nil
 }
 
@@ -236,26 +292,10 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	return m.ch
 }
 
-func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
-	fun := "ApolloConfig.ParseKey-->"
-	parts := strings.Split(key, apolloConfigSep)
-	numParts := len(parts)
-	if numParts < 4 {
-		errMsg := fmt.Sprintf("%s invalid key:%s", fun, key)
-		slog.Errorln(ctx, errMsg)
-		return nil, errors.New(errMsg)
-	}
-
-	return &KeyParts{
-		Topic: strings.Join(parts[:numParts-3], apolloConfigSep),
-		Group: parts[numParts-3],
-	}, nil
-}
-
 func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string {
 	return strings.Join([]string{
 		topic,
-		scontext.GetGroupWithDefault(ctx, defaultGroup),
+		scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		fmt.Sprint(MQTypeKafka),
 		item,
 	}, apolloConfigSep)

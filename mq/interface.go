@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
@@ -25,7 +24,7 @@ const (
 	spanLogKeyKafkaPartition = "partition"
 	spanLogKeyKafkaBrokers   = "brokers"
 
-	defaultGroup = "default"
+	defaultRouteGroup = "default"
 )
 
 var mqOpDurationLimit = 10 * time.Millisecond
@@ -45,7 +44,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		log.String(spanLogKeyKey, key))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeWriter,
 		topic:     topic,
 		groupId:   "",
@@ -82,7 +81,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	span.LogFields(log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeWriter,
 		topic:     topic,
 		groupId:   "",
@@ -121,7 +120,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   groupId,
@@ -172,7 +171,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   "",
@@ -223,7 +222,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultGroup),
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   groupId,
@@ -264,18 +263,15 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	return mctx, handler, err
 }
 
-func SetConfiger(ctx context.Context, configer Configer) error {
+func SetConfiger(ctx context.Context, configerType ConfigerType) error {
 	fun := "mq.SetConfiger-->"
-	DefaultConfiger = configer
-	switch DefaultConfiger.(type) {
-	case *ApolloConfig:
-		err := center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
-		if err != nil {
-			slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
-			return err
-		}
+	configer, err := NewConfiger(configerType)
+	if err != nil {
+		slog.Infof(ctx, "%s set configer:%v err:%v", fun, configerType, err)
+		return err
 	}
-	return nil
+	DefaultConfiger = configer
+	return DefaultConfiger.Init(ctx)
 }
 
 func WatchUpdate(ctx context.Context) {
@@ -284,4 +280,9 @@ func WatchUpdate(ctx context.Context) {
 
 func Close() {
 	defaultInstanceManager.Close()
+}
+
+func init() {
+	// set default config type to simple
+	_ = SetConfiger(context.Background(), ConfigerTypeSimple)
 }

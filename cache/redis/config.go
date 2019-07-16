@@ -28,10 +28,17 @@ type Config struct {
 	timeout   time.Duration
 }
 
-var DefaultConfiger = NewSimpleConfiger()
+type KeyParts struct {
+	Namespace string
+	Group     string
+}
+
+var DefaultConfiger Configer
 
 type Configer interface {
+	Init(ctx context.Context) error
 	GetConfig(ctx context.Context, namespace string) (*Config, error)
+	ParseKey(ctx context.Context, key string) (*KeyParts, error)
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
 
@@ -55,6 +62,13 @@ func NewSimpleConfiger() Configer {
 	return &SimpleConfig{}
 }
 
+func (m *SimpleConfig) Init(ctx context.Context) error {
+	fun := "SimpleConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	// noop
+	return nil
+}
+
 func (m *SimpleConfig) GetConfig(ctx context.Context, namespace string) (*Config, error) {
 	addr := ""
 	if namespace == "base/report" {
@@ -67,6 +81,11 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, namespace string) (*Config
 		timeout:   defaultTimeoutNumSeconds * time.Second,
 		poolSize:  defaultPoolSize,
 	}, nil
+}
+
+func (m *SimpleConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "SimpleConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 func (m *SimpleConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
@@ -86,11 +105,23 @@ func NewEtcdConfiger() Configer {
 	}
 }
 
+func (m *EtcdConfig) Init(ctx context.Context) error {
+	fun := "EtcdConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	// TODO
+	return nil
+}
+
 func (m *EtcdConfig) GetConfig(ctx context.Context, namespace string) (*Config, error) {
 	fun := "EtcdConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get etcd config namespace:%s", fun, namespace)
 	//todo etcd router
 	return nil, fmt.Errorf("%s etcd config not supported", fun)
+}
+
+func (m *EtcdConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "EtcdConfig.ParseKey-->"
+	return nil, fmt.Errorf("%s not implemented", fun)
 }
 
 func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
@@ -120,6 +151,15 @@ func NewApolloConfiger() *ApolloConfig {
 	}
 }
 
+func (m *ApolloConfig) Init(ctx context.Context) error {
+	fun := "ApolloConfig.Init-->"
+	err := center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
+	if err != nil {
+		slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
+	}
+	return err
+}
+
 type simpleContextController struct {
 	group string
 }
@@ -129,7 +169,6 @@ func (s simpleContextController) GetGroup() string {
 }
 
 func (m *ApolloConfig) getConfigStringItemWithFallback(ctx context.Context, namespace, name string) (string, bool) {
-	slog.Infof(ctx, "build key %s", m.buildKey(ctx, namespace, name))
 	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
@@ -180,9 +219,51 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, namespace string) (*Config
 	}, nil
 }
 
+func (m *ApolloConfig) ParseKey(ctx context.Context, key string) (*KeyParts, error) {
+	fun := "ApolloConfig.ParseKey-->"
+	parts := strings.Split(key, apolloConfigSep)
+	numParts := len(parts)
+
+	if numParts < 4 {
+		err := fmt.Errorf("%s invalid key:%s", fun, key)
+		slog.Errorf(ctx, "%s err:%v", fun, err)
+		return nil, err
+	}
+
+	return &KeyParts{
+		Namespace: strings.Join(parts[:numParts-3], apolloConfigSep),
+		Group:     parts[numParts-3],
+	}, nil
+}
+
+type apolloObserver struct {
+	ch chan<- *center.ChangeEvent
+}
+
+func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
+	if event.Namespace != defaultApolloNamespace {
+		return
+	}
+
+	var changes = map[string]*center.Change{}
+	for k, ce := range event.Changes {
+		if strings.Contains(k, fmt.Sprint(cache.CacheTypeRedis)) {
+			changes[k] = ce
+		}
+	}
+
+	event.Changes = changes
+	ob.ch <- event
+}
+
 func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
-	// TODO
-	return nil
+	fun := "ApolloConfig.Watch-->"
+	m.watchOnce.Do(func() {
+		slog.Infof(ctx, "%s start", fun)
+		center.StartWatchUpdate(ctx)
+		center.RegisterObserver(ctx, &apolloObserver{m.ch})
+	})
+	return m.ch
 }
 
 func (m *ApolloConfig) buildKey(ctx context.Context, namespace, item string) string {

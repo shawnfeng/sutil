@@ -2,6 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// TODO: 删除旧版本的 cache sdk
+// TODO: 将 redis 文件夹中的 config.go, instance.go, redis.go 都拿到 sdk 根目录下
+//       config 和 instance 不应该属于 redis
+
 package value
 
 import (
@@ -12,6 +16,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/cache/redis"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"strings"
 	"time"
@@ -76,7 +81,11 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 		return err
 	}
 
-	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
+	conf := &redis.InstanceConf{
+		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Namespace: m.namespace,
+	}
+	client := redis.DefaultInstanceManager.GetInstance(ctx, conf)
 	if client == nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
@@ -141,7 +150,11 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 		return err
 	}
 
-	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
+	conf := &redis.InstanceConf{
+		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Namespace: m.namespace,
+	}
+	client := redis.DefaultInstanceManager.GetInstance(ctx, conf)
 	if client == nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
@@ -185,7 +198,11 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 		return err
 	}
 
-	client := redis.DefaultInstanceManager.GetInstance(ctx, m.namespace)
+	conf := &redis.InstanceConf{
+		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Namespace: m.namespace,
+	}
+	client := redis.DefaultInstanceManager.GetInstance(ctx, conf)
 	if client == nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
@@ -212,5 +229,13 @@ func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
 	}
 	slog.Infof(ctx, "%s %v configer created", fun, configerType)
 	redis.DefaultConfiger = configer
-	return nil
+	return redis.DefaultConfiger.Init(ctx)
+}
+
+func WatchUpdate(ctx context.Context) {
+	go redis.DefaultInstanceManager.Watch(ctx)
+}
+
+func init() {
+	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
 }
