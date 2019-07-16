@@ -172,7 +172,6 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 }
 
 const (
-	defaultApolloNamespace = "infra.mq"
 	apolloConfigSep        = "."
 	apolloBrokersSep       = ","
 	apolloBrokersKey       = "brokers"
@@ -192,9 +191,9 @@ func NewApolloConfiger() *ApolloConfig {
 func (m *ApolloConfig) Init(ctx context.Context) (err error) {
 	fun := "ApolloConfig.Init-->"
 	slog.Infof(ctx, "%s start", fun)
-	err = center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
+	err = center.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloMQNamespace})
 	if err != nil {
-		slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
+		slog.Errorf(ctx, "%s init config center err:%v", fun, err)
 	}
 	return
 }
@@ -208,10 +207,10 @@ func (s simpleContextController) GetGroup() string {
 }
 
 func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) (string, bool) {
-	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, topic, name))
+	val, ok := center.GetStringWithNamespace(ctx, center.DefaultApolloMQNamespace, m.buildKey(ctx, topic, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultRouteGroup})
-		val, ok = center.GetStringWithNamespace(defaultCtx, defaultApolloNamespace, m.buildKey(defaultCtx, topic, name))
+		val, ok = center.GetStringWithNamespace(defaultCtx, center.DefaultApolloMQNamespace, m.buildKey(defaultCtx, topic, name))
 	}
 	return val, ok
 }
@@ -265,7 +264,7 @@ type apolloObserver struct {
 }
 
 func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
-	if event.Namespace != defaultApolloNamespace {
+	if event.Namespace != center.DefaultApolloMQNamespace {
 		return
 	}
 

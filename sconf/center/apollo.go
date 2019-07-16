@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"github.com/ZhengHe-MD/agollo"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"os"
 	"strings"
@@ -22,6 +23,7 @@ const (
 
 type apolloConfigCenter struct {
 	conf            *agollo.Conf
+	ag 				*agollo.Agollo
 	watchUpdateOnce sync.Once
 	changeEventChan chan *ChangeEvent
 }
@@ -58,7 +60,10 @@ func normalizeServiceName(serviceName string) string {
 }
 
 func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, namespaceNames []string) error {
-	fun := "apollo.Init-->"
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.Init")
+	defer span.Finish()
+
+	fun := "apolloConfigCenter.Init-->"
 
 	agollo.SetLogger(slog.GetLogger())
 
@@ -72,10 +77,11 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 	}
 
 	ap.conf = conf
+	ap.ag = agollo.NewAgollo(conf)
 
 	slog.Infof(ctx, "%s start agollo with conf:%v", fun, ap.conf)
 
-	if err := agollo.StartWithConf(ap.conf); err != nil {
+	if err := ap.ag.Start(); err != nil {
 		slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
 	} else {
 		slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
@@ -85,39 +91,60 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 }
 
 func (ap *apolloConfigCenter) Stop(ctx context.Context) error {
-	return agollo.Stop()
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.Stop")
+	defer span.Finish()
+	return ap.ag.Stop()
 }
 
 func (ap *apolloConfigCenter) SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
-	return agollo.SubscribeToNamespaces(namespaceNames...)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.SubscribeNamespaces")
+	defer span.Finish()
+	return ap.ag.SubscribeToNamespaces(namespaceNames...)
 }
 
 func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) (string, bool) {
-	return agollo.GetString(key)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetString")
+	defer span.Finish()
+	return ap.ag.GetString(key)
 }
 
 func (ap *apolloConfigCenter) GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool) {
-	return agollo.GetStringWithNamespace(namespace, key)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetStringWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetStringWithNamespace(namespace, key)
 }
 
 func (ap *apolloConfigCenter) GetBool(ctx context.Context, key string) (bool, bool) {
-	return agollo.GetBool(key)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetBool")
+	defer span.Finish()
+
+	return ap.ag.GetBool(key)
 }
 
 func (ap *apolloConfigCenter) GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool) {
-	return agollo.GetBoolWithNamespace(namespace, key)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetBoolWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetBoolWithNamespace(namespace, key)
 }
 
 func (ap *apolloConfigCenter) GetInt(ctx context.Context, key string) (int, bool) {
-	return agollo.GetInt(key)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetInt")
+	defer span.Finish()
+
+	return ap.ag.GetInt(key)
 }
 
 func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool) {
-	return agollo.GetIntWithNamespace(namespace, key)
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetIntWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetIntWithNamespace(namespace, key)
 }
 
 func (ap *apolloConfigCenter) StartWatchUpdate(ctx context.Context) {
-	agollo.StartWatchUpdate()
+	ap.ag.StartWatchUpdate()
 }
 
 type agolloObserver struct {
@@ -129,5 +156,5 @@ func (o *agolloObserver) HandleChangeEvent(ce *agollo.ChangeEvent) {
 }
 
 func (ap *apolloConfigCenter) RegisterObserver(ctx context.Context, observer ConfigObserver) func() {
-	return agollo.RegisterObserver(&agolloObserver{observer})
+	return ap.ag.RegisterObserver(&agolloObserver{observer})
 }
