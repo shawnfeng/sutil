@@ -2,6 +2,8 @@ package value
 
 import (
 	"context"
+	"github.com/shawnfeng/sutil/trace"
+
 	//"fmt"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"testing"
@@ -21,19 +23,20 @@ func load(key interface{}) (value interface{}, err error) {
 }
 
 func TestGet(t *testing.T) {
+	_ = trace.InitDefaultTracer("cache.test")
 
 	ctx := context.Background()
 	cache := NewCache("base/report", "test", 60*time.Second, load)
 
 	var test Test
-	err := cache.Get(ctx, 3.5, &test)
+	err := cache.Get(ctx, 3, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}
 	slog.Infof(ctx, "test: %v", test)
 
-	//	cache.Del(ctx, 1)
-	err = cache.Get(ctx, 1, &test)
+	cache.Del(ctx, 3)
+	err = cache.Get(ctx, 3, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}

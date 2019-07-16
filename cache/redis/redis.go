@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
+	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"strings"
 	"time"
 )
 
@@ -43,30 +47,49 @@ func (m *Client) fixKey(key string) string {
 	return fmt.Sprintf("%s.%s", m.namespace, key)
 }
 
-func (m *Client) Get(key string) *redis.StringCmd {
-	return m.client.Get(m.fixKey(key))
+func (m *Client) logSpan(ctx context.Context, op, key string) {
+	if span := opentracing.SpanFromContext(ctx); span != nil {
+		span.LogFields(
+			log.String(cache.SpanLogOp, op),
+			log.String(cache.SpanLogKeyKey, key),
+			log.String(cache.SpanLogCacheType, fmt.Sprint(cache.CacheTypeRedis)))
+	}
 }
 
-func (m *Client) Set(key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
-	return m.client.Set(m.fixKey(key), value, expiration)
+func (m *Client) Get(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Get", k)
+	return m.client.Get(k)
 }
 
-func (m *Client) Del(keys ...string) *redis.IntCmd {
+func (m *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Set", k)
+	return m.client.Set(k, value, expiration)
+}
+
+func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	var tkeys []string
 	for _, key := range keys {
 		tkeys = append(tkeys, m.fixKey(key))
 	}
+
+	m.logSpan(ctx, "Del", strings.Join(tkeys, ","))
 	return m.client.Del(tkeys...)
 }
 
-func (m *Client) Incr(key string) *redis.IntCmd {
-	return m.client.Incr(m.fixKey(key))
+func (m *Client) Incr(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Incr", k)
+	return m.client.Incr(k)
 }
 
-func (m *Client) SetNX(key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
-	return m.client.SetNX(m.fixKey(key), value, expiration)
+func (m *Client) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SetNX", k)
+	return m.client.SetNX(k, value, expiration)
 }
 
-func (m *Client) Close() error {
+func (m *Client) Close(ctx context.Context) error {
 	return m.client.Close()
 }

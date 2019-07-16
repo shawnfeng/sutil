@@ -82,7 +82,7 @@ func (m *InstanceManager) Close() {
 			return false
 		}
 
-		err := client.Close()
+		err := client.Close(ctx)
 		if err != nil {
 			slog.Errorf(ctx, "%s client.Close, key:%v", fun, skey)
 			return false
