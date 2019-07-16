@@ -212,5 +212,9 @@ func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
 	}
 	slog.Infof(ctx, "%s %v configer created", fun, configerType)
 	redis.DefaultConfiger = configer
-	return nil
+	return redis.DefaultConfiger.Init(ctx)
+}
+
+func init() {
+	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
 }

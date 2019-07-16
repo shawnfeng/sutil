@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
@@ -264,18 +263,15 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	return mctx, handler, err
 }
 
-func SetConfiger(ctx context.Context, configer Configer) error {
+func SetConfiger(ctx context.Context, configerType ConfigerType) error {
 	fun := "mq.SetConfiger-->"
-	DefaultConfiger = configer
-	switch DefaultConfiger.(type) {
-	case *ApolloConfig:
-		err := center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
-		if err != nil {
-			slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
-			return err
-		}
+	configer, err := NewConfiger(configerType)
+	if err != nil {
+		slog.Infof(ctx, "%s set configer:%v err:%v", fun, configerType, err)
+		return err
 	}
-	return nil
+	DefaultConfiger = configer
+	return DefaultConfiger.Init(ctx)
 }
 
 func WatchUpdate(ctx context.Context) {
@@ -284,4 +280,9 @@ func WatchUpdate(ctx context.Context) {
 
 func Close() {
 	defaultInstanceManager.Close()
+}
+
+func init() {
+	// set default config type to simple
+	_ = SetConfiger(context.Background(), ConfigerTypeSimple)
 }

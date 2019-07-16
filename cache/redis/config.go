@@ -28,9 +28,10 @@ type Config struct {
 	timeout   time.Duration
 }
 
-var DefaultConfiger = NewSimpleConfiger()
+var DefaultConfiger Configer
 
 type Configer interface {
+	Init(ctx context.Context) error
 	GetConfig(ctx context.Context, namespace string) (*Config, error)
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
@@ -53,6 +54,13 @@ type SimpleConfig struct {
 
 func NewSimpleConfiger() Configer {
 	return &SimpleConfig{}
+}
+
+func (m *SimpleConfig) Init(ctx context.Context) error {
+	fun := "SimpleConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	// noop
+	return nil
 }
 
 func (m *SimpleConfig) GetConfig(ctx context.Context, namespace string) (*Config, error) {
@@ -84,6 +92,13 @@ func NewEtcdConfiger() Configer {
 	return &EtcdConfig{
 		etcdAddr: []string{}, //todo
 	}
+}
+
+func (m *EtcdConfig) Init(ctx context.Context) error {
+	fun := "EtcdConfig.Init-->"
+	slog.Infof(ctx, "%s start", fun)
+	// TODO
+	return nil
 }
 
 func (m *EtcdConfig) GetConfig(ctx context.Context, namespace string) (*Config, error) {
@@ -120,6 +135,15 @@ func NewApolloConfiger() *ApolloConfig {
 	}
 }
 
+func (m *ApolloConfig) Init(ctx context.Context) error {
+	fun := "ApolloConfig.Init-->"
+	err := center.SubscribeNamespaces(ctx, []string{defaultApolloNamespace})
+	if err != nil {
+		slog.Errorf(ctx, "%s subscribe namespace:%s err:%v", fun, defaultApolloNamespace, err)
+	}
+	return err
+}
+
 type simpleContextController struct {
 	group string
 }
@@ -129,7 +153,6 @@ func (s simpleContextController) GetGroup() string {
 }
 
 func (m *ApolloConfig) getConfigStringItemWithFallback(ctx context.Context, namespace, name string) (string, bool) {
-	slog.Infof(ctx, "build key %s", m.buildKey(ctx, namespace, name))
 	val, ok := center.GetStringWithNamespace(ctx, defaultApolloNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
@@ -180,9 +203,34 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, namespace string) (*Config
 	}, nil
 }
 
+type apolloObserver struct {
+	ch chan<- *center.ChangeEvent
+}
+
+func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
+	if event.Namespace != defaultApolloNamespace {
+		return
+	}
+
+	var changes = map[string]*center.Change{}
+	for k, ce := range event.Changes {
+		if strings.Contains(k, fmt.Sprint(cache.CacheTypeRedis)) {
+			changes[k] = ce
+		}
+	}
+
+	event.Changes = changes
+	ob.ch<- event
+}
+
 func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
-	// TODO
-	return nil
+	fun := "ApolloConfig.Watch-->"
+	m.watchOnce.Do(func() {
+		slog.Infof(ctx, "%s start", fun)
+		center.StartWatchUpdate(ctx)
+		center.RegisterObserver(ctx, &apolloObserver{m.ch})
+	})
+	return m.ch
 }
 
 func (m *ApolloConfig) buildKey(ctx context.Context, namespace, item string) string {
@@ -193,3 +241,4 @@ func (m *ApolloConfig) buildKey(ctx context.Context, namespace, item string) str
 		item,
 	}, apolloConfigSep)
 }
+

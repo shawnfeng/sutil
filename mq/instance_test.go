@@ -71,7 +71,7 @@ func getSyncMapSizeUnSafe(m sync.Map) (ret int) {
 
 func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 	ctx := context.TODO()
-	configer, _ := NewConfiger(ConfigTypeApollo)
+	configer, _ := NewConfiger(ConfigerTypeApollo)
 	apolloConfig, _ := configer.(*ApolloConfig)
 	SetConfiger(configer)
 

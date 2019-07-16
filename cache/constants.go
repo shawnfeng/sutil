@@ -41,3 +41,4 @@ func (c ConfigerType) String() string {
 		return "unkown"
 	}
 }
+

@@ -35,9 +35,7 @@ func main() {
 	}
 
 	_ = center.Init(ctx, "test/test", nil)
-
-	configer, _ := mq.NewConfiger(mq.ConfigTypeApollo)
-	_ = mq.SetConfiger(ctx, configer)
+	_ = mq.SetConfiger(ctx, mq.ConfigerTypeApollo)
 	mq.WatchUpdate(ctx)
 
 	go func() {
