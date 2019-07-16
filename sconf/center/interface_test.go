@@ -54,4 +54,3 @@ func TestGetTypedVarWithNamespace(t *testing.T) {
 		t.Errorf("intVal expect:0 got:%d", intVal)
 	}
 }
-

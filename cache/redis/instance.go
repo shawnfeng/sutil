@@ -11,6 +11,10 @@ import (
 	"sync"
 )
 
+const (
+	defaultGroup = "default"
+)
+
 var DefaultInstanceManager = NewInstanceManager()
 
 type InstanceManager struct {

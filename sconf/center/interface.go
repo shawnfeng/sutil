@@ -17,12 +17,12 @@ type ConfigCenter interface {
 
 	SubscribeNamespaces(ctx context.Context, namespaceNames []string) error
 
-	GetString(ctx context.Context, key string) string
-	GetStringWithNamespace(ctx context.Context, namespace, key string) string
-	GetBool(ctx context.Context, key string) bool
-	GetBoolWithNamespace(ctx context.Context, namespace, key string) bool
-	GetInt(ctx context.Context, key string) int
-	GetIntWithNamespace(ctx context.Context, namespace, key string) int
+	GetString(ctx context.Context, key string) (string, bool)
+	GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool)
+	GetBool(ctx context.Context, key string) (bool, bool)
+	GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool)
+	GetInt(ctx context.Context, key string) (int, bool)
+	GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool)
 
 	StartWatchUpdate(ctx context.Context)
 	RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func())
@@ -50,42 +50,42 @@ func SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
 	return defaultConfigCenter.SubscribeNamespaces(ctx, namespaceNames)
 }
 
-func GetString(ctx context.Context, key string) string {
+func GetString(ctx context.Context, key string) (string, bool) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetString")
 	defer span.Finish()
 
 	return defaultConfigCenter.GetString(ctx, key)
 }
 
-func GetStringWithNamespace(ctx context.Context, namespace, key string) string {
+func GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetStringWithNamespace")
 	defer span.Finish()
 
 	return defaultConfigCenter.GetStringWithNamespace(ctx, namespace, key)
 }
 
-func GetBool(ctx context.Context, key string) bool {
+func GetBool(ctx context.Context, key string) (bool, bool) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetBool")
 	defer span.Finish()
 
 	return defaultConfigCenter.GetBool(ctx, key)
 }
 
-func GetBoolWithNamespace(ctx context.Context, namespace, key string) bool {
+func GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetBoolWithNamespace")
 	defer span.Finish()
 
 	return defaultConfigCenter.GetBoolWithNamespace(ctx, namespace, key)
 }
 
-func GetInt(ctx context.Context, key string) int {
+func GetInt(ctx context.Context, key string) (int, bool) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetInt")
 	defer span.Finish()
 
 	return defaultConfigCenter.GetInt(ctx, key)
 }
 
-func GetIntWithNamespace(ctx context.Context, namespace, key string) int {
+func GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetIntWithNamespace")
 	defer span.Finish()
 

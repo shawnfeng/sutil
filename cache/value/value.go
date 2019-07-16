@@ -10,8 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
+	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"strings"
 	"time"
 )
 
@@ -27,7 +29,7 @@ type Cache struct {
 
 func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Cache {
 	return &Cache{
-		namespace: namespace,
+		namespace: strings.Replace(namespace, "/", ".", -1),
 		prefix:    prefix,
 		load:      load,
 		expire:    expire,
@@ -199,4 +201,16 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 	}
 
 	return rerr
+}
+
+func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
+	fun := "Cache.SetConfiger-->"
+	configer, err := redis.NewConfiger(configerType)
+	if err != nil {
+		slog.Errorf(ctx, "%s create configer err:%v", fun, err)
+		return err
+	}
+	slog.Infof(ctx, "%s %v configer created", fun, configerType)
+	redis.DefaultConfiger = configer
+	return nil
 }
