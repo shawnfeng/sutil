@@ -142,6 +142,7 @@ const (
 type ApolloConfig struct {
 	watchOnce sync.Once
 	ch        chan *center.ChangeEvent
+	center 	  center.ConfigCenter
 }
 
 func NewApolloConfiger() *ApolloConfig {
@@ -152,10 +153,17 @@ func NewApolloConfiger() *ApolloConfig {
 
 func (m *ApolloConfig) Init(ctx context.Context) error {
 	fun := "ApolloConfig.Init-->"
-	err := center.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloCacheNamespace})
+	apolloCenter, err := center.NewConfigCenter(center.ApolloConfigCenter)
+	if err != nil {
+		slog.Errorf(ctx, "%s create config center err:%v", fun, err)
+	}
+
+	err = apolloCenter.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloCacheNamespace})
 	if err != nil {
 		slog.Errorf(ctx, "%s init config center err:%v", fun, err)
 	}
+
+	m.center = apolloCenter
 	return err
 }
 
@@ -168,19 +176,19 @@ func (s simpleContextController) GetGroup() string {
 }
 
 func (m *ApolloConfig) getConfigStringItemWithFallback(ctx context.Context, namespace, name string) (string, bool) {
-	val, ok := center.GetStringWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
+	val, ok := m.center.GetStringWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
-		val, ok = center.GetStringWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
+		val, ok = m.center.GetStringWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
 	}
 	return val, ok
 }
 
 func (m *ApolloConfig) getConfigIntItemWithFallback(ctx context.Context, namespace, name string) (int, bool) {
-	val, ok := center.GetIntWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
+	val, ok := m.center.GetIntWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
-		val, ok = center.GetIntWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
+		val, ok = m.center.GetIntWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
 	}
 	return val, ok
 }
@@ -259,8 +267,8 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	fun := "ApolloConfig.Watch-->"
 	m.watchOnce.Do(func() {
 		slog.Infof(ctx, "%s start", fun)
-		center.StartWatchUpdate(ctx)
-		center.RegisterObserver(ctx, &apolloObserver{m.ch})
+		m.center.StartWatchUpdate(ctx)
+		m.center.RegisterObserver(ctx, &apolloObserver{m.ch})
 	})
 	return m.ch
 }
