@@ -25,6 +25,8 @@ github.com/ZhengHe-MD/agollo v2.1.0+incompatible h1:NqugIJRTEPNLBtzg3TkM2rfUnpwN
 github.com/ZhengHe-MD/agollo v2.1.0+incompatible/go.mod h1:Hs1VYbuOoVlDPOMlZawvwpN7eAqDOQUFG3Lxcne0SBo=
 github.com/ZhengHe-MD/properties v0.0.1 h1:o/BdossbmWdoD0T5jhEW3ty77q1Yy106uefvV1GDPQc=
 github.com/ZhengHe-MD/properties v0.0.1/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
+github.com/ZhengHe-MD/properties v0.0.2 h1:+ZlfMUFN0rrTEjSsSvdZmwwvry6tHVq036k5KIsbYuM=
+github.com/ZhengHe-MD/properties v0.0.2/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
 github.com/bitly/go-simplejson v0.5.0 h1:6IH+V8/tVMab511d5bn4M7EwGXZf9Hj6i2xSwkNEM+Y=
@@ -88,6 +90,7 @@ github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8 h1:UEgIO+G
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8/go.mod h1:9u5PFfVGpGVlGplh2jWs0UqjcY3ptVZ/v5iXpsRGg9M=
 github.com/stretchr/objx v0.1.0 h1:4G4v2dO3VZwixGIRoQ5Lfboy6nUhCyYzaqnIAPPhYs4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/objx v0.2.0/go.mod h1:qt09Ya8vawLte6SNmTgCsAVtYtaKzEcn8ATUoHMkEqE=
 github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c h1:03OmljzZYsezlgAfa+f/cY8E8XXPiFh5bgANMhUlDI4=
 github.com/stretchr/testify v1.2.3-0.20181014000028-04af85275a5c/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=

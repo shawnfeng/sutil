@@ -105,7 +105,7 @@ func TestUnmarshal(t *testing.T) {
 
 	type GatewayConfig struct {
 		Filters []Filter `properties:"filters"`
-		Routers []Router `properties:"routers"`
+		Routers []*Router `properties:"routers"`
 	}
 
 	var g GatewayConfig
@@ -115,7 +115,7 @@ func TestUnmarshal(t *testing.T) {
 		Filters: []Filter{
 			{"AddRequestHeader", Args{"foo", "bar"}},
 		},
-		Routers: []Router{
+		Routers: []*Router{
 			{"hello", "http://localhost:8080", "/hello", "localhost"},
 		},
 	}

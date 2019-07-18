@@ -3,10 +3,9 @@ module github.com/shawnfeng/sutil
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/ZhengHe-MD/agollo v0.0.0-20190716115826-871879c67d2c
-	github.com/ZhengHe-MD/properties v0.0.1
+	github.com/ZhengHe-MD/properties v0.0.2
 	github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb
 	github.com/coreos/etcd v3.0.0-beta.0.0.20160712024141-cc26f2c8892e+incompatible
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
 	github.com/go-redis/redis v6.15.1+incompatible
 	github.com/go-sql-driver/mysql v1.0.1-0.20160411075031-7ebe0a500653
@@ -23,6 +22,7 @@ require (
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
 	github.com/segmentio/kafka-go v0.2.4
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/stretchrcom/testify v1.2.2 // indirect
 	github.com/uber/jaeger-client-go v2.16.0+incompatible
