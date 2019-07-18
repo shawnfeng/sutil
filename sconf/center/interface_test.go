@@ -109,7 +109,7 @@ func TestUnmarshal(t *testing.T) {
 	}
 
 	var g GatewayConfig
-	assert.NoError(t, Unmarshall(ctx, &g))
+	assert.NoError(t, Unmarshal(ctx, &g))
 
 	var expected = GatewayConfig{
 		Filters: []Filter{

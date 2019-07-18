@@ -103,7 +103,7 @@ func RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func
 	return defaultConfigCenter.RegisterObserver(ctx, observer)
 }
 
-func Unmarshall(ctx context.Context, v interface{}) error {
+func Unmarshal(ctx context.Context, v interface{}) error {
 	return defaultConfigCenter.Unmarshal(ctx, v)
 }
 
