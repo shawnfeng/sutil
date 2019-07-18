@@ -6,15 +6,16 @@
 package stext
 
 import (
+	"context"
 	"testing"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 
 func ck(t *testing.T, correct, format string, params ...string) {
 
 	res := LocationText(format, params...)
-	slog.Infoln(format, params, res)
+	slog.Infoln(context.TODO(), format, params, res)
 
 	if res != correct {
 		t.Errorf("correct:%s format:%s params:%s res:%s", correct, format, params, res)

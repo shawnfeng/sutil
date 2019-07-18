@@ -1,9 +1,10 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func newRedisClient(addr, serverName string, poolSize int) (*RedisClient, error)
 
 	pong, err := client.Ping().Result()
 	if err != nil {
-		slog.Errorf("%s ping:%s err:%s", fun, pong, err)
+		slog.Errorf(context.TODO(), "%s ping:%s err:%s", fun, pong, err)
 	}
 
 	return &RedisClient{

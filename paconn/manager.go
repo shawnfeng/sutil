@@ -6,13 +6,14 @@
 package paconn
 
 import (
+	"context"
 	"net"
 	"time"
 	"errors"
 	"sync"
 
 	"github.com/shawnfeng/sutil/snetutil"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type AgentManager struct {
@@ -68,7 +69,7 @@ func (m *AgentManager) callbackTwoway (a *Agent, btype int32, recv []byte) (int3
 func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
 	fun := "AgentManager.callbackClose"
 
-	slog.Infof("%s close:%s pack:%v", fun, a, pack)
+	slog.Infof(context.TODO(), "%s close:%s pack:%v", fun, a, pack)
 
 	ok := func() bool {
 		m.agentMu.Lock()
@@ -85,7 +86,7 @@ func (m *AgentManager) callbackClose (a *Agent, pack []byte, err error) {
 		m.cbClose(a, pack, err)
 
 	} else {
-		slog.Errorf("%s delete not find:%s", fun, a)
+		slog.Errorf(context.TODO(), "%s delete not find:%s", fun, a)
 	}
 
 }
@@ -138,7 +139,7 @@ func (m *AgentManager) accept(
 	fun := "AgentManager.accept"
 
 	netListen, error := net.Listen(tcpAddr.Network(), tcpAddr.String())
-	slog.Infof("%s listen:%s", fun, netListen.Addr())
+	slog.Infof(context.TODO(), "%s listen:%s", fun, netListen.Addr())
 	if error != nil {
 		done <-error
 		return;
@@ -149,10 +150,10 @@ func (m *AgentManager) accept(
 	done <-nil
 
 	for {
-		//slog.Infof("%s Waiting for clients", fun)
+		//slog.Infof(context.TODO(), "%s Waiting for clients", fun)
 		conn, error := netListen.Accept()
 		if error != nil {
-			slog.Warnf("%s Agent error: ", fun, error)
+			slog.Warnf(context.TODO(), "%s Agent error: ", fun, error)
 		} else {
 			ag := NewAgent(
 				conn,

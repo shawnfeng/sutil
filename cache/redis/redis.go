@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
 )
 
@@ -30,7 +30,7 @@ func NewClient(ctx context.Context, namespace string) (*Client, error) {
 
 	pong, err := client.Ping().Result()
 	if err != nil {
-		slog.Errorf("%s ping:%s err:%s", fun, pong, err)
+		slog.Errorf(ctx, "%s ping:%s err:%s", fun, pong, err)
 	}
 
 	return &Client{

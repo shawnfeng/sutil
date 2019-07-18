@@ -1,10 +1,11 @@
 package rediscache
 
 import (
+	"context"
 	"testing"
 	"encoding/json"
 
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 
@@ -50,7 +51,7 @@ func TestCache(t *testing.T) {
 	}
 
 
-	slog.Infof("%s", data)
+	slog.Infof(context.TODO(), "%s", data)
 
 	if data.Key != "test" || data.Tst != 12345 {
 		t.Errorf("get err")

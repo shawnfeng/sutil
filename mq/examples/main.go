@@ -7,8 +7,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/scontext"
+	"github.com/shawnfeng/sutil/slog/slog"
+	"github.com/shawnfeng/sutil/trace"
 	"time"
 )
 
@@ -18,9 +21,17 @@ type Msg struct {
 }
 
 func main() {
+
+	trace.InitDefaultTracer("mq.test")
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
+	ctx = context.WithValue(ctx, scontext.ContextKeyHead, "hahahaha")
+	ctx = context.WithValue(ctx, scontext.ContextKeyControl, "{\"group\": \"g1\"}")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
+	if span != nil {
+		defer span.Finish()
+	}
 	go func() {
 		var msgs []mq.Message
 		for i := 0; i < 10; i++ {
@@ -34,19 +45,18 @@ func main() {
 				Value: value,
 			})
 			err := mq.WriteMsg(ctx, topic, value.Body, value)
-			slog.Infof("in msg: %v, err:%v", value, err)
+			slog.Infof(ctx, "in msg: %v, err:%v", value, err)
 		}
 		err := mq.WriteMsgs(ctx, topic, msgs...)
-		slog.Infof("in msgs: %v, err:%v", msgs, err)
+		slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
 	}()
 
-	ctx1 := context.Background()
 	go func() {
 		for i := 0; i < 10000; i++ {
 			var msg Msg
-			handler, err := mq.FetchMsgByGroup(ctx1, topic, "group2", &msg)
-			slog.Infof("out msg: %v, err:%v", msg, err)
-			handler.CommitMsg(ctx1)
+			ctx1 := context.Background()
+			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
+			slog.Infof(ctx, "out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 		}
 	}()
 

@@ -2,6 +2,7 @@ module github.com/shawnfeng/sutil
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
+	github.com/ZhengHe-MD/agollo v0.0.0-20190709010021-166900f9bd56
 	github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb
 	github.com/coreos/etcd v3.0.0-beta.0.0.20160712024141-cc26f2c8892e+incompatible
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -16,7 +17,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v0.0.0-20170603225454-8837942c3e09
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.8.0 // indirect
+	github.com/pkg/errors v0.8.0
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v0.9.2
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886

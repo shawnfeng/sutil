@@ -5,8 +5,9 @@
 package db
 
 import (
+	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
 	"time"
 )
@@ -100,7 +101,7 @@ func (m *DBInstanceManager) get(dbtype, dbname string) DBInstance {
 		configInfo := m.config.GetConfig(dbtype, dbname)
 		dbIn, err = NewInstance(dbtype, dbname, configInfo.DBAddr, configInfo.UserName, configInfo.PassWord, configInfo.TimeOut)
 		if err != nil {
-			slog.Errorf("%s NewInstance err, dbname: %s, err: %s", fun, dbname, err.Error())
+			slog.Errorf(context.TODO(), "%s NewInstance err, dbname: %s, err: %s", fun, dbname, err.Error())
 			return nil
 		}
 
@@ -108,7 +109,7 @@ func (m *DBInstanceManager) get(dbtype, dbname string) DBInstance {
 		if ok == true {
 			dbIn, ok = in.(DBInstance)
 			if ok == false {
-				slog.Errorf("%s ins.(DBInstance) err, name: %s", fun, name)
+				slog.Errorf(context.TODO(), "%s ins.(DBInstance) err, name: %s", fun, name)
 				return nil
 			}
 		}
@@ -118,7 +119,7 @@ func (m *DBInstanceManager) get(dbtype, dbname string) DBInstance {
 
 	dbIn, ok = in.(DBInstance)
 	if ok == false {
-		slog.Errorf("%s ins.(DBInstance) err, name: %s", fun, name)
+		slog.Errorf(context.TODO(), "%s ins.(DBInstance) err, name: %s", fun, name)
 		return nil
 	}
 

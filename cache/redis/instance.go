@@ -7,7 +7,7 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
 )
 
@@ -43,10 +43,10 @@ func (m *InstanceManager) GetInstance(ctx context.Context, namespace string) *Cl
 	in, ok := m.instances.Load(key)
 	if ok == false {
 
-		slog.Infof("%s newInstance, flag: %s, namespace: %s", fun, flag, namespace)
+		slog.Infof(ctx, "%s newInstance, flag: %s, namespace: %s", fun, flag, namespace)
 		in, err = m.newInstance(ctx, namespace)
 		if err != nil {
-			slog.Errorf("%s NewInstance err, namespace: %s, err: %s", fun, namespace, err.Error())
+			slog.Errorf(ctx, "%s NewInstance err, namespace: %s, err: %s", fun, namespace, err.Error())
 			return nil
 		}
 
@@ -55,7 +55,7 @@ func (m *InstanceManager) GetInstance(ctx context.Context, namespace string) *Cl
 
 	client, ok := in.(*Client)
 	if ok == false {
-		slog.Errorf("%s in.(*Client), key:%v", fun, key)
+		slog.Errorf(ctx, "%s in.(*Client), key:%v", fun, key)
 		return nil
 	}
 
@@ -65,24 +65,26 @@ func (m *InstanceManager) GetInstance(ctx context.Context, namespace string) *Cl
 func (m *InstanceManager) Close() {
 	fun := "InstanceManager.Close -->"
 
+	ctx := context.TODO()
+
 	m.instances.Range(func(key, value interface{}) bool {
-		slog.Infof("%s key:%v", fun, key)
+		slog.Infof(ctx, "%s key:%v", fun, key)
 
 		skey, ok := key.(string)
 		if ok == false {
-			slog.Errorf("%s key:%v", fun, key)
+			slog.Errorf(ctx, "%s key:%v", fun, key)
 			return false
 		}
 
 		client, ok := value.(*Client)
 		if ok == false {
-			slog.Errorf("%s value.(*Client), key:%v", fun, skey)
+			slog.Errorf(ctx, "%s value.(*Client), key:%v", fun, skey)
 			return false
 		}
 
 		err := client.Close()
 		if err != nil {
-			slog.Errorf("%s client.Close, key:%v", fun, skey)
+			slog.Errorf(ctx, "%s client.Close, key:%v", fun, skey)
 			return false
 		}
 

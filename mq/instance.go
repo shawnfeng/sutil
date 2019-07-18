@@ -5,8 +5,9 @@
 package mq
 
 import (
+	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 	"strings"
 	"sync"
 )
@@ -65,7 +66,7 @@ func (m *InstanceManager) newInstance(flag string, role int, topic, groupId stri
 		return NewWriter(topic)
 
 	default:
-		return nil, fmt.Errorf("role %s error", role)
+		return nil, fmt.Errorf("role %d error", role)
 	}
 }
 
@@ -78,10 +79,10 @@ func (m *InstanceManager) get(flag string, role int, topic, groupId string, part
 	in, ok := m.instances.Load(key)
 	if ok == false {
 
-		slog.Infof("%s newInstance, role:%d, topic: %s", fun, role, topic)
+		slog.Infof(context.TODO(), "%s newInstance, role:%d, topic: %s", fun, role, topic)
 		in, err = m.newInstance(flag, role, topic, groupId, partition)
 		if err != nil {
-			slog.Errorf("%s NewInstance err, topic: %s, err: %s", fun, topic, err.Error())
+			slog.Errorf(context.TODO(), "%s NewInstance err, topic: %s, err: %s", fun, topic, err.Error())
 			return nil
 		}
 
@@ -100,7 +101,7 @@ func (m *InstanceManager) getReader(flag string, role int, topic, groupId string
 
 	reader, ok := in.(Reader)
 	if ok == false {
-		slog.Errorf("%s in.(Reader) err, topic: %s", fun, topic)
+		slog.Errorf(context.TODO(), "%s in.(Reader) err, topic: %s", fun, topic)
 		return nil
 	}
 
@@ -117,7 +118,7 @@ func (m *InstanceManager) getWriter(flag string, role int, topic, groupId string
 
 	writer, ok := in.(Writer)
 	if ok == false {
-		slog.Errorf("%s in.(Writer) err, topic: %s", fun, topic)
+		slog.Errorf(context.TODO(), "%s in.(Writer) err, topic: %s", fun, topic)
 		return nil
 	}
 
@@ -128,24 +129,24 @@ func (m *InstanceManager) Close() {
 	fun := "InstanceManager.Close -->"
 
 	m.instances.Range(func(key, value interface{}) bool {
-		slog.Infof("%s key:%v", fun, key)
+		slog.Infof(context.TODO(), "%s key:%v", fun, key)
 
 		skey, ok := key.(string)
 		if ok == false {
-			slog.Errorf("%s key:%v", fun, key)
+			slog.Errorf(context.TODO(), "%s key:%v", fun, key)
 			return false
 		}
 
 		role, err := m.getRole(skey)
 		if err != nil {
-			slog.Errorf("%s key:%v, err:%s", fun, key, err)
+			slog.Errorf(context.TODO(), "%s key:%v, err:%s", fun, key, err)
 			return false
 		}
 
 		if role == ROLE_TYPE_READER {
 			reader, ok := value.(Reader)
 			if ok == false {
-				slog.Errorf("%s value.(Reader), key:%v", fun, key)
+				slog.Errorf(context.TODO(), "%s value.(Reader), key:%v", fun, key)
 				return false
 			}
 
@@ -155,7 +156,7 @@ func (m *InstanceManager) Close() {
 		if role == ROLE_TYPE_WRITER {
 			writer, ok := value.(Writer)
 			if ok == false {
-				slog.Errorf("%s value.(Writer), key:%v", fun, key)
+				slog.Errorf(context.TODO(), "%s value.(Writer), key:%v", fun, key)
 				return false
 			}
 
