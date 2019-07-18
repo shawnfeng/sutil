@@ -87,24 +87,24 @@ func TestUnmarshal(t *testing.T) {
 	defer Stop(ctx)
 
 	type Args struct {
-		Name string `properties:"name"`
+		Name  string `properties:"name"`
 		Value string `properties:"value"`
 	}
 
 	type Filter struct {
 		Name string `properties:"name"`
-		Args Args `properties:"args"`
+		Args Args   `properties:"args"`
 	}
 
 	type Router struct {
-		ID string `properties:"id"`
-		URI string `properties:"uri"`
+		ID   string `properties:"id"`
+		URI  string `properties:"uri"`
 		Path string `properties:"path"`
 		Host string `properties:"host"`
 	}
 
 	type GatewayConfig struct {
-		Filters []Filter `properties:"filters"`
+		Filters []Filter  `properties:"filters"`
 		Routers []*Router `properties:"routers"`
 	}
 

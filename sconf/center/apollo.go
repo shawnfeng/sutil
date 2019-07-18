@@ -24,7 +24,7 @@ const (
 
 type apolloConfigCenter struct {
 	conf            *agollo.Conf
-	ag 				*agollo.Agollo
+	ag              *agollo.Agollo
 	watchUpdateOnce sync.Once
 	changeEventChan chan *ChangeEvent
 }
