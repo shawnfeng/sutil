@@ -48,6 +48,11 @@ type ConfigCenter interface {
 	GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool)
 	GetInt(ctx context.Context, key string) (int, bool)
 	GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool)
+	GetAllKeys(ctx context.Context) []string
+	GetAllKeysWithNamespace(ctx context.Context, namespace string) []string
+
+	Unmarshal(ctx context.Context, v interface{}) error
+	UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error
 
 	StartWatchUpdate(ctx context.Context)
 	RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func())
@@ -96,4 +101,12 @@ func StartWatchUpdate(ctx context.Context) {
 
 func RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func()) {
 	return defaultConfigCenter.RegisterObserver(ctx, observer)
+}
+
+func Unmarshal(ctx context.Context, v interface{}) error {
+	return defaultConfigCenter.Unmarshal(ctx, v)
+}
+
+func UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error {
+	return defaultConfigCenter.UnmarshalWithNamespace(ctx, namespace, v)
 }

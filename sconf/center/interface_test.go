@@ -2,6 +2,7 @@ package center
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -77,4 +78,47 @@ func TestGetTypedVarWithNamespace(t *testing.T) {
 	if intVal != 0 {
 		t.Errorf("intVal expect:0 got:%d", intVal)
 	}
+}
+
+func TestUnmarshal(t *testing.T) {
+	ctx := context.Background()
+
+	_ = Init(ctx, "test/test", []string{"application"})
+	defer Stop(ctx)
+
+	type Args struct {
+		Name  string `properties:"name"`
+		Value string `properties:"value"`
+	}
+
+	type Filter struct {
+		Name string `properties:"name"`
+		Args Args   `properties:"args"`
+	}
+
+	type Router struct {
+		ID   string `properties:"id"`
+		URI  string `properties:"uri"`
+		Path string `properties:"path"`
+		Host string `properties:"host"`
+	}
+
+	type GatewayConfig struct {
+		Filters []Filter  `properties:"filters"`
+		Routers []*Router `properties:"routers"`
+	}
+
+	var g GatewayConfig
+	assert.NoError(t, Unmarshal(ctx, &g))
+
+	var expected = GatewayConfig{
+		Filters: []Filter{
+			{"AddRequestHeader", Args{"foo", "bar"}},
+		},
+		Routers: []*Router{
+			{"hello", "http://localhost:8080", "/hello", "localhost"},
+		},
+	}
+
+	assert.Equal(t, expected, g)
 }

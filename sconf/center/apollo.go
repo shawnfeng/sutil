@@ -3,6 +3,7 @@ package center
 import (
 	"context"
 	"github.com/ZhengHe-MD/agollo"
+	"github.com/ZhengHe-MD/properties"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"os"
@@ -23,7 +24,7 @@ const (
 
 type apolloConfigCenter struct {
 	conf            *agollo.Conf
-	ag 				*agollo.Agollo
+	ag              *agollo.Agollo
 	watchUpdateOnce sync.Once
 	changeEventChan chan *ChangeEvent
 }
@@ -143,6 +144,20 @@ func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace
 	return ap.ag.GetIntWithNamespace(namespace, key)
 }
 
+func (ap *apolloConfigCenter) GetAllKeys(ctx context.Context) []string {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetAllKeys")
+	defer span.Finish()
+
+	return ap.ag.GetAllKeys("application")
+}
+
+func (ap *apolloConfigCenter) GetAllKeysWithNamespace(ctx context.Context, namespace string) []string {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetAllKeysWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetAllKeys(namespace)
+}
+
 func (ap *apolloConfigCenter) StartWatchUpdate(ctx context.Context) {
 	ap.ag.StartWatchUpdate()
 }
@@ -157,4 +172,21 @@ func (o *agolloObserver) HandleChangeEvent(ce *agollo.ChangeEvent) {
 
 func (ap *apolloConfigCenter) RegisterObserver(ctx context.Context, observer ConfigObserver) func() {
 	return ap.ag.RegisterObserver(&agolloObserver{observer})
+}
+
+func (ap *apolloConfigCenter) Unmarshal(ctx context.Context, v interface{}) error {
+	return ap.UnmarshalWithNamespace(ctx, defaultNamespaceApplication, v)
+}
+
+func (ap *apolloConfigCenter) UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error {
+	var kv = map[string]string{}
+
+	ks := ap.GetAllKeysWithNamespace(ctx, namespace)
+	for _, k := range ks {
+		if v, ok := ap.GetStringWithNamespace(ctx, namespace, k); ok {
+			kv[k] = v
+		}
+	}
+
+	return properties.UnmarshalKV(kv, v)
 }

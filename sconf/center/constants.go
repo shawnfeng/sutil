@@ -3,6 +3,6 @@ package center
 const (
 	DefaultApolloMiddlewareService = "middleware"
 
-	DefaultApolloMQNamespace = "infra.mq"
+	DefaultApolloMQNamespace    = "infra.mq"
 	DefaultApolloCacheNamespace = "infra.cache"
 )
