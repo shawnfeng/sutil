@@ -74,7 +74,7 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Del")
 	defer span.Finish()
 
-	skey, err := m.fixKey(key)
+	skey, err := m.prefixKey(key)
 	if err != nil {
 		slog.Errorf(ctx, "%s fixkey, key: %v err: %v", fun, key, err)
 		return err
@@ -83,11 +83,12 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	conf := &redis.InstanceConf{
 		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
+		Wrapper:   cache.WrapperTypeCache,
 	}
-	client := redis.DefaultInstanceManager.GetInstance(ctx, conf)
-	if client == nil {
+	client, err := redis.DefaultInstanceManager.GetInstance(ctx, conf)
+	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
-		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
+		return err
 	}
 
 	err = client.Del(ctx, skey).Err()
@@ -125,8 +126,8 @@ func (m *Cache) keyToString(key interface{}) (string, error) {
 	}
 }
 
-func (m *Cache) fixKey(key interface{}) (string, error) {
-	fun := "Cache.fixKey -->"
+func (m *Cache) prefixKey(key interface{}) (string, error) {
+	fun := "Cache.prefixKey -->"
 
 	skey, err := m.keyToString(key)
 	if err != nil {
@@ -144,7 +145,7 @@ func (m *Cache) fixKey(key interface{}) (string, error) {
 func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.getValueFromCache -->"
 
-	skey, err := m.fixKey(key)
+	skey, err := m.prefixKey(key)
 	if err != nil {
 		return err
 	}
@@ -152,11 +153,12 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 	conf := &redis.InstanceConf{
 		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
+		Wrapper:   cache.WrapperTypeCache,
 	}
-	client := redis.DefaultInstanceManager.GetInstance(ctx, conf)
-	if client == nil {
+	client, err := redis.DefaultInstanceManager.GetInstance(ctx, conf)
+	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
-		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
+		return err
 	}
 
 	data, err := client.Get(ctx, skey).Bytes()
@@ -191,7 +193,7 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 		}
 	}
 
-	skey, err := m.fixKey(key)
+	skey, err := m.prefixKey(key)
 	if err != nil {
 		slog.Errorf(ctx, "%s fixkey, key: %v err:%v", fun, key, err)
 		return err
@@ -200,11 +202,12 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 	conf := &redis.InstanceConf{
 		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
+		Wrapper:   cache.WrapperTypeCache,
 	}
-	client := redis.DefaultInstanceManager.GetInstance(ctx, conf)
-	if client == nil {
+	client, err := redis.DefaultInstanceManager.GetInstance(ctx, conf)
+	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
-		return fmt.Errorf("get instance err, namespace: %s", m.namespace)
+		return err
 	}
 
 	rerr := client.Set(ctx, skey, data, m.expire).Err()
@@ -238,3 +241,4 @@ func WatchUpdate(ctx context.Context) {
 func init() {
 	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
 }
+

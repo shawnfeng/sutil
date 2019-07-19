@@ -2,7 +2,7 @@ package value
 
 import (
 	"context"
-	cache2 "github.com/shawnfeng/sutil/cache"
+	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/trace"
 
 	//"fmt"
@@ -27,19 +27,19 @@ func TestGet(t *testing.T) {
 	ctx := context.Background()
 	_ = trace.InitDefaultTracer("cache.test")
 
-	cache := NewCache("base/report", "test", 60*time.Second, load)
-	_ = SetConfiger(ctx, cache2.ConfigerTypeApollo)
+	c := NewCache("base/report", "test", 60*time.Second, load)
+	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 	WatchUpdate(ctx)
 
 	var test Test
-	err := cache.Get(ctx, 7, &test)
+	err := c.Get(ctx, 7, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}
 	slog.Infof(ctx, "test: %v", test)
 
-	cache.Del(ctx, 7)
-	err = cache.Get(ctx, 7, &test)
+	c.Del(ctx, 7)
+	err = c.Get(ctx, 7, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}

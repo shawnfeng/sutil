@@ -22,21 +22,23 @@ const (
 type InstanceConf struct {
 	Group     string
 	Namespace string
+	Wrapper   string
 }
 
 func (m *InstanceConf) String() string {
-	return fmt.Sprintf("group:%s namespace:%s", m.Group, m.Namespace)
+	return fmt.Sprintf("group:%s namespace:%s wrapper:%s", m.Group, m.Namespace, m.Wrapper)
 }
 
 func instanceConfFromString(s string) (conf *InstanceConf, err error) {
 	items := strings.Split(s, keySep)
-	if len(items) != 2 {
+	if len(items) != 3 {
 		return nil, fmt.Errorf("invalid instance conf string:%s", s)
 	}
 
 	conf = &InstanceConf{
 		Group:     items[0],
 		Namespace: items[1],
+		Wrapper:   items[2],
 	}
 	return conf, nil
 }
@@ -56,6 +58,7 @@ func (m *InstanceManager) buildKey(conf *InstanceConf) string {
 	return strings.Join([]string{
 		conf.Group,
 		conf.Namespace,
+		conf.Wrapper,
 	}, keySep)
 }
 
@@ -64,10 +67,10 @@ func (m *InstanceManager) add(key string, client *Client) {
 }
 
 func (m *InstanceManager) newInstance(ctx context.Context, conf *InstanceConf) (*Client, error) {
-	return NewClient(ctx, conf.Namespace)
+	return NewClient(ctx, conf.Namespace, conf.Wrapper)
 }
 
-func (m *InstanceManager) GetInstance(ctx context.Context, conf *InstanceConf) *Client {
+func (m *InstanceManager) GetInstance(ctx context.Context, conf *InstanceConf) (*Client, error) {
 	fun := "InstanceManager.GetInstance -->"
 
 	var err error
@@ -80,7 +83,7 @@ func (m *InstanceManager) GetInstance(ctx context.Context, conf *InstanceConf) *
 		in, err = m.newInstance(ctx, conf)
 		if err != nil {
 			slog.Errorf(ctx, "%s NewInstance err: %v", fun, err)
-			return nil
+			return nil, err
 		}
 
 		in, _ = m.instances.LoadOrStore(key, in)
@@ -88,11 +91,12 @@ func (m *InstanceManager) GetInstance(ctx context.Context, conf *InstanceConf) *
 
 	client, ok := in.(*Client)
 	if ok == false {
-		slog.Errorf(ctx, "%s in.(*Client), key:%v", fun, key)
-		return nil
+		err := fmt.Errorf("in.(*Client), key:%v", key)
+		slog.Errorf(ctx, "%s %s", fun, err.Error())
+		return nil, err
 	}
 
-	return client
+	return client, nil
 }
 
 func (m *InstanceManager) applyChange(ctx context.Context, key string, change *center.Change) {
