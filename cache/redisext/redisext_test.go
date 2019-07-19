@@ -26,6 +26,10 @@ func TestRedisExt_ZAdd(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(len(members)), n)
 
+	n, err = re.ZAddNX(ctx, zsetTestKey, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), n)
+
 	dn, err := re.Del(ctx, zsetTestKey)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), dn)
