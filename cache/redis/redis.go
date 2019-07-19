@@ -136,6 +136,18 @@ func (m *Client) ZAddCh(ctx context.Context, key string, members ...redis.Z) *re
 	return m.client.ZAddCh(k, members...)
 }
 
+func (m *Client) ZCard(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZCard", k)
+	return m.client.ZCard(k)
+}
+
+func (m *Client) ZCount(ctx context.Context, key, min, max string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZCount", k)
+	return m.client.ZCount(k, min, max)
+}
+
 func (m *Client) ZRange(ctx context.Context, key string, start, stop int64) *redis.StringSliceCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZRange", k)
@@ -170,6 +182,12 @@ func (m *Client) ZRevRank(ctx context.Context, key string, member string) *redis
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZRevRank", k)
 	return m.client.ZRevRank(k, member)
+}
+
+func (m *Client) ZRem(ctx context.Context, key string, members []interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRem", k)
+	return m.client.ZRem(k, members...)
 }
 
 func (m *Client) ZIncr(ctx context.Context, key string, member redis.Z) *redis.FloatCmd {

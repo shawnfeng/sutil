@@ -7,6 +7,7 @@ import (
 	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type RedisExt struct {
@@ -19,7 +20,7 @@ func NewRedisExt(namespace, prefix string) *RedisExt {
 }
 
 type Z struct {
-	Score float64
+	Score  float64
 	Member interface{}
 }
 
@@ -71,6 +72,13 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	}
 }
 
+func (m *RedisExt) Del(ctx context.Context, key string) (n int64, err error) {
+	if client, err := m.getRedisInstance(ctx); err == nil {
+		n, err = client.Del(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
 func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, err error) {
 	if client, err := m.getRedisInstance(ctx); err == nil {
 		n, err = client.ZAdd(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
@@ -109,6 +117,20 @@ func (m *RedisExt) ZAddXXCh(ctx context.Context, key string, members []Z) (n int
 func (m *RedisExt) ZAddCh(ctx context.Context, key string, members []Z) (n int64, err error) {
 	if client, err := m.getRedisInstance(ctx); err == nil {
 		n, err = client.ZAddCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
+	}
+	return
+}
+
+func (m *RedisExt) ZCard(ctx context.Context, key string) (n int64, err error) {
+	if client, err := m.getRedisInstance(ctx); err == nil {
+		n, err = client.ZCard(ctx, key).Result()
+	}
+	return
+}
+
+func (m *RedisExt) ZCount(ctx context.Context, key, min, max string) (n int64, err error) {
+	if client, err := m.getRedisInstance(ctx); err == nil {
+		n, err = client.ZCount(ctx, m.prefixKey(key), min, max).Result()
 	}
 	return
 }
@@ -159,6 +181,13 @@ func (m *RedisExt) ZRevRank(ctx context.Context, key string, member string) (n i
 	return
 }
 
+func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) (n int64, err error) {
+	if client, err := m.getRedisInstance(ctx); err == nil {
+		n, err = client.ZRem(ctx, m.prefixKey(key), members).Result()
+	}
+	return
+}
+
 func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, err error) {
 	if client, err := m.getRedisInstance(ctx); err == nil {
 		f, err = client.ZIncr(ctx, m.prefixKey(key), member.toRedisZ()).Result()
@@ -187,3 +216,22 @@ func (m *RedisExt) ZIncrBy(ctx context.Context, key string, increment float64, m
 	return
 }
 
+func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
+	fun := "Cache.SetConfiger-->"
+	configer, err := redis.NewConfiger(configerType)
+	if err != nil {
+		slog.Errorf(ctx, "%s create configer err:%v", fun, err)
+		return err
+	}
+	slog.Infof(ctx, "%s %v configer created", fun, configerType)
+	redis.DefaultConfiger = configer
+	return redis.DefaultConfiger.Init(ctx)
+}
+
+func WatchUpdate(ctx context.Context) {
+	go redis.DefaultInstanceManager.Watch(ctx)
+}
+
+func init() {
+	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
+}

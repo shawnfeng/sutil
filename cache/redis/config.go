@@ -132,7 +132,7 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 }
 
 const (
-	apolloConfigSep        = "."
+	apolloConfigSep = "."
 
 	apolloConfigKeyAddr     = "addr"
 	apolloConfigKeyPoolSize = "poolsize"
@@ -142,7 +142,7 @@ const (
 type ApolloConfig struct {
 	watchOnce sync.Once
 	ch        chan *center.ChangeEvent
-	center 	  center.ConfigCenter
+	center    center.ConfigCenter
 }
 
 func NewApolloConfiger() *ApolloConfig {

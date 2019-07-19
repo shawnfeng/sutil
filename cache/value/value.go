@@ -241,3 +241,4 @@ func WatchUpdate(ctx context.Context) {
 func init() {
 	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
 }
+
