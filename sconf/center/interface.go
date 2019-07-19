@@ -53,6 +53,8 @@ type ConfigCenter interface {
 
 	Unmarshal(ctx context.Context, v interface{}) error
 	UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error
+	UnmarshalKey(ctx context.Context, key string, v interface{}) error
+	UnmarshalKeyWithNamespace(ctx context.Context, namespace string, key string, v interface{}) error
 
 	StartWatchUpdate(ctx context.Context)
 	RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func())
@@ -109,4 +111,12 @@ func Unmarshal(ctx context.Context, v interface{}) error {
 
 func UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error {
 	return defaultConfigCenter.UnmarshalWithNamespace(ctx, namespace, v)
+}
+
+func UnmarshalKey(ctx context.Context, key string, v interface{}) error {
+	return defaultConfigCenter.UnmarshalKey(ctx, key, v)
+}
+
+func UnmarshalKeyWithNamespace(ctx context.Context, namespace, key string, v interface{}) error {
+	return defaultConfigCenter.UnmarshalKeyWithNamespace(ctx, namespace, key, v)
 }

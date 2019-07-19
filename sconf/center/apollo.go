@@ -190,3 +190,26 @@ func (ap *apolloConfigCenter) UnmarshalWithNamespace(ctx context.Context, namesp
 
 	return properties.UnmarshalKV(kv, v)
 }
+
+func (ap *apolloConfigCenter) UnmarshalKey(ctx context.Context, key string, v interface{}) error {
+	return ap.UnmarshalKeyWithNamespace(ctx, defaultNamespaceApplication, key, v)
+}
+
+func (ap *apolloConfigCenter) UnmarshalKeyWithNamespace(ctx context.Context, namespace string, key string, v interface{}) error {
+	var kv = map[string]string{}
+
+	ks := ap.GetAllKeysWithNamespace(ctx, namespace)
+	for _, k := range ks {
+		if v, ok := ap.GetStringWithNamespace(ctx, namespace, k); ok {
+			kv[k] = v
+		}
+	}
+
+	bs, err := properties.Marshal(&kv)
+	if err != nil {
+		return err
+	}
+
+	return properties.UnmarshalKey(key, bs, v)
+}
+
