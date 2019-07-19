@@ -17,9 +17,10 @@ var RedisNil = fmt.Sprintf("redis: nil")
 type Client struct {
 	client    *redis.Client
 	namespace string
+	wrapper   string
 }
 
-func NewClient(ctx context.Context, namespace string) (*Client, error) {
+func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
 	fun := "NewClient -->"
 
 	config, err := DefaultConfiger.GetConfig(ctx, namespace)
@@ -44,11 +45,16 @@ func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	return &Client{
 		client:    client,
 		namespace: namespace,
+		wrapper:   wrapper,
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
-	return fmt.Sprintf("%s.%s", m.namespace, key)
+	return strings.Join([]string{
+		m.namespace,
+		m.wrapper,
+		key,
+	}, ".")
 }
 
 func (m *Client) logSpan(ctx context.Context, op, key string) {
@@ -92,6 +98,102 @@ func (m *Client) SetNX(ctx context.Context, key string, value interface{}, expir
 	k := m.fixKey(key)
 	m.logSpan(ctx, "SetNX", k)
 	return m.client.SetNX(k, value, expiration)
+}
+
+func (m *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZAdd", k)
+	return m.client.ZAdd(k, members...)
+}
+
+func (m *Client) ZAddNX(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZAddNX", k)
+	return m.client.ZAddNX(k, members...)
+}
+
+func (m *Client) ZAddNXCh(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZAddNXCh", k)
+	return m.client.ZAddNXCh(k, members...)
+}
+
+func (m *Client) ZAddXX(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZAddXX", k)
+	return m.client.ZAddXX(k, members...)
+}
+
+func (m *Client) ZAddXXCh(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZAddXXCh", k)
+	return m.client.ZAddXXCh(k, members...)
+}
+
+func (m *Client) ZAddCh(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZAddCh", k)
+	return m.client.ZAddCh(k, members...)
+}
+
+func (m *Client) ZRange(ctx context.Context, key string, start, stop int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRange", k)
+	return m.client.ZRange(k, start, stop)
+}
+
+func (m *Client) ZRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRangeWithScores", k)
+	return m.client.ZRangeWithScores(k, start, stop)
+}
+
+func (m *Client) ZRevRange(ctx context.Context, key string, start, stop int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRevRange", k)
+	return m.client.ZRevRange(k, start, stop)
+}
+
+func (m *Client) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRevRangeWithScores", k)
+	return m.client.ZRevRangeWithScores(k, start, stop)
+}
+
+func (m *Client) ZRank(ctx context.Context, key string, member string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRank", k)
+	return m.client.ZRank(k, member)
+}
+
+func (m *Client) ZRevRank(ctx context.Context, key string, member string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRevRank", k)
+	return m.client.ZRevRank(k, member)
+}
+
+func (m *Client) ZIncr(ctx context.Context, key string, member redis.Z) *redis.FloatCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZIncr", k)
+	return m.client.ZIncr(k, member)
+}
+
+func (m *Client) ZIncrNX(ctx context.Context, key string, member redis.Z) *redis.FloatCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZIncrNX", k)
+	return m.client.ZIncrNX(k, member)
+}
+
+func (m *Client) ZIncrXX(ctx context.Context, key string, member redis.Z) *redis.FloatCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZIncrXX", k)
+	return m.client.ZIncrXX(k, member)
+}
+
+func (m *Client) ZIncrBy(ctx context.Context, key string, increment float64, member string) *redis.FloatCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZIncrBy", k)
+	return m.client.ZIncrBy(k, increment, member)
 }
 
 func (m *Client) Close(ctx context.Context) error {
