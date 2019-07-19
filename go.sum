@@ -29,6 +29,10 @@ github.com/ZhengHe-MD/properties v0.0.2 h1:+ZlfMUFN0rrTEjSsSvdZmwwvry6tHVq036k5K
 github.com/ZhengHe-MD/properties v0.0.2/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
 github.com/ZhengHe-MD/properties v0.0.3 h1:H0+O10ckCTCbP1p5IP5Dk5v9DIXXhIxJr35y7/Uhhg8=
 github.com/ZhengHe-MD/properties v0.0.3/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
+github.com/ZhengHe-MD/properties v0.2.0 h1:+Ldk3RfgF3I9tz3aqplkQle61IvdJxrnb4P7mrUFErg=
+github.com/ZhengHe-MD/properties v0.2.0/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
+github.com/ZhengHe-MD/properties v0.2.1 h1:EhfDfGMkt/tkenvmaRZ5iwnYF1cZrtDiDcL4RHzBFCA=
+github.com/ZhengHe-MD/properties v0.2.1/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb/go.mod h1:cXHtHw4XUPsvGaxgjIAn8PhEWG9NfngEKAMDJEczWVA=
 github.com/bitly/go-simplejson v0.5.0 h1:6IH+V8/tVMab511d5bn4M7EwGXZf9Hj6i2xSwkNEM+Y=

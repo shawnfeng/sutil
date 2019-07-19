@@ -3,7 +3,7 @@ module github.com/shawnfeng/sutil
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/ZhengHe-MD/agollo v0.0.0-20190716115826-871879c67d2c
-	github.com/ZhengHe-MD/properties v0.0.3
+	github.com/ZhengHe-MD/properties v0.2.1
 	github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb
 	github.com/coreos/etcd v3.0.0-beta.0.0.20160712024141-cc26f2c8892e+incompatible
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594

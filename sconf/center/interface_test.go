@@ -122,3 +122,25 @@ func TestUnmarshal(t *testing.T) {
 
 	assert.Equal(t, expected, g)
 }
+
+func TestUnmarshalKey(t *testing.T) {
+	ctx := context.Background()
+
+	_ = Init(ctx, "test/test", []string{"application"})
+	defer Stop(ctx)
+
+	type S struct {
+		A string `properties:"a"`
+		B string `properties:"b"`
+	}
+
+	var s S
+	assert.NoError(t, UnmarshalKey(ctx, "s", &s))
+
+	var expected = S{
+		A: "hello",
+		B: "world",
+	}
+
+	assert.Equal(t, expected, s)
+}
