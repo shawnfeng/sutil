@@ -216,6 +216,13 @@ func (m *RedisExt) ZIncrBy(ctx context.Context, key string, increment float64, m
 	return
 }
 
+func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f float64, err error) {
+	if client, err := m.getRedisInstance(ctx); err == nil {
+		f, err = client.ZScore(ctx, m.prefixKey(key), member).Result()
+	}
+	return
+}
+
 func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
 	fun := "Cache.SetConfiger-->"
 	configer, err := redis.NewConfiger(configerType)
