@@ -81,7 +81,7 @@ func (m *Client) Set(ctx context.Context, key string, value interface{}, expirat
 func (m *Client) Exists(ctx context.Context, key string) *redis.IntCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Exists", k)
-	return m.client.Exists(key)
+	return m.client.Exists(k)
 }
 
 func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
