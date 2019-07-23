@@ -214,6 +214,12 @@ func (m *Client) ZIncrBy(ctx context.Context, key string, increment float64, mem
 	return m.client.ZIncrBy(k, increment, member)
 }
 
+func (m *Client) ZScore(ctx context.Context, key string, member string) *redis.FloatCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZScore", k)
+	return m.client.ZScore(k, member)
+}
+
 func (m *Client) Close(ctx context.Context) error {
 	return m.client.Close()
 }

@@ -136,3 +136,34 @@ func TestRedisExt_ZCount(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), dn)
 }
+
+func TestRedisExt_ZScore(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
+
+	// prepare
+	members := []Z{
+		{1, "one"},
+		{2, "two"},
+		{3, "three"},
+	}
+
+	n, err := re.ZAdd(ctx, zsetTestKey, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(len(members)), n)
+
+	// tests
+	f, err := re.ZScore(ctx, zsetTestKey, "two")
+	assert.NoError(t, err)
+	assert.Equal(t, float64(2), f)
+
+	f, err = re.ZScore(ctx, zsetTestKey, "one")
+	assert.NoError(t, err)
+	assert.Equal(t, float64(1), f)
+
+	// cleanup
+	dn, err := re.Del(ctx, zsetTestKey)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), dn)
+}
