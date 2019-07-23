@@ -156,7 +156,7 @@ func (m *RedisExt) ZAddCh(ctx context.Context, key string, members []Z) (n int64
 func (m *RedisExt) ZCard(ctx context.Context, key string) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
-		n, err = client.ZCard(ctx, key).Result()
+		n, err = client.ZCard(ctx, m.prefixKey(key)).Result()
 	}
 	return
 }
