@@ -8,6 +8,7 @@ import (
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"time"
 )
 
 type RedisExt struct {
@@ -72,71 +73,105 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	}
 }
 
+func (m *RedisExt) Get(ctx context.Context, key string) (s string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.Get(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp time.Duration) (s string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.Set(ctx, m.prefixKey(key), val, exp).Result()
+	}
+	return
+}
+
+func (m *RedisExt) Exists(ctx context.Context, key string) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.Exists(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
 func (m *RedisExt) Del(ctx context.Context, key string) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.Del(ctx, m.prefixKey(key)).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZAdd(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZAddNX(ctx context.Context, key string, members []Z) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZAddNX(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZAddNXCh(ctx context.Context, key string, members []Z) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZAddNXCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZAddXX(ctx context.Context, key string, members []Z) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZAddXX(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZAddXXCh(ctx context.Context, key string, members []Z) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZAddXXCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZAddCh(ctx context.Context, key string, members []Z) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZAddCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZCard(ctx context.Context, key string) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZCard(ctx, key).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZCount(ctx context.Context, key, min, max string) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZCount(ctx, m.prefixKey(key), min, max).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZRange(ctx context.Context, key string, start, stop int64) (ss []string, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		ss, err = client.ZRange(ctx, m.prefixKey(key), start, stop).Result()
 	}
 	return
@@ -144,7 +179,8 @@ func (m *RedisExt) ZRange(ctx context.Context, key string, start, stop int64) (s
 
 func (m *RedisExt) ZRangeWithScores(ctx context.Context, key string, start, stop int64) (zs []Z, err error) {
 	var rzs []redis2.Z
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		rzs, err = client.ZRangeWithScores(ctx, m.prefixKey(key), start, stop).Result()
 		zs = fromRedisZSlice(rzs)
 	}
@@ -152,7 +188,8 @@ func (m *RedisExt) ZRangeWithScores(ctx context.Context, key string, start, stop
 }
 
 func (m *RedisExt) ZRevRange(ctx context.Context, key string, start, stop int64) (ss []string, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		ss, err = client.ZRevRange(ctx, m.prefixKey(key), start, stop).Result()
 	}
 	return
@@ -160,7 +197,8 @@ func (m *RedisExt) ZRevRange(ctx context.Context, key string, start, stop int64)
 
 func (m *RedisExt) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) (zs []Z, err error) {
 	var rzs []redis2.Z
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		rzs, err = client.ZRevRangeWithScores(ctx, m.prefixKey(key), start, stop).Result()
 		zs = fromRedisZSlice(rzs)
 	}
@@ -168,56 +206,64 @@ func (m *RedisExt) ZRevRangeWithScores(ctx context.Context, key string, start, s
 }
 
 func (m *RedisExt) ZRank(ctx context.Context, key string, member string) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZRank(ctx, m.prefixKey(key), member).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZRevRank(ctx context.Context, key string, member string) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZRevRank(ctx, m.prefixKey(key), member).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) (n int64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		n, err = client.ZRem(ctx, m.prefixKey(key), members).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		f, err = client.ZIncr(ctx, m.prefixKey(key), member.toRedisZ()).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZIncrNX(ctx context.Context, key string, member Z) (f float64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		f, err = client.ZIncrNX(ctx, m.prefixKey(key), member.toRedisZ()).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZIncrXX(ctx context.Context, key string, member Z) (f float64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		f, err = client.ZIncrXX(ctx, m.prefixKey(key), member.toRedisZ()).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZIncrBy(ctx context.Context, key string, increment float64, member string) (f float64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		f, err = client.ZIncrBy(ctx, m.prefixKey(key), increment, member).Result()
 	}
 	return
 }
 
 func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f float64, err error) {
-	if client, err := m.getRedisInstance(ctx); err == nil {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
 		f, err = client.ZScore(ctx, m.prefixKey(key), member).Result()
 	}
 	return

@@ -78,6 +78,12 @@ func (m *Client) Set(ctx context.Context, key string, value interface{}, expirat
 	return m.client.Set(k, value, expiration)
 }
 
+func (m *Client) Exists(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Exists", k)
+	return m.client.Exists(key)
+}
+
 func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	var tkeys []string
 	for _, key := range keys {

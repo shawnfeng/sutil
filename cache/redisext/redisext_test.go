@@ -104,6 +104,14 @@ func TestRedisExt_ZRank(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(2), n)
 
+	n, err = re.ZRank(ctx, zsetTestKey, "four")
+	assert.Error(t, err)
+	assert.Equal(t, int64(0), n)
+
+	n, err = re.ZRevRank(ctx, zsetTestKey, "four")
+	assert.Error(t, err)
+	assert.Equal(t, int64(0), n)
+
 	// cleanup
 	dn, err := re.Del(ctx, zsetTestKey)
 	assert.NoError(t, err)
@@ -161,6 +169,10 @@ func TestRedisExt_ZScore(t *testing.T) {
 	f, err = re.ZScore(ctx, zsetTestKey, "one")
 	assert.NoError(t, err)
 	assert.Equal(t, float64(1), f)
+
+	f, err = re.ZScore(ctx, zsetTestKey, "four")
+	assert.Error(t, err)
+	assert.Equal(t, float64(0), f)
 
 	// cleanup
 	dn, err := re.Del(ctx, zsetTestKey)
