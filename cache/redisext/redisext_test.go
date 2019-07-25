@@ -5,6 +5,7 @@ import (
 	"github.com/shawnfeng/sutil/cache"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 const (
@@ -178,4 +179,32 @@ func TestRedisExt_ZScore(t *testing.T) {
 	dn, err := re.Del(ctx, zsetTestKey)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), dn)
+}
+
+func TestRedisExt_Expire(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
+
+	// prepare
+	members := []Z{
+		{1, "one"},
+		{2, "two"},
+		{3, "three"},
+	}
+
+	n, err := re.ZAdd(ctx, zsetTestKey, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(len(members)), n)
+
+	expiration := 1 * time.Second
+	b, err := re.Expire(ctx, zsetTestKey, expiration)
+	assert.NoError(t, err)
+	assert.True(t, b)
+
+	time.Sleep(expiration * 2)
+
+	n, err = re.Exists(ctx, zsetTestKey)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), n)
 }

@@ -105,6 +105,14 @@ func (m *RedisExt) Del(ctx context.Context, key string) (n int64, err error) {
 	return
 }
 
+func (m *RedisExt) Expire(ctx context.Context, key string, expiration time.Duration) (b bool, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		b, err = client.Expire(ctx, m.prefixKey(key), expiration).Result()
+	}
+	return
+}
+
 func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
