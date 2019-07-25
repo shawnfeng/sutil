@@ -75,6 +75,11 @@ func (m *SimpleConfig) GetConfig(ctx context.Context, namespace string) (*Config
 		addr = "common.codis.pri.ibanyu.com:19000"
 		//addr = "core.codis.pri.ibanyu.com:19000"
 	}
+
+	if namespace == "base/growthsystem" {
+		addr = "common.codis.pri.ibanyu.com:19000"
+	}
+
 	return &Config{
 		addr:      addr,
 		namespace: namespace,

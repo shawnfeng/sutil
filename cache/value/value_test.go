@@ -39,6 +39,7 @@ func TestGet(t *testing.T) {
 	slog.Infof(ctx, "test: %v", test)
 
 	c.Del(ctx, 7)
+	c.Load(ctx, 7)
 	err = c.Get(ctx, 7, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)

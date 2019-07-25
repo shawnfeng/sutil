@@ -40,6 +40,14 @@ func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Ca
 	}
 }
 
+func (m *Cache) getInstanceConf(ctx context.Context) *redis.InstanceConf {
+	return &redis.InstanceConf{
+		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Namespace: m.namespace,
+		Wrapper:   cache.WrapperTypeCache,
+	}
+}
+
 func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
 
@@ -80,12 +88,7 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 		return err
 	}
 
-	conf := &redis.InstanceConf{
-		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
-		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeCache,
-	}
-	client, err := redis.DefaultInstanceManager.GetInstance(ctx, conf)
+	client, err := redis.DefaultInstanceManager.GetInstance(ctx, m.getInstanceConf(ctx))
 	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return err
@@ -97,6 +100,13 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	}
 
 	return nil
+}
+
+func (m *Cache) Load(ctx context.Context, key interface{}) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Load")
+	defer span.Finish()
+
+	return m.loadValueToCache(ctx, key)
 }
 
 func (m *Cache) keyToString(key interface{}) (string, error) {
@@ -150,12 +160,7 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 		return err
 	}
 
-	conf := &redis.InstanceConf{
-		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
-		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeCache,
-	}
-	client, err := redis.DefaultInstanceManager.GetInstance(ctx, conf)
+	client, err := redis.DefaultInstanceManager.GetInstance(ctx, m.getInstanceConf(ctx))
 	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return err
@@ -199,12 +204,7 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 		return err
 	}
 
-	conf := &redis.InstanceConf{
-		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
-		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeCache,
-	}
-	client, err := redis.DefaultInstanceManager.GetInstance(ctx, conf)
+	client, err := redis.DefaultInstanceManager.GetInstance(ctx, m.getInstanceConf(ctx))
 	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return err

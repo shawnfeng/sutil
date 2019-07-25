@@ -94,6 +94,12 @@ func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	return m.client.Del(tkeys...)
 }
 
+func (m *Client) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Expire", k)
+	return m.client.Expire(k, expiration)
+}
+
 func (m *Client) Incr(ctx context.Context, key string) *redis.IntCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Incr", k)
