@@ -21,13 +21,18 @@ type FactoryFunc func(ctx context.Context, key string) (in Instancer, err error)
 
 type InstanceManager struct {
 	instances sync.Map
+	shadowInstances sync.Map
 	factory   FactoryFunc
 }
 
-func NewInstanceManager(factory FactoryFunc) *InstanceManager {
-	return &InstanceManager{
+func NewInstanceManager(factory FactoryFunc, dbChangeChan chan dbInstanceChange) *InstanceManager {
+	instanceManager := &InstanceManager{
 		factory: factory,
 	}
+
+	go instanceManager.dbInsChangeHandler(context.Background(), dbChangeChan)
+
+	return instanceManager
 }
 
 func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
@@ -35,7 +40,20 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 
 	var err error
 	var in interface{}
-	in, ok := m.instances.Load(key)
+	var instanceMap sync.Map
+
+	// TODO 确定是否压测的标识
+	if isTest, ok := ctx.Value("xxx").(bool); ok {
+		if isTest {
+			instanceMap = m.shadowInstances
+		} else {
+			instanceMap = m.instances
+		}
+	} else {
+		instanceMap = m.instances
+	}
+
+	in, ok := instanceMap.Load(key)
 	if ok == false {
 
 		slog.Infof(ctx, "%s newInstance, key: %s", fun, key)
@@ -45,7 +63,7 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 			return nil
 		}
 
-		in, _ = m.instances.LoadOrStore(key, in)
+		in, _ = instanceMap.LoadOrStore(key, in)
 	}
 
 	tmp, ok := in.(Instancer)
@@ -74,4 +92,65 @@ func (m *InstanceManager) Close() {
 
 		return true
 	})
+
+	m.shadowInstances.Range(func(key, value interface{}) bool {
+		slog.Infof(context.TODO(), "%s key:%v", fun, key)
+
+		in, ok := value.(Instancer)
+		if ok == false {
+			slog.Errorf(context.TODO(), "%s value.(Instancer) false, key: %v", fun, key)
+			return false
+		}
+
+		in.Close()
+		m.shadowInstances.Delete(key)
+
+		return true
+	})
+}
+
+func (m *InstanceManager) dbInsChangeHandler(ctx context.Context, dbChangeChan chan dbInstanceChange) {
+	fun := "InstanceManager.dbInsChangeHandler -->"
+	for dbInsChange := range dbChangeChan {
+		slog.Infof(ctx, "%s receive db instance changes: %+v", fun, dbInsChange)
+		for _, insName := range dbInsChange.dbInsChanges {
+			m.closeDbInstance(ctx, insName)
+		}
+
+		for _, insName := range dbInsChange.shadowDbInsChanges {
+			m.closeShadowDbInstance(ctx, insName)
+		}
+	}
+}
+
+func (m *InstanceManager) closeDbInstance(ctx context.Context, insName string) {
+	fun := "InstanceManager.closeDbInstance -->"
+	if ins, ok := m.instances.Load(insName); ok {
+		m.instances.Delete(insName)
+		if in, ok := ins.(Instancer); ok {
+			if err := in.Close(); err == nil {
+				slog.Infof(ctx, "%s succeed to close db instance %s", fun, insName)
+			} else {
+				slog.Warnf(ctx, "%s close db instance %s error: %s", fun, insName, err.Error())
+			}
+		} else {
+			slog.Warnf(ctx, "%s close db instance %s error, not Instancer type", fun, insName)
+		}
+	}
+}
+
+func (m *InstanceManager) closeShadowDbInstance(ctx context.Context, insName string) {
+	fun := "InstanceManager.closeShadowDbInstance -->"
+	if ins, ok := m.shadowInstances.Load(insName); ok {
+		m.shadowInstances.Delete(insName)
+		if in, ok := ins.(Instancer); ok {
+			if err := in.Close(); err == nil {
+				slog.Infof(ctx, "%s succeed to close shadow db instance %s", fun, insName)
+			} else {
+				slog.Warnf(ctx, "%s close shadow db instance %s error: %s", fun, insName, err.Error())
+			}
+		} else {
+			slog.Warnf(ctx, "%s close shadow db instance %s error, not Instancer type", fun, insName)
+		}
+	}
 }

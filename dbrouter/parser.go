@@ -27,6 +27,13 @@ type dbInsCfg struct {
 	Dbcfg  json.RawMessage `json:"dbcfg"`
 }
 
+type dbInsCfgEtcd struct {
+	Dbtype string          `json:"dbtype"`
+	Dbname string          `json:"dbname"`
+	Dbcfg  json.RawMessage `json:"dbcfg"`
+	Type   int32           `json:"type"`
+}
+
 type dbInsInfo struct {
 	Instance string
 	DBType   string
@@ -41,23 +48,38 @@ type routeConfig struct {
 	Instances map[string]*dbInsCfg      `json:"instances"`
 }
 
+type routeConfigEtcd struct {
+	Cluster   map[string][]*dbLookupCfg  `json:"cluster"`
+	Instances map[string][]*dbInsCfgEtcd `json:"instances"`
+}
+
 type Parser struct {
 	dbCls *dbCluster
 	dbIns map[string]*dbInsInfo
+	// shadowDbCls *dbCluster  // 影子集群配置，用于全链路压测
+	shadowDbIns map[string]*dbInsInfo  // 影子实例配置，用于全链路压测
 }
 
 func (m *Parser) String() string {
-	return fmt.Sprintf("%s", m.dbCls.clusters)
+	return fmt.Sprintf("%v", m.dbCls.clusters)
 }
 
 func (m *Parser) GetInstance(cluster, table string) string {
 	instance := m.dbCls.getInstance(cluster, table)
-	info := m.getConfig(instance)
-	return info.Instance
+	return instance
+	/*info := m.getConfig(instance)
+	return info.Instance*/
 }
 
 func (m *Parser) getConfig(instance string) *dbInsInfo {
 	if info, ok := m.dbIns[instance]; ok {
+		return info
+	}
+	return &dbInsInfo{}
+}
+
+func (m *Parser) GetShadowConfig(instance string) *dbInsInfo {
+	if info, ok := m.shadowDbIns[instance]; ok {
 		return info
 	}
 	return &dbInsInfo{}
@@ -96,6 +118,116 @@ func checkVarname(varname string) error {
 	return nil
 }
 
+func NewParserEtcd(jscfg []byte) (*Parser, error) {
+	fun := "NewParserEtcd -->"
+
+	r := &Parser{
+		dbCls: &dbCluster{
+			clusters: make(map[string]*clsEntry),
+		},
+		dbIns: make(map[string]*dbInsInfo),
+	}
+
+	var cfg routeConfigEtcd
+	err := json.Unmarshal(jscfg, cfg)
+	if err != nil {
+		slog.Errorf(context.TODO(), "%s dbrouter config unmarshal:%s", fun, err.Error())
+		return r, nil
+	}
+
+	cls := cfg.Cluster
+	for c, ins := range cls {
+		if er := checkVarname(c); er != nil {
+			slog.Errorf(context.TODO(), "%s cluster config name err:%s", fun, err)
+			continue
+		}
+
+		if len(ins) == 0 {
+			slog.Errorf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
+			continue
+		}
+
+		for _, v := range ins {
+			if len(v.Express) == 0 {
+				slog.Errorf(context.TODO(), "%s empty express in cluster:%s instance:%s", fun, c, v.Instance)
+				continue
+			}
+
+			if er := checkVarname(v.Match); er != nil {
+				slog.Errorf(context.TODO(), "%s match in cluster:%s instance:%s err:%s", fun, c, v.Instance, err)
+				continue
+			}
+
+			if er := checkVarname(v.Instance); er != nil {
+				slog.Errorf(context.TODO(), "%s instance name in cluster:%s instance:%s err:%s", fun, c, v.Instance, err)
+				continue
+			}
+
+			if err := r.dbCls.addInstance(c, v); err != nil {
+				return nil, fmt.Errorf("load instance lookup rule err:%s", err.Error())
+			}
+		}
+	}
+
+	inss := cfg.Instances
+	for ins, dbs := range inss {
+		if er := checkVarname(ins); er != nil {
+			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, er.Error())
+			continue
+		}
+
+		for _, db := range dbs {
+			dbtype := db.Dbtype
+			dbname := db.Dbname
+			cfg := db.Dbcfg
+
+			if er := checkVarname(dbtype); er != nil {
+				slog.Errorf(context.TODO(), "%s dbtype instance:%s err:%s", fun, ins, er.Error())
+				continue
+			}
+
+			if er := checkVarname(dbname); er != nil {
+				slog.Errorf(context.TODO(), "%sdbname instance:%s err:%s", fun, ins, er.Error())
+				continue
+			}
+
+			if len(cfg) == 0 {
+				slog.Errorf(context.TODO(), "%s empty dbcfg instance:%s", fun, ins)
+				continue
+			}
+
+			var info dbInsInfo
+			err := json.Unmarshal(cfg, &info)
+			if err != nil {
+				slog.Errorf(context.TODO(), "%s unmarshal err, cfg:%s", fun, string(cfg))
+				continue
+			}
+			info.DBType = dbtype
+			info.DBName = dbname
+			info.Instance = ins
+
+			// TODO 标识字段待定
+			if db.Type == 0 {
+				if _, ok := r.dbIns[ins]; ok {
+					slog.Errorf(context.TODO(), "%s dbname dup, ins:%s, cfg:%v", fun, ins, string(cfg))
+					continue
+				}
+
+				r.dbIns[ins] = &info
+			} else if db.Type == 1 {
+				if _, ok := r.shadowDbIns[ins]; ok {
+					slog.Errorf(context.TODO(), "%s shadow dbname dup, ins:%s, cfg:%v", fun, ins, string(cfg))
+					continue
+				}
+
+				r.shadowDbIns[ins] = &info
+			}
+		}
+	}
+
+	return r, nil
+}
+
 func NewParser(jscfg []byte) (*Parser, error) {
 	fun := "NewParser -->"
 
@@ -116,7 +248,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 	inss := cfg.Instances
 	for ins, db := range inss {
 		if er := checkVarname(ins); er != nil {
-			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, err.Error())
+			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, er.Error())
 			continue
 		}
 
@@ -192,4 +324,47 @@ func NewParser(jscfg []byte) (*Parser, error) {
 	}
 
 	return r, nil
+}
+
+func compareParsers(originParser Parser, newParser Parser) dbInstanceChange {
+	// 原来实例中修改的、删除的，要通知数据库连接池关闭掉实例的数据库连接
+	dbInsChanges := compareDbInstances(originParser.dbIns, newParser.dbIns)
+	shadowDbInsChanges := compareDbInstances(originParser.shadowDbIns, newParser.shadowDbIns)
+	return dbInstanceChange{
+		dbInsChanges: dbInsChanges,
+		shadowDbInsChanges: shadowDbInsChanges,
+	}
+}
+
+func compareDbInstances(originDbInstances map[string]*dbInsInfo, newDbInstances map[string]*dbInsInfo) []string {
+	var dbInstanceChanges []string
+	for insName, originDbInsInfo := range originDbInstances {
+		if newDbInsInfo, ok := newDbInstances[insName]; ok {
+			if !compareDbInfo(*originDbInsInfo, *newDbInsInfo) {
+				dbInstanceChanges = append(dbInstanceChanges, insName)
+			}
+		} else {
+			dbInstanceChanges = append(dbInstanceChanges, insName)
+		}
+	}
+	return dbInstanceChanges
+}
+
+func compareDbInfo(dbInsInfo1 dbInsInfo, dbInsInfo2 dbInsInfo) bool {
+	return dbInsInfo1.DBName == dbInsInfo2.DBName && dbInsInfo1.UserName == dbInsInfo2.UserName &&
+		dbInsInfo1.PassWord == dbInsInfo2.PassWord && compareStringList(dbInsInfo1.DBAddr, dbInsInfo2.DBAddr)
+}
+
+func compareStringList(stringList1 []string, stringList2 []string) bool {
+	if len(stringList1) != len(stringList2) {
+		return false
+	}
+
+	for index := range stringList1 {
+		if stringList1[index] != stringList2[index] {
+			return false
+		}
+	}
+
+	return true
 }

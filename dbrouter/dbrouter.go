@@ -26,8 +26,18 @@ type Router struct {
 	report    *stat.StatReport
 }
 
+type dbInstanceChange struct {
+	dbInsChanges []string
+	shadowDbInsChanges []string
+}
+
 func NewRouter(data []byte) (*Router, error) {
-	configer := NewSimpleConfiger(data)
+	var dbChangeChan = make(chan dbInstanceChange)
+	configer, err := NewConfiger(CONFIG_TYPE_ETCD, data, dbChangeChan)
+	if err != nil {
+		return nil, err
+	}
+	// configer := NewSimpleConfiger(data)
 	factory := func(configer Configer) func(ctx context.Context, key string) (in Instancer, err error) {
 		return func(ctx context.Context, key string) (in Instancer, err error) {
 			return Factory(ctx, key, configer)
@@ -35,7 +45,7 @@ func NewRouter(data []byte) (*Router, error) {
 	}(configer)
 	return &Router{
 		configer:  configer,
-		instances: NewInstanceManager(factory),
+		instances: NewInstanceManager(factory, dbChangeChan),
 		report:    stat.NewStat(),
 	}, nil
 }

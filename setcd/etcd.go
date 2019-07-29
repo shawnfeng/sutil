@@ -185,6 +185,7 @@ func (m *EtcdInstance) startWatch(ctx context.Context, chg chan *client.Response
 
 	for i := 0; ; i++ {
 		r, err := m.Api.Get(ctx, path, &client.GetOptions{Recursive: true, Sort: false})
+		slog.Infof(ctx, "%s get path:%s value:%s", fun, path, r.Node.Value)
 		if err != nil {
 			slog.Warnf(ctx, "%s get path:%s err:%s", fun, path, err)
 		} else {
