@@ -5,6 +5,7 @@ import (
 	"github.com/shawnfeng/sutil/slog"
 	"net/http"
 	"net/http/pprof"
+	"runtime"
 )
 
 var (
@@ -28,6 +29,11 @@ func (p *Metricsprocessor) Driver() (string, interface{}) {
 	handlerFor := p.Metrics.Exportor()
 	router := httprouter.New()
 	router.Handler("GET", default_metric_location, handlerFor)
+	// set only when there's no existing setting
+	if runtime.SetMutexProfileFraction(-1) == 0 {
+		// 1 out of 5 mutex events are reported, on average
+		runtime.SetMutexProfileFraction(5)
+	}
 	router.HandlerFunc("GET", "/debug/pprof/", pprof.Index)
 	router.HandlerFunc("POST", "/debug/pprof/", pprof.Index)
 	router.HandlerFunc("GET", "/debug/pprof/allocs", pprof.Index)
