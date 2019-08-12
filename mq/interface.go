@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
 	"time"
@@ -16,10 +17,14 @@ import (
 )
 
 const (
-	spanLogKeyKey       = "key"
-	spanLogKeyTopic     = "topic"
-	spanLogKeyGroupId   = "groupId"
-	spanLogKeyPartition = "partition"
+	spanLogKeyKey            = "key"
+	spanLogKeyTopic          = "topic"
+	spanLogKeyMQType         = "mq"
+	spanLogKeyKafkaGroupID   = "groupid"
+	spanLogKeyKafkaPartition = "partition"
+	spanLogKeyKafkaBrokers   = "brokers"
+
+	defaultRouteGroup = "default"
 )
 
 var mqOpDurationLimit = 10 * time.Millisecond
@@ -30,7 +35,7 @@ type Message struct {
 }
 
 func WriteMsg(ctx context.Context, topic string, key string, value interface{}) error {
-	fun := "WriteMsg -->"
+	fun := "mq.WriteMsg -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
 	defer span.Finish()
@@ -38,8 +43,14 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		log.String(spanLogKeyTopic, topic),
 		log.String(spanLogKeyKey, key))
 
-	//todo flag
-	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeWriter,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	writer := defaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -63,14 +74,20 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 }
 
 func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
-	fun := "WriteMsgs -->"
+	fun := "mq.WriteMsgs -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsgs")
 	defer span.Finish()
 	span.LogFields(log.String(spanLogKeyTopic, topic))
 
-	//todo flag
-	writer := DefaultInstanceManager.getWriter("", ROLE_TYPE_WRITER, topic, "", 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeWriter,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	writer := defaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
 		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
@@ -95,16 +112,21 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 
 // 读完消息后会自动提交offset
 func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (context.Context, error) {
-	fun := "ReadMsgByGroup -->"
+	fun := "mq.ReadMsgByGroup -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByGroup")
 	defer span.Finish()
 	span.LogFields(
-		log.String(spanLogKeyTopic, topic),
-		log.String(spanLogKeyGroupId, groupId))
+		log.String(spanLogKeyTopic, topic))
 
-	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeReader,
+		topic:     topic,
+		groupId:   groupId,
+		partition: 0,
+	}
+	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -134,24 +156,28 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	if mspan != nil {
 		defer mspan.Finish()
 		mspan.LogFields(
-			log.String(spanLogKeyTopic, topic),
-			log.String(spanLogKeyGroupId, groupId))
+			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, err
 }
 
 //
 func ReadMsgByPartition(ctx context.Context, topic string, partition int, value interface{}) (context.Context, error) {
-	fun := "ReadMsgByPartition -->"
+	fun := "mq.ReadMsgByPartition -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadMsgByPartition")
 	defer span.Finish()
 	span.LogFields(
-		log.String(spanLogKeyTopic, topic),
-		log.Int(spanLogKeyPartition, partition))
+		log.String(spanLogKeyTopic, topic))
 
-	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, "", partition)
+	conf := &instanceConf{
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeReader,
+		topic:     topic,
+		groupId:   "",
+		partition: partition,
+	}
+	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -181,24 +207,28 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	if mspan != nil {
 		defer mspan.Finish()
 		mspan.LogFields(
-			log.String(spanLogKeyTopic, topic),
-			log.Int(spanLogKeyPartition, partition))
+			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, err
 }
 
 // 读完消息后不会自动提交offset,需要手动调用Handle.CommitMsg方法来提交offset
 func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface{}) (context.Context, Handler, error) {
-	fun := "FetchMsgByGroup -->"
+	fun := "mq.FetchMsgByGroup -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchMsgByGroup")
 	defer span.Finish()
 	span.LogFields(
-		log.String(spanLogKeyTopic, topic),
-		log.String(spanLogKeyGroupId, groupId))
+		log.String(spanLogKeyTopic, topic))
 
-	//todo flag
-	reader := DefaultInstanceManager.getReader("", ROLE_TYPE_READER, topic, groupId, 0)
+	conf := &instanceConf{
+		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeReader,
+		topic:     topic,
+		groupId:   groupId,
+		partition: 0,
+	}
+	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
 		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return nil, nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
@@ -228,12 +258,31 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	if mspan != nil {
 		defer mspan.Finish()
 		mspan.LogFields(
-			log.String(spanLogKeyTopic, topic),
-			log.String(spanLogKeyGroupId, groupId))
+			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, handler, err
 }
 
+func SetConfiger(ctx context.Context, configerType ConfigerType) error {
+	fun := "mq.SetConfiger-->"
+	configer, err := NewConfiger(configerType)
+	if err != nil {
+		slog.Infof(ctx, "%s set configer:%v err:%v", fun, configerType, err)
+		return err
+	}
+	DefaultConfiger = configer
+	return DefaultConfiger.Init(ctx)
+}
+
+func WatchUpdate(ctx context.Context) {
+	go defaultInstanceManager.watch(ctx)
+}
+
 func Close() {
-	DefaultInstanceManager.Close()
+	defaultInstanceManager.Close()
+}
+
+func init() {
+	// set default config type to simple
+	_ = SetConfiger(context.Background(), ConfigerTypeSimple)
 }

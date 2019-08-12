@@ -22,7 +22,7 @@ type Msg struct {
 
 func main() {
 
-	trace.InitDefaultTracer("mq.test")
+	_ = trace.InitDefaultTracer("mq.test")
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
@@ -32,6 +32,10 @@ func main() {
 	if span != nil {
 		defer span.Finish()
 	}
+
+	_ = mq.SetConfiger(ctx, mq.ConfigerTypeApollo)
+	mq.WatchUpdate(ctx)
+
 	go func() {
 		var msgs []mq.Message
 		for i := 0; i < 10; i++ {
