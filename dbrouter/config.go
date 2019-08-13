@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/coreos/etcd/client"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/setcd"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
@@ -137,9 +138,23 @@ func (m *EtcdConfig) init(ctx context.Context, dbChangeChan chan dbInstanceChang
 }
 
 func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
+	fun := "EtcdConfig.GetConfig --> "
 	var info *dbInsInfo
 	// TODO 确定是否压测的标识
-	if isTest, ok := ctx.Value("xxx").(bool); ok {
+	group := scontext.GetGroup(ctx)
+	switch group {
+	case "":
+		info = m.parser.getConfig(instance)
+	case "default":
+		info = m.parser.getConfig(instance)
+	case "xxx":
+		info = m.parser.GetShadowConfig(instance)
+	default:
+		// TODO 这种情况容不容易出现？
+		slog.Errorf(ctx, "%s invalid context group: %s", fun, group)
+		info = &dbInsInfo{}
+	}
+	/*if isTest, ok := ctx.Value("xxx").(bool); ok {
 		if isTest {
 			info = m.parser.GetShadowConfig(instance)
 		} else {
@@ -147,7 +162,7 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
 		}
 	} else {
 		info = m.parser.getConfig(instance)
-	}
+	}*/
 	//todo etcd router
 	return &Config{
 		DBType:   info.DBType,

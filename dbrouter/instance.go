@@ -6,6 +6,7 @@ package dbrouter
 
 import (
 	"context"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"sync"
 )
@@ -43,7 +44,20 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 	var instanceMap sync.Map
 
 	// TODO 确定是否压测的标识
-	if isTest, ok := ctx.Value("xxx").(bool); ok {
+	group := scontext.GetGroup(ctx)
+	switch group {
+	case "":
+		instanceMap = m.instances
+	case "default":
+		instanceMap = m.instances
+	case "xxx":
+		instanceMap = m.shadowInstances
+	default:
+		// TODO 这种情况容不容易出现？
+		slog.Errorf(ctx, "%s invalid context group: %s", fun, group)
+		return nil
+	}
+	/*if isTest, ok := ctx.Value("xxx").(bool); ok {
 		if isTest {
 			instanceMap = m.shadowInstances
 		} else {
@@ -51,7 +65,7 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 		}
 	} else {
 		instanceMap = m.instances
-	}
+	}*/
 
 	in, ok := instanceMap.Load(key)
 	if ok == false {

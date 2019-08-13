@@ -32,6 +32,7 @@ type dbInsCfgEtcd struct {
 	Dbname string          `json:"dbname"`
 	Dbcfg  json.RawMessage `json:"dbcfg"`
 	Type   int32           `json:"type"`
+	// TODO 可能要新添加压测配置
 }
 
 type dbInsInfo struct {
@@ -50,13 +51,12 @@ type routeConfig struct {
 
 type routeConfigEtcd struct {
 	Cluster   map[string][]*dbLookupCfg  `json:"cluster"`
-	Instances map[string][]*dbInsCfgEtcd `json:"instances"`
+	Instances map[string]*dbInsCfgEtcd   `json:"instances"`
 }
 
 type Parser struct {
 	dbCls *dbCluster
 	dbIns map[string]*dbInsInfo
-	// shadowDbCls *dbCluster  // 影子集群配置，用于全链路压测
 	shadowDbIns map[string]*dbInsInfo  // 影子实例配置，用于全链路压测
 }
 
@@ -129,7 +129,7 @@ func NewParserEtcd(jscfg []byte) (*Parser, error) {
 	}
 
 	var cfg routeConfigEtcd
-	err := json.Unmarshal(jscfg, cfg)
+	err := json.Unmarshal(jscfg, &cfg)
 	if err != nil {
 		slog.Errorf(context.TODO(), "%s dbrouter config unmarshal:%s", fun, err.Error())
 		return r, nil
@@ -170,13 +170,13 @@ func NewParserEtcd(jscfg []byte) (*Parser, error) {
 	}
 
 	inss := cfg.Instances
-	for ins, dbs := range inss {
+	for ins, db := range inss {
 		if er := checkVarname(ins); er != nil {
 			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, er.Error())
 			continue
 		}
 
-		for _, db := range dbs {
+		// for _, db := range dbs {
 			dbtype := db.Dbtype
 			dbname := db.Dbname
 			cfg := db.Dbcfg
@@ -187,7 +187,7 @@ func NewParserEtcd(jscfg []byte) (*Parser, error) {
 			}
 
 			if er := checkVarname(dbname); er != nil {
-				slog.Errorf(context.TODO(), "%sdbname instance:%s err:%s", fun, ins, er.Error())
+				slog.Errorf(context.TODO(), "%s dbname instance:%s err:%s", fun, ins, er.Error())
 				continue
 			}
 
@@ -223,7 +223,7 @@ func NewParserEtcd(jscfg []byte) (*Parser, error) {
 				r.shadowDbIns[ins] = &info
 			}
 		}
-	}
+	// }
 
 	return r, nil
 }
@@ -262,7 +262,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		}
 
 		if er := checkVarname(dbname); er != nil {
-			slog.Errorf(context.TODO(), "%sdbname instance:%s err:%s", fun, ins, er.Error())
+			slog.Errorf(context.TODO(), "%s dbname instance:%s err:%s", fun, ins, er.Error())
 			continue
 		}
 
