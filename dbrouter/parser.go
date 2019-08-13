@@ -71,7 +71,7 @@ func (m *Parser) getConfig(instance, group string) *dbInsInfo {
 			return info
 		}
 	} else {
-		if info, ok := infoMap[""]; ok {
+		if info, ok := infoMap[DefaultGroup]; ok {
 			return info
 		}
 	}
@@ -112,7 +112,7 @@ func checkVarname(varname string) error {
 }
 
 func NewParser(jscfg []byte) (*Parser, error) {
-	fun := "NewParserEtcd -->"
+	fun := "NewParser -->"
 
 	r := &Parser{
 		dbCls: &dbCluster{

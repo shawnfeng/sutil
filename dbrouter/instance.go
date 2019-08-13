@@ -20,8 +20,6 @@ type Instancer interface {
 
 type FactoryFunc func(ctx context.Context, key, group string) (in Instancer, err error)
 
-type ConfigFunc func(key, group string) (Config, error)
-
 type InstanceManager struct {
 	instances map[string]*sync.Map
 	factory   FactoryFunc
@@ -56,7 +54,7 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 	}
 
 	if !isConfig {
-		group = ""
+		group = DefaultGroup
 	}
 
 	if ins, ok := m.instances[group]; ok {

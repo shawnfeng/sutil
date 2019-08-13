@@ -32,7 +32,7 @@ type dbConfigChange struct {
 }
 
 func NewRouter(data []byte) (*Router, error) {
-    // TODO config type由哪里决定
+	// TODO config type由哪里决定
 	var dbChangeChan = make(chan dbConfigChange)
 	configer, err := NewConfiger(CONFIG_TYPE_ETCD, data, dbChangeChan)
 	if err != nil {
