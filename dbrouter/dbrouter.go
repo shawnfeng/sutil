@@ -26,16 +26,28 @@ type Router struct {
 	report    *stat.StatReport
 }
 
+type dbConfigChange struct {
+	dbInstanceChange map[string][]string
+	dbGroups         []string
+}
+
 func NewRouter(data []byte) (*Router, error) {
-	configer := NewSimpleConfiger(data)
-	factory := func(configer Configer) func(ctx context.Context, key string) (in Instancer, err error) {
-		return func(ctx context.Context, key string) (in Instancer, err error) {
-			return Factory(ctx, key, configer)
+	// TODO config type由哪里决定
+	var dbChangeChan = make(chan dbConfigChange)
+	configer, err := NewConfiger(CONFIG_TYPE_ETCD, data, dbChangeChan)
+	if err != nil {
+		return nil, err
+	}
+
+	factory := func(configer Configer) func(ctx context.Context, key, group string) (in Instancer, err error) {
+		return func(ctx context.Context, key, group string) (in Instancer, err error) {
+			return Factory(ctx, key, group, configer)
 		}
 	}(configer)
+
 	return &Router{
 		configer:  configer,
-		instances: NewInstanceManager(factory),
+		instances: NewInstanceManager(factory, dbChangeChan, configer.GetGroups(context.TODO())),
 		report:    stat.NewStat(),
 	}, nil
 }
