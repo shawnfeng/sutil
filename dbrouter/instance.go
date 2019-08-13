@@ -18,17 +18,21 @@ type Instancer interface {
 	Close() error
 }
 
-type FactoryFunc func(ctx context.Context, key string) (in Instancer, err error)
+type FactoryFunc func(ctx context.Context, key, group string) (in Instancer, err error)
+
+type ConfigFunc func(key, group string) (Config, error)
 
 type InstanceManager struct {
-	instances sync.Map
-	shadowInstances sync.Map
+	instances map[string]*sync.Map
 	factory   FactoryFunc
+	groups    []string
 }
 
-func NewInstanceManager(factory FactoryFunc, dbChangeChan chan dbInstanceChange) *InstanceManager {
+func NewInstanceManager(factory FactoryFunc, dbChangeChan chan dbConfigChange, groups []string) *InstanceManager {
 	instanceManager := &InstanceManager{
 		factory: factory,
+		instances: make(map[string]*sync.Map),
+		groups: groups,
 	}
 
 	go instanceManager.dbInsChangeHandler(context.Background(), dbChangeChan)
@@ -41,37 +45,32 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 
 	var err error
 	var in interface{}
-	var instanceMap sync.Map
-
-	// TODO 确定是否压测的标识
+	var instanceMap *sync.Map
 	group := scontext.GetGroup(ctx)
-	switch group {
-	case "":
-		instanceMap = m.instances
-	case "default":
-		instanceMap = m.instances
-	case "xxx":
-		instanceMap = m.shadowInstances
-	default:
-		// TODO 这种情况容不容易出现？
-		slog.Errorf(ctx, "%s invalid context group: %s", fun, group)
-		return nil
-	}
-	/*if isTest, ok := ctx.Value("xxx").(bool); ok {
-		if isTest {
-			instanceMap = m.shadowInstances
-		} else {
-			instanceMap = m.instances
+
+	isConfig := false
+	for _, configGroup := range m.groups {
+		if group == configGroup {
+			isConfig = true
 		}
+	}
+
+	if !isConfig {
+		group = ""
+	}
+
+	if ins, ok := m.instances[group]; ok {
+		instanceMap = ins
 	} else {
-		instanceMap = m.instances
-	}*/
+		m.instances[group] = new(sync.Map)
+		instanceMap = m.instances[group]
+	}
 
 	in, ok := instanceMap.Load(key)
 	if ok == false {
 
 		slog.Infof(ctx, "%s newInstance, key: %s", fun, key)
-		in, err = m.factory(ctx, key)
+		in, err = m.factory(ctx, key, group)
 		if err != nil {
 			slog.Errorf(ctx, "%s NewInstance err, key: %s, err: %s", fun, key, err.Error())
 			return nil
@@ -92,55 +91,65 @@ func (m *InstanceManager) Get(ctx context.Context, key string) Instancer {
 func (m *InstanceManager) Close() {
 	fun := "InstanceManager.Close -->"
 
-	m.instances.Range(func(key, value interface{}) bool {
-		slog.Infof(context.TODO(), "%s key:%v", fun, key)
+	for group, ins := range m.instances {
+		ins.Range(func(key, value interface{}) bool {
+			slog.Infof(context.TODO(), "%s key:%v", fun, key)
 
-		in, ok := value.(Instancer)
-		if ok == false {
-			slog.Errorf(context.TODO(), "%s value.(Instancer) false, key: %v", fun, key)
-			return false
-		}
+			in, ok := value.(Instancer)
+			if ok == false {
+				slog.Errorf(context.TODO(), "%s value.(Instancer) false, key: %v", fun, key)
+				return false
+			}
 
-		in.Close()
-		m.instances.Delete(key)
+			in.Close()
+			ins.Delete(key)
 
-		return true
-	})
+			return true
+		})
 
-	m.shadowInstances.Range(func(key, value interface{}) bool {
-		slog.Infof(context.TODO(), "%s key:%v", fun, key)
-
-		in, ok := value.(Instancer)
-		if ok == false {
-			slog.Errorf(context.TODO(), "%s value.(Instancer) false, key: %v", fun, key)
-			return false
-		}
-
-		in.Close()
-		m.shadowInstances.Delete(key)
-
-		return true
-	})
+		delete(m.instances, group)
+	}
 }
 
-func (m *InstanceManager) dbInsChangeHandler(ctx context.Context, dbChangeChan chan dbInstanceChange) {
+func (m *InstanceManager) dbInsChangeHandler(ctx context.Context, dbChangeChan chan dbConfigChange) {
 	fun := "InstanceManager.dbInsChangeHandler -->"
+	var originGroups []string
 	for dbInsChange := range dbChangeChan {
 		slog.Infof(ctx, "%s receive db instance changes: %+v", fun, dbInsChange)
-		for _, insName := range dbInsChange.dbInsChanges {
-			m.closeDbInstance(ctx, insName)
+		originGroups = m.groups
+		m.groups = dbInsChange.dbGroups
+		for group, insNames := range dbInsChange.dbInstanceChange {
+			for _, insName := range insNames {
+				m.closeDbInstance(ctx, insName, group)
+			}
 		}
 
-		for _, insName := range dbInsChange.shadowDbInsChanges {
-			m.closeShadowDbInstance(ctx, insName)
+		for _, group := range originGroups {
+			if !isInStringList(group, m.groups) {
+				delete(m.instances, group)
+				slog.Infof(ctx, "%s succeed delete group %s", fun, group)
+			}
 		}
 	}
 }
 
-func (m *InstanceManager) closeDbInstance(ctx context.Context, insName string) {
+func isInStringList(item string, strList []string) bool {
+	for _, str := range strList {
+		if str == item {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (m *InstanceManager) closeDbInstance(ctx context.Context, insName, group string) {
 	fun := "InstanceManager.closeDbInstance -->"
-	if ins, ok := m.instances.Load(insName); ok {
-		m.instances.Delete(insName)
+	if _, ok := m.instances[group]; !ok {
+		return
+	}
+	if ins, ok := m.instances[group].Load(insName); ok {
+		m.instances[group].Delete(insName)
 		if in, ok := ins.(Instancer); ok {
 			if err := in.Close(); err == nil {
 				slog.Infof(ctx, "%s succeed to close db instance %s", fun, insName)
@@ -149,22 +158,6 @@ func (m *InstanceManager) closeDbInstance(ctx context.Context, insName string) {
 			}
 		} else {
 			slog.Warnf(ctx, "%s close db instance %s error, not Instancer type", fun, insName)
-		}
-	}
-}
-
-func (m *InstanceManager) closeShadowDbInstance(ctx context.Context, insName string) {
-	fun := "InstanceManager.closeShadowDbInstance -->"
-	if ins, ok := m.shadowInstances.Load(insName); ok {
-		m.shadowInstances.Delete(insName)
-		if in, ok := ins.(Instancer); ok {
-			if err := in.Close(); err == nil {
-				slog.Infof(ctx, "%s succeed to close shadow db instance %s", fun, insName)
-			} else {
-				slog.Warnf(ctx, "%s close shadow db instance %s error: %s", fun, insName, err.Error())
-			}
-		} else {
-			slog.Warnf(ctx, "%s close shadow db instance %s error, not Instancer type", fun, insName)
 		}
 	}
 }
