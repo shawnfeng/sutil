@@ -108,7 +108,8 @@ func (m *SimpleConfig) GetGroups(ctx context.Context) []string {
 
 type EtcdConfig struct {
 	etcdAddr []string
-	parser *Parser
+	parser   *Parser
+	parserMu sync.RWMutex
 }
 
 func NewEtcdConfiger(ctx context.Context, dbChangeChan chan dbConfigChange) (Configer, error) {
@@ -142,6 +143,9 @@ func (m *EtcdConfig) init(ctx context.Context, dbChangeChan chan dbConfigChange)
 			slog.Errorf(ctx, "%s init db parser err: ", fun, er.Error())
 		} else {
 			slog.Infof(ctx, "succeed to init new parser")
+			m.parserMu.Lock()
+			defer m.parserMu.Unlock()
+
 			if m.parser != nil {
 				dbConfigChange := compareParsers(*m.parser, *parser)
 				slog.Infof(ctx, "parser changes: %+v", dbConfigChange)
@@ -157,13 +161,16 @@ func (m *EtcdConfig) init(ctx context.Context, dbChangeChan chan dbConfigChange)
 		})
 	})
 	// 做一次同步，等parser初始化完成
-	err = <- initCh
+	err = <-initCh
 	close(initCh)
 	return err
 }
 
 func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
 	group := scontext.GetGroup(ctx)
+	m.parserMu.RLock()
+	defer m.parserMu.RUnlock()
+
 	info := m.parser.GetConfig(instance, group)
 	return &Config{
 		DBType:   info.DBType,
@@ -176,6 +183,9 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
 }
 
 func (m *EtcdConfig) GetConfigByGroup(ctx context.Context, instance, group string) *Config {
+	m.parserMu.RLock()
+	defer m.parserMu.RUnlock()
+
 	info := m.parser.GetConfig(instance, group)
 	return &Config{
 		DBType:   info.DBType,
@@ -188,11 +198,17 @@ func (m *EtcdConfig) GetConfigByGroup(ctx context.Context, instance, group strin
 }
 
 func (m *EtcdConfig) GetInstance(ctx context.Context, cluster, table string) (instance string) {
+	m.parserMu.RLock()
+	defer m.parserMu.RUnlock()
+
 	return m.parser.GetInstance(cluster, table)
 }
 
 func (m *EtcdConfig) GetGroups(ctx context.Context) []string {
 	var groups []string
+	m.parserMu.RLock()
+	defer m.parserMu.RUnlock()
+
 	for group, _ := range m.parser.dbIns {
 		groups = append(groups, group)
 	}

@@ -32,8 +32,8 @@ type dbInsCfg struct {
 }
 
 type itemDbInsCfg struct {
-	Dbcfg  json.RawMessage `json:"dbcfg"`
-	Group  string          `json:"group"`
+	Dbcfg json.RawMessage `json:"dbcfg"`
+	Group string          `json:"group"`
 }
 
 type dbInsInfo struct {
@@ -266,7 +266,7 @@ func compareParsers(originParser Parser, newParser Parser) dbConfigChange {
 
 	return dbConfigChange{
 		dbInstanceChange: dbInsChangeMap,
-		dbGroups: groups,
+		dbGroups:         groups,
 	}
 }
 

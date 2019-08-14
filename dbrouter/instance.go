@@ -22,16 +22,18 @@ type Instancer interface {
 type FactoryFunc func(ctx context.Context, key, group string) (in Instancer, err error)
 
 type InstanceManager struct {
-	instanceMu sync.Mutex
-	instances  sync.Map
+	instanceMu sync.RWMutex
+	groupMu    sync.RWMutex
+	instances  map[string]Instancer
 	factory    FactoryFunc
 	groups     []string
 }
 
 func NewInstanceManager(factory FactoryFunc, dbChangeChan chan dbConfigChange, groups []string) *InstanceManager {
 	instanceManager := &InstanceManager{
-		factory: factory,
-		groups: groups,
+		instances: make(map[string]Instancer),
+		factory:   factory,
+		groups:    groups,
 	}
 
 	go instanceManager.dbInsChangeHandler(context.Background(), dbChangeChan)
@@ -47,15 +49,17 @@ func (m *InstanceManager) Get(ctx context.Context, instance string) Instancer {
 	fun := "InstanceManager.Get -->"
 
 	var err error
-	var in interface{}
+	var in Instancer
 	group := scontext.GetGroup(ctx)
 
-	if !m.isInGroup(group) {
-		group = DefaultGroup
+	if group != DefaultGroup {
+		if !m.isInGroup(group) {
+			group = DefaultGroup
+		}
 	}
 
 	key := m.buildKey(instance, group)
-	in, ok := m.instances.Load(key)
+	in, ok := m.getInstance(ctx, key)
 	if ok == false {
 		slog.Infof(ctx, "%s newInstance, instance: %s", fun, instance)
 		in, err = m.buildInstance(ctx, instance, group)
@@ -66,16 +70,21 @@ func (m *InstanceManager) Get(ctx context.Context, instance string) Instancer {
 
 	}
 
-	tmp, ok := in.(Instancer)
-	if ok == false {
-		slog.Errorf(ctx, "%s in.(Instancer) false, key: %s", fun, key)
-		return nil
-	}
+	return in
+}
 
-	return tmp
+func (m *InstanceManager) getInstance(ctx context.Context, key string) (Instancer, bool) {
+	m.instanceMu.RLock()
+	defer m.instanceMu.RUnlock()
+
+	in, ok := m.instances[key]
+	return in, ok
 }
 
 func (m *InstanceManager) isInGroup(group string) bool {
+	m.groupMu.RLock()
+	defer m.groupMu.RUnlock()
+
 	for _, configGroup := range m.groups {
 		if group == configGroup {
 			return true
@@ -84,7 +93,7 @@ func (m *InstanceManager) isInGroup(group string) bool {
 	return false
 }
 
-func (m *InstanceManager) buildInstance(ctx context.Context, instance, group string) (interface{}, error) {
+func (m *InstanceManager) buildInstance(ctx context.Context, instance, group string) (Instancer, error) {
 	m.instanceMu.Lock()
 	defer m.instanceMu.Unlock()
 	if group != DefaultGroup {
@@ -92,43 +101,46 @@ func (m *InstanceManager) buildInstance(ctx context.Context, instance, group str
 			group = DefaultGroup
 		}
 	}
-	tmp, err := m.factory(ctx, instance, group)
+	key := m.buildKey(instance, group)
+	if in, ok := m.instances[key]; ok {
+		return in, nil
+	}
+
+	in, err := m.factory(ctx, instance, group)
 	if err != nil {
 		return nil, err
 	}
 
-	key := m.buildKey(instance, group)
-	in, _ := m.instances.LoadOrStore(key, tmp)
-
+	m.instances[key] = in
 	return in, nil
 }
 
 func (m *InstanceManager) Close() {
 	fun := "InstanceManager.Close -->"
+	m.instanceMu.Lock()
+	defer m.instanceMu.Unlock()
 
-	m.instances.Range(func(key, value interface{}) bool {
+	for key, in := range m.instances {
 		slog.Infof(context.TODO(), "%s key:%v", fun, key)
-
-		in, ok := value.(Instancer)
-		if ok == false {
-			slog.Errorf(context.TODO(), "%s value.(Instancer) false, key: %v", fun, key)
-			return false
-		}
-
 		in.Close()
-		m.instances.Delete(key)
-
-		return true
-	})
+		delete(m.instances, key)
+	}
 }
 
 func (m *InstanceManager) dbInsChangeHandler(ctx context.Context, dbChangeChan chan dbConfigChange) {
 	fun := "InstanceManager.dbInsChangeHandler -->"
 	for dbInsChange := range dbChangeChan {
 		slog.Infof(ctx, "%s receive db instance changes: %+v", fun, dbInsChange)
-		m.groups = dbInsChange.dbGroups
+		m.handleGroupChange(dbInsChange.dbGroups)
 		m.handleDbInsChange(ctx, dbInsChange.dbInstanceChange)
 	}
+}
+
+func (m *InstanceManager) handleGroupChange(groups []string) {
+	m.groupMu.Lock()
+	defer m.groupMu.Unlock()
+
+	m.groups = groups
 }
 
 func (m *InstanceManager) handleDbInsChange(ctx context.Context, dbInstanceChange map[string][]string) {
@@ -144,16 +156,12 @@ func (m *InstanceManager) handleDbInsChange(ctx context.Context, dbInstanceChang
 func (m *InstanceManager) closeDbInstance(ctx context.Context, insName, group string) {
 	fun := "InstanceManager.closeDbInstance -->"
 	key := m.buildKey(insName, group)
-	if ins, ok := m.instances.Load(key); ok {
-		m.instances.Delete(key)
-		if in, ok := ins.(Instancer); ok {
-			if err := in.Close(); err == nil {
-				slog.Infof(ctx, "%s succeed to close db instance: %s group: %s", fun, insName, group)
-			} else {
-				slog.Warnf(ctx, "%s close db instance: %s group: %s error: %s", fun, insName, group, err.Error())
-			}
+	if in, ok := m.instances[key]; ok {
+		delete(m.instances, key)
+		if err := in.Close(); err == nil {
+			slog.Infof(ctx, "%s succeed to close db instance: %s group: %s", fun, insName, group)
 		} else {
-			slog.Warnf(ctx, "%s close db instance: %s group: %s error, not Instancer type", fun, insName, group)
+			slog.Warnf(ctx, "%s close db instance: %s group: %s error: %s", fun, insName, group, err.Error())
 		}
 	}
 }
