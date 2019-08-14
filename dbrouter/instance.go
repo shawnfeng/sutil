@@ -94,14 +94,16 @@ func (m *InstanceManager) isInGroup(group string) bool {
 }
 
 func (m *InstanceManager) buildInstance(ctx context.Context, instance, group string) (Instancer, error) {
-	m.instanceMu.Lock()
-	defer m.instanceMu.Unlock()
 	if group != DefaultGroup {
 		if !m.isInGroup(group) {
 			group = DefaultGroup
 		}
 	}
 	key := m.buildKey(instance, group)
+
+	m.instanceMu.Lock()
+	defer m.instanceMu.Unlock()
+
 	if in, ok := m.instances[key]; ok {
 		return in, nil
 	}
@@ -122,7 +124,7 @@ func (m *InstanceManager) Close() {
 
 	for key, in := range m.instances {
 		slog.Infof(context.TODO(), "%s key:%v", fun, key)
-		in.Close()
+		go in.Close()
 		delete(m.instances, key)
 	}
 }
@@ -144,8 +146,6 @@ func (m *InstanceManager) handleGroupChange(groups []string) {
 }
 
 func (m *InstanceManager) handleDbInsChange(ctx context.Context, dbInstanceChange map[string][]string) {
-	m.instanceMu.Lock()
-	defer m.instanceMu.Unlock()
 	for group, insNames := range dbInstanceChange {
 		for _, insName := range insNames {
 			m.closeDbInstance(ctx, insName, group)
@@ -156,12 +156,18 @@ func (m *InstanceManager) handleDbInsChange(ctx context.Context, dbInstanceChang
 func (m *InstanceManager) closeDbInstance(ctx context.Context, insName, group string) {
 	fun := "InstanceManager.closeDbInstance -->"
 	key := m.buildKey(insName, group)
+
+	m.instanceMu.Lock()
+	defer m.instanceMu.Unlock()
+
 	if in, ok := m.instances[key]; ok {
 		delete(m.instances, key)
-		if err := in.Close(); err == nil {
-			slog.Infof(ctx, "%s succeed to close db instance: %s group: %s", fun, insName, group)
-		} else {
-			slog.Warnf(ctx, "%s close db instance: %s group: %s error: %s", fun, insName, group, err.Error())
-		}
+		go func() {
+			if err := in.Close(); err == nil {
+				slog.Infof(ctx, "%s succeed to close db instance: %s group: %s", fun, insName, group)
+			} else {
+				slog.Warnf(ctx, "%s close db instance: %s group: %s error: %s", fun, insName, group, err.Error())
+			}
+		}()
 	}
 }
