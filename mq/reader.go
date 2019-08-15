@@ -7,9 +7,6 @@ package mq
 import (
 	"context"
 	"fmt"
-	//"time"
-	// kafka "github.com/segmentio/kafka-go"
-	//"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type Handler interface {
@@ -24,12 +21,15 @@ type Reader interface {
 
 //CommitInterval indicates the interval at which offsets are committed to
 // the broker.  If 0, commits will be handled synchronously.
-func NewGroupReader(topic, groupId string) (Reader, error) {
-	config := DefaultConfiger.GetConfig(topic)
+func NewGroupReader(ctx context.Context, topic, groupId string) (Reader, error) {
+	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	if err != nil {
+		return nil, err
+	}
 
 	mqType := config.MQType
 	switch mqType {
-	case MQ_TYPE_KAFKA:
+	case MQTypeKafka:
 		return NewKafkaReader(config.MQAddr, topic, groupId, 0, 1, 10e6, config.CommitInterval), nil
 
 	default:
@@ -42,13 +42,16 @@ const (
 	FirstOffset       = -2 // The least recent offset available for a partition.
 )
 
-func NewPartitionReader(topic string, partition int) (Reader, error) {
-	config := DefaultConfiger.GetConfig(topic)
+func NewPartitionReader(ctx context.Context, topic string, partition int) (Reader, error) {
+	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	if err != nil {
+		return nil, err
+	}
 
 	offset := config.Offset
 	mqType := config.MQType
 	switch mqType {
-	case MQ_TYPE_KAFKA:
+	case MQTypeKafka:
 		reader := NewKafkaReader(config.MQAddr, topic, "", partition, 1, 10e6, 0)
 		err := reader.SetOffset(offset)
 		if err != nil {
