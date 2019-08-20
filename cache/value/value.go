@@ -175,7 +175,7 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 
 	err = json.Unmarshal(data, value)
 	if err != nil {
-		return err
+		return errors.New(string(data))
 	}
 
 	return nil
