@@ -7,8 +7,6 @@ package mq
 import (
 	"context"
 	"fmt"
-	// kafka "github.com/segmentio/kafka-go"
-	//"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type Writer interface {
@@ -17,12 +15,15 @@ type Writer interface {
 	Close() error
 }
 
-func NewWriter(topic string) (Writer, error) {
-	config := DefaultConfiger.GetConfig(topic)
+func NewWriter(ctx context.Context, topic string) (Writer, error) {
+	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	if err != nil {
+		return nil, err
+	}
 
 	mqType := config.MQType
 	switch mqType {
-	case MQ_TYPE_KAFKA:
+	case MQTypeKafka:
 		return NewKafkaWriter(config.MQAddr, topic), nil
 
 	default:

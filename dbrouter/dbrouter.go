@@ -99,6 +99,49 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	return query(db, tmptables)
 }
 
+func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB, []interface{}) error, tables ...string) error {
+	fun := "Router.OrmExec -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.OrmExec")
+	defer span.Finish()
+
+	st := stime.NewTimeStat()
+
+	if len(tables) <= 0 {
+		return fmt.Errorf("tables is empty")
+	}
+
+	table := tables[0]
+	span.LogFields(
+		log.String(spanLogKeyCluster, cluster),
+		log.String(spanLogKeyTable, table))
+	instance := m.configer.GetInstance(ctx, cluster, table)
+	in := m.instances.Get(ctx, generateKey(instance))
+	if in == nil {
+		return fmt.Errorf("db instance not find: instance:%s", instance)
+	}
+
+	dbsql, ok := in.(*Sql)
+	if !ok {
+		return fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
+	}
+
+	db := dbsql.getGormDB()
+
+	defer func() {
+		dur := st.Duration()
+		m.report.IncQuery(cluster, table, st.Duration())
+		slog.Tracef(ctx, "%s cls:%s table:%s dur:%d", fun, cluster, table, dur)
+	}()
+
+	var tmptables []interface{}
+	for _, item := range tables {
+		tmptables = append(tmptables, item)
+	}
+
+	return query(db, tmptables)
+}
+
 func (m *Router) MongoExecEventual(ctx context.Context, cluster, table string, query func(*mgo.Collection) error) error {
 	return m.mongoExec(ctx, eventual, cluster, table, query)
 }
