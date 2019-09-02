@@ -110,7 +110,8 @@ func (m *Cache) Load(ctx context.Context, key interface{}) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Load")
 	defer span.Finish()
 
-	return m.loadValueToCache(ctx, key)
+	_, err := m.loadValueToCache(ctx, key)
+	return err
 }
 
 func (m *Cache) keyToString(key interface{}) (string, error) {
@@ -222,7 +223,7 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []b
 		return nil, err
 	}
 
-	return nil, rerr
+	return data, nil
 }
 
 func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
