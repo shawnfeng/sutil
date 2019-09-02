@@ -135,7 +135,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		}
 
 		if len(ins) == 0 {
-			slog.Errorf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
+			slog.Warnf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
 			continue
 		}
 
