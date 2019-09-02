@@ -54,6 +54,10 @@ func (m *InstanceManager) Get(ctx context.Context, instance string) Instancer {
 
 	if group != DefaultGroup {
 		if !m.isInGroup(group) {
+			if group == TestGroup {
+				slog.Errorf(ctx, "%s db config don't have group: %s", fun, group)
+				return nil
+			}
 			group = DefaultGroup
 		}
 	}
@@ -96,6 +100,9 @@ func (m *InstanceManager) isInGroup(group string) bool {
 func (m *InstanceManager) buildInstance(ctx context.Context, instance, group string) (Instancer, error) {
 	if group != DefaultGroup {
 		if !m.isInGroup(group) {
+			if group == TestGroup {
+				return nil, fmt.Errorf("db config don't have group: %s", group)
+			}
 			group = DefaultGroup
 		}
 	}
