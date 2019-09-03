@@ -11,6 +11,11 @@ import (
 	"github.com/shawnfeng/sutil/slog/slog"
 )
 
+const(
+	DefaultGroup = ""
+	TestGroup    = "test"
+)
+
 type dbLookupCfg struct {
 	Instance string `json:"instance"`
 	Match    string `json:"match"`
@@ -25,12 +30,20 @@ type dbInsCfg struct {
 	Dbtype string          `json:"dbtype"`
 	Dbname string          `json:"dbname"`
 	Dbcfg  json.RawMessage `json:"dbcfg"`
+	Level  int32           `json:"level"`
+	Ins    []itemDbInsCfg  `json:"ins"`
+}
+
+type itemDbInsCfg struct {
+	Dbcfg json.RawMessage `json:"dbcfg"`
+	Group string          `json:"group"`
 }
 
 type dbInsInfo struct {
 	Instance string
 	DBType   string
 	DBName   string
+	Level    int32
 	DBAddr   []string `json:"addrs"`
 	UserName string   `json:"user"`
 	PassWord string   `json:"passwd"`
@@ -43,28 +56,33 @@ type routeConfig struct {
 
 type Parser struct {
 	dbCls *dbCluster
-	dbIns map[string]*dbInsInfo
+	dbIns map[string]map[string]*dbInsInfo
 }
 
 func (m *Parser) String() string {
-	return fmt.Sprintf("%s", m.dbCls.clusters)
+	return fmt.Sprintf("%v", m.dbCls.clusters)
 }
 
 func (m *Parser) GetInstance(cluster, table string) string {
 	instance := m.dbCls.getInstance(cluster, table)
-	info := m.getConfig(instance)
-	return info.Instance
+	return instance
 }
 
-func (m *Parser) getConfig(instance string) *dbInsInfo {
-	if info, ok := m.dbIns[instance]; ok {
-		return info
+func (m *Parser) getConfig(instance, group string) *dbInsInfo {
+	if infoMap, ok := m.dbIns[group]; ok {
+		if info, ok := infoMap[instance]; ok {
+			return info
+		}
+	} else if group != TestGroup {
+		if info, ok := infoMap[DefaultGroup]; ok {
+			return info
+		}
 	}
 	return &dbInsInfo{}
 }
 
-func (m *Parser) GetConfig(instance string) *dbInsInfo {
-	return m.getConfig(instance)
+func (m *Parser) GetConfig(instance, group string) *dbInsInfo {
+	return m.getConfig(instance, group)
 }
 
 // 检查用户输入的合法性
@@ -103,58 +121,13 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		dbCls: &dbCluster{
 			clusters: make(map[string]*clsEntry),
 		},
-		dbIns: make(map[string]*dbInsInfo),
+		dbIns: make(map[string]map[string]*dbInsInfo),
 	}
 
 	var cfg routeConfig
 	err := json.Unmarshal(jscfg, &cfg)
 	if err != nil {
-		slog.Errorf(context.TODO(), "%s dbrouter config unmarshal:%s", fun, err.Error())
-		return r, nil
-	}
-
-	inss := cfg.Instances
-	for ins, db := range inss {
-		if er := checkVarname(ins); er != nil {
-			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, err.Error())
-			continue
-		}
-
-		dbtype := db.Dbtype
-		dbname := db.Dbname
-		cfg := db.Dbcfg
-
-		if er := checkVarname(dbtype); er != nil {
-			slog.Errorf(context.TODO(), "%s dbtype instance:%s err:%s", fun, ins, er.Error())
-			continue
-		}
-
-		if er := checkVarname(dbname); er != nil {
-			slog.Errorf(context.TODO(), "%sdbname instance:%s err:%s", fun, ins, er.Error())
-			continue
-		}
-
-		if len(cfg) == 0 {
-			slog.Errorf(context.TODO(), "%s empty dbcfg instance:%s", fun, ins)
-			continue
-		}
-
-		var info dbInsInfo
-		err := json.Unmarshal(cfg, &info)
-		if err != nil {
-			slog.Errorf(context.TODO(), "%s unmarshal err, cfg:%s", fun, string(cfg))
-			continue
-		}
-		info.DBType = dbtype
-		info.DBName = dbname
-		info.Instance = ins
-
-		if _, ok := r.dbIns[ins]; ok {
-			slog.Errorf(context.TODO(), "%s dbname dup, ins:%s, cfg:%v", fun, ins, string(cfg))
-			continue
-		}
-
-		r.dbIns[ins] = &info
+		return nil, fmt.Errorf("dbrouter config unmarshal error: %s", err.Error())
 	}
 
 	cls := cfg.Cluster
@@ -165,7 +138,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		}
 
 		if len(ins) == 0 {
-			slog.Errorf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
+			slog.Warnf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
 			continue
 		}
 
@@ -191,5 +164,144 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		}
 	}
 
+	inss := cfg.Instances
+	for ins, db := range inss {
+		if er := checkVarname(ins); er != nil {
+			slog.Errorf(context.TODO(), "%s instances name config err:%s", fun, er.Error())
+			continue
+		}
+
+		dbtype := db.Dbtype
+		dbname := db.Dbname
+		cfg := db.Dbcfg
+		level := db.Level
+		// 外层配置为默认的group
+		group := DefaultGroup
+		info, err := parseDbIns(dbtype, dbname, ins, cfg, level)
+		if err != nil {
+			slog.Errorf(context.TODO(), "%s parse default dbInsInfo error, %s", fun, err.Error())
+		} else {
+			if _, ok := r.dbIns[group]; ok {
+				r.dbIns[group][ins] = info
+			} else {
+				r.dbIns[group] = make(map[string]*dbInsInfo)
+				r.dbIns[group][ins] = info
+			}
+		}
+
+		for _, itemIns := range db.Ins {
+			cfg = itemIns.Dbcfg
+			group = itemIns.Group
+			info, err := parseDbIns(dbtype, dbname, ins, cfg, level)
+			if err != nil {
+				slog.Errorf(context.TODO(), "%s parse %s dbInsInfo error, %s", fun, group, err.Error())
+			} else {
+				if _, ok := r.dbIns[group]; ok {
+					r.dbIns[group][ins] = info
+				} else {
+					r.dbIns[group] = make(map[string]*dbInsInfo)
+					r.dbIns[group][ins] = info
+				}
+			}
+		}
+
+		dbInsLen := len(r.dbIns[DefaultGroup])
+		for group, insMap := range r.dbIns {
+			if len(insMap) > dbInsLen {
+				return nil, fmt.Errorf("db instance %s is lack of default group", ins)
+			} else if len(insMap) < dbInsLen {
+				return nil, fmt.Errorf("db instance %s is lack of group %s", ins, group)
+			}
+		}
+	}
+
 	return r, nil
+}
+
+func parseDbIns(dbtype, dbname, ins string, dbcfg json.RawMessage, level int32) (*dbInsInfo, error) {
+	if er := checkVarname(dbtype); er != nil {
+		return nil, fmt.Errorf("dbtype instance:%s err:%s", ins, er.Error())
+	}
+
+	if er := checkVarname(dbname); er != nil {
+		return nil, fmt.Errorf("dbname instance:%s err:%s", ins, er.Error())
+	}
+
+	if len(dbcfg) == 0 {
+		return nil, fmt.Errorf("empty dbcfg instance:%s", ins)
+	}
+
+	var info = new(dbInsInfo)
+	err := json.Unmarshal(dbcfg, info)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal err, cfg:%s", string(dbcfg))
+	}
+	info.DBType = dbtype
+	info.DBName = dbname
+	info.Instance = ins
+	info.Level = level
+
+	return info, nil
+}
+
+func compareParsers(originParser Parser, newParser Parser) dbConfigChange {
+	// 原来实例中修改的、删除的，要通知数据库连接池关闭掉实例的数据库连接
+	var dbInsChangeMap = make(map[string][]string)
+	var groups []string
+	for group, originIns := range originParser.dbIns {
+		var dbInsChanges []string
+		if newIns, ok := newParser.dbIns[group]; ok {
+			dbInsChanges = compareDbInstances(originIns, newIns)
+			if len(dbInsChanges) == 0 {
+
+			}
+		} else {
+			dbInsChanges = compareDbInstances(originIns, make(map[string]*dbInsInfo))
+		}
+		if len(dbInsChanges) > 0 {
+			dbInsChangeMap[group] = dbInsChanges
+		}
+	}
+
+	for group, _ := range newParser.dbIns {
+		groups = append(groups, group)
+	}
+
+	return dbConfigChange{
+		dbInstanceChange: dbInsChangeMap,
+		dbGroups:         groups,
+	}
+}
+
+func compareDbInstances(originDbInstances map[string]*dbInsInfo, newDbInstances map[string]*dbInsInfo) []string {
+	var dbInstanceChanges []string
+	for insName, originDbInsInfo := range originDbInstances {
+		if newDbInsInfo, ok := newDbInstances[insName]; ok {
+			if !compareDbInfo(originDbInsInfo, newDbInsInfo) {
+				dbInstanceChanges = append(dbInstanceChanges, insName)
+			}
+		} else {
+			dbInstanceChanges = append(dbInstanceChanges, insName)
+		}
+	}
+	return dbInstanceChanges
+}
+
+func compareDbInfo(dbInsInfo1 *dbInsInfo, dbInsInfo2 *dbInsInfo) bool {
+	return dbInsInfo1.DBName == dbInsInfo2.DBName && dbInsInfo1.UserName == dbInsInfo2.UserName &&
+		dbInsInfo1.PassWord == dbInsInfo2.PassWord && compareStringList(dbInsInfo1.DBAddr, dbInsInfo2.DBAddr)
+}
+
+func compareStringList(stringList1 []string, stringList2 []string) bool {
+	if len(stringList1) != len(stringList2) {
+		return false
+	}
+
+	for index := range stringList1 {
+		if stringList1[index] != stringList2[index] {
+			return false
+		}
+	}
+
+	return true
 }
