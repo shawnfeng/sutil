@@ -2,7 +2,7 @@ package center
 
 import (
 	"context"
-	"github.com/ZhengHe-MD/agollo"
+	"github.com/ZhengHe-MD/agollo/v4"
 	"github.com/ZhengHe-MD/properties"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/slog/slog"
