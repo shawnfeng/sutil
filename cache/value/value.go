@@ -239,6 +239,13 @@ func WatchUpdate(ctx context.Context) {
 }
 
 func init() {
-	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
+	fun := "value.init -->"
+	ctx := context.Background()
+	err := SetConfiger(ctx, cache.ConfigerTypeApollo)
+	if err != nil {
+		slog.Errorf(ctx, "%s set cache configer:%v err:%v", fun, cache.ConfigerTypeApollo, err)
+	} else {
+		slog.Infof(ctx, "%s cache configer:%v been set", fun, cache.ConfigerTypeApollo)
+	}
 }
 
