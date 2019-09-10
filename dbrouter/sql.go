@@ -29,7 +29,7 @@ func NewSql(dbtype, dbname, addr, userName, passWord string, timeout time.Durati
 	fun := "NewSql-->"
 
 	if timeout == 0 {
-		timeout = 3 * time.Second
+		timeout = 60 * time.Second
 	}
 
 	info := &Sql{

@@ -41,7 +41,7 @@ func dialBySqlx(info *Sql) (db *sqlx.DB, err error) {
 	sqlxdb, err := sqlx.Connect(info.dbType, dataSourceName)
 	if err != nil {
 		sqlxdb.SetMaxIdleConns(8)
-		sqlxdb.SetMaxOpenConns(128)
+		//sqlxdb.SetMaxOpenConns(128)
 	}
 	return sqlxdb, err
 }
