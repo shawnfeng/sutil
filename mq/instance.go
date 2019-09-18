@@ -95,6 +95,7 @@ func instanceConfFromString(s string) (conf *instanceConf, err error) {
 type InstanceManager struct {
 	instances sync.Map
 	watchOnce sync.Once
+	mutex     sync.Mutex
 }
 
 func NewInstanceManager() *InstanceManager {
@@ -140,14 +141,25 @@ func (m *InstanceManager) get(ctx context.Context, conf *instanceConf) interface
 	in, ok := m.instances.Load(key)
 	if ok == false {
 
+		m.mutex.Lock()
+
+		in, ok = m.instances.Load(key)
+		if ok {
+			m.mutex.Unlock()
+			return in
+		}
+
 		slog.Infof(ctx, "%s newInstance, role:%v, topic: %s", fun, conf.role, conf.topic)
 		in, err = m.newInstance(ctx, conf)
 		if err != nil {
 			slog.Errorf(ctx, "%s NewInstance err, topic: %s, err: %s", fun, conf.topic, err.Error())
+			m.mutex.Unlock()
 			return nil
 		}
 
 		in, _ = m.instances.LoadOrStore(key, in)
+
+		m.mutex.Unlock()
 	}
 	return in
 }

@@ -283,6 +283,12 @@ func Close() {
 }
 
 func init() {
-	// set default config type to simple
-	_ = SetConfiger(context.Background(), ConfigerTypeSimple)
+	fun := "mq.init -->"
+	ctx := context.Background()
+	err := SetConfiger(ctx, ConfigerTypeApollo)
+	if err != nil {
+		slog.Errorf(ctx, "%s set mq configer:%v err:%v", fun, ConfigerTypeApollo, err)
+	} else {
+		slog.Infof(ctx, "%s mq configer:%v been set", fun, ConfigerTypeApollo)
+	}
 }

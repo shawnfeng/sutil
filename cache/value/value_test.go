@@ -32,7 +32,7 @@ func TestGet(t *testing.T) {
 	WatchUpdate(ctx)
 
 	var test Test
-	err := c.Get(ctx, 7, &test)
+	err := c.Get(ctx, 14, &test)
 	if err != nil {
 		t.Errorf("get err: %v", err)
 	}

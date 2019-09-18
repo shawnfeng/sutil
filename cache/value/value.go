@@ -66,14 +66,18 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 	slog.Infof(ctx, "%s miss key: %v, err: %s", fun, key, err)
 
-	err = m.loadValueToCache(ctx, key)
+	data, err := m.loadValueToCache(ctx, key)
 	if err != nil {
 		slog.Errorf(ctx, "%s loadValueToCache key: %v err: %v", fun, key, err)
 		return err
 	}
 
-	//简单处理interface对象构造的问题
-	return m.getValueFromCache(ctx, key, value)
+	err = json.Unmarshal(data, value)
+	if err != nil {
+		return errors.New(string(data))
+	}
+
+	return nil
 }
 
 func (m *Cache) Del(ctx context.Context, key interface{}) error {
@@ -106,7 +110,8 @@ func (m *Cache) Load(ctx context.Context, key interface{}) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Load")
 	defer span.Finish()
 
-	return m.loadValueToCache(ctx, key)
+	_, err := m.loadValueToCache(ctx, key)
+	return err
 }
 
 func (m *Cache) keyToString(key interface{}) (string, error) {
@@ -181,10 +186,9 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 	return nil
 }
 
-func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
+func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []byte, err error) {
 	fun := "Cache.loadValueToCache -->"
 
-	var data []byte
 	value, err := m.load(key)
 	if err != nil {
 		slog.Warnf(ctx, "%s load err, cache key:%v err:%v", fun, key, err)
@@ -201,13 +205,13 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 	skey, err := m.prefixKey(key)
 	if err != nil {
 		slog.Errorf(ctx, "%s fixkey, key: %v err:%v", fun, key, err)
-		return err
+		return nil, err
 	}
 
 	client, err := redis.DefaultInstanceManager.GetInstance(ctx, m.getInstanceConf(ctx))
 	if err != nil {
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
-		return err
+		return nil, err
 	}
 
 	rerr := client.Set(ctx, skey, data, m.expire).Err()
@@ -216,10 +220,10 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) error {
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return rerr
+	return data, nil
 }
 
 func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
@@ -239,6 +243,12 @@ func WatchUpdate(ctx context.Context) {
 }
 
 func init() {
-	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
+	fun := "value.init -->"
+	ctx := context.Background()
+	err := SetConfiger(ctx, cache.ConfigerTypeApollo)
+	if err != nil {
+		slog.Errorf(ctx, "%s set cache configer:%v err:%v", fun, cache.ConfigerTypeApollo, err)
+	} else {
+		slog.Infof(ctx, "%s cache configer:%v been set", fun, cache.ConfigerTypeApollo)
+	}
 }
-
