@@ -6,60 +6,13 @@ package dbrouter
 
 import (
 	"context"
-	"database/sql"
+	//	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
 )
-
-type DB struct {
-	*sqlx.DB
-}
-
-func (db *DB) NamedExecWrapper(tables []interface{}, query string, arg interface{}) (sql.Result, error) {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.NamedExec(query, arg)
-}
-
-func (db *DB) NamedQueryWrapper(tables []interface{}, query string, arg interface{}) (*sqlx.Rows, error) {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.NamedQuery(query, arg)
-}
-
-func (db *DB) SelectWrapper(tables []interface{}, dest interface{}, query string, args ...interface{}) error {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.Select(dest, query, args...)
-}
-
-func (db *DB) ExecWrapper(tables []interface{}, query string, args ...interface{}) (sql.Result, error) {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.Exec(query, args...)
-}
-
-func (db *DB) QueryRowxWrapper(tables []interface{}, query string, args ...interface{}) *sqlx.Row {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.QueryRowx(query, args...)
-}
-
-func (db *DB) QueryxWrapper(tables []interface{}, query string, args ...interface{}) (*sqlx.Rows, error) {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.Queryx(query, args...)
-}
-
-func (db *DB) GetWrapper(tables []interface{}, dest interface{}, query string, args ...interface{}) error {
-	query = fmt.Sprintf(query, tables...)
-	return db.DB.Get(dest, query, args...)
-}
-
-func NewDB(sqlxdb *sqlx.DB) *DB {
-	db := &DB{
-		sqlxdb,
-	}
-	return db
-}
 
 type Sql struct {
 	dbType   string
@@ -69,6 +22,7 @@ type Sql struct {
 	userName string
 	passWord string
 	db       *DB
+	gormdb   *GormDB
 }
 
 func NewSql(dbtype, dbname, addr, userName, passWord string, timeout time.Duration) (*Sql, error) {
@@ -88,34 +42,38 @@ func NewSql(dbtype, dbname, addr, userName, passWord string, timeout time.Durati
 	}
 
 	var err error
-	info.db, err = dial(info)
+	info.db, info.gormdb, err = dial(info)
 	if err != nil {
 		slog.Errorf(context.TODO(), "%s info:%v, err:%s", fun, *info, err.Error())
 		return nil, err
 	}
-	info.db.SetMaxIdleConns(8)
 	return info, err
 }
 
-func dial(info *Sql) (db *DB, err error) {
-	fun := "dial-->"
+func dial(info *Sql) (*DB, *GormDB, error) {
+	fun := "dial -->"
 
-	var dataSourceName string
-	if info.dbType == DB_TYPE_MYSQL {
-		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s", info.userName, info.passWord, info.dbAddr, info.dbName)
-
-	} else if info.dbType == DB_TYPE_POSTGRES {
-		dataSourceName = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
-			info.userName, info.passWord, info.dbAddr, info.dbName)
+	sqlxdb, err := dialBySqlx(info)
+	if err != nil {
+		slog.Errorf(context.TODO(), "%s info:%v, dialBySqlx err:%s", fun, *info, err.Error())
+		return nil, nil, err
 	}
 
-	slog.Infof(context.TODO(), "%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
-	sqlxdb, err := sqlx.Connect(info.dbType, dataSourceName)
-	return NewDB(sqlxdb), err
+	gormdb, err := dialByGorm(info)
+	if err != nil {
+		slog.Errorf(context.TODO(), "%s info:%v, dialByGorm err:%s", fun, *info, err.Error())
+		return nil, nil, err
+	}
+
+	return NewDB(sqlxdb), NewGormDB(gormdb), nil
 }
 
 func (m *Sql) getDB() *DB {
 	return m.db
+}
+
+func (m *Sql) getGormDB() *GormDB {
+	return m.gormdb
 }
 
 func (m *Sql) GetType() string {
@@ -123,5 +81,12 @@ func (m *Sql) GetType() string {
 }
 
 func (m *Sql) Close() error {
-	return m.db.Close()
+	err1 := m.db.Close()
+	err2 := m.gormdb.Close()
+
+	if err1 != nil || err2 != nil {
+		return fmt.Errorf("sqlx.Close err: %v, gorm.Close err: %v", err1, err2)
+	}
+
+	return nil
 }
