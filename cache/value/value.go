@@ -22,7 +22,7 @@ import (
 )
 
 // key类型只支持int（包含有无符号，8，16，32，64位）和string
-type LoadFunc func(key interface{}) (value interface{}, err error)
+type LoadFunc func(ctx context.Context, key interface{}) (value interface{}, err error)
 
 type Cache struct {
 	namespace string
@@ -189,7 +189,8 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []byte, err error) {
 	fun := "Cache.loadValueToCache -->"
 
-	value, err := m.load(key)
+	var data []byte
+	value, err := m.load(ctx, key)
 	if err != nil {
 		slog.Warnf(ctx, "%s load err, cache key:%v err:%v", fun, key, err)
 		data = []byte(err.Error())
