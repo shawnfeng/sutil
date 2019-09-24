@@ -53,6 +53,20 @@ func fromRedisZSlice(rzs []redis2.Z) (zs []Z) {
 	return
 }
 
+type ZRangeBy struct {
+	Min, Max string
+	Offset, Count int64
+}
+
+func toRedisZRangeBy(by ZRangeBy) redis2.ZRangeBy {
+	return redis2.ZRangeBy{
+		Min:    by.Min,
+		Max:    by.Max,
+		Offset: by.Offset,
+		Count:  by.Count,
+	}
+}
+
 func (m *RedisExt) prefixKey(key string) string {
 	if len(m.prefix) > 0 {
 		key = fmt.Sprintf("%s.%s", m.prefix, key)
@@ -89,6 +103,14 @@ func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp tim
 	return
 }
 
+func (m *RedisExt) SetNX(ctx context.Context, key string, val interface{}, exp time.Duration) (b bool, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		b, err = client.SetNX(ctx, m.prefixKey(key), val, exp).Result()
+	}
+	return
+}
+
 func (m *RedisExt) Exists(ctx context.Context, key string) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -113,6 +135,112 @@ func (m *RedisExt) Expire(ctx context.Context, key string, expiration time.Durat
 	return
 }
 
+// hashes apis
+func (m *RedisExt) HSet(ctx context.Context, key string, field string, value interface{}) (b bool, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		b, err = client.HSet(ctx, m.prefixKey(key), field, value).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HDel(ctx context.Context, key string, fields ...string) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.HDel(ctx, m.prefixKey(key), fields...).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HExists(ctx context.Context, key string, field string) (b bool, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		b, err = client.HExists(ctx, m.prefixKey(key), field).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HGet(ctx context.Context, key string, field string) (s string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.HGet(ctx, m.prefixKey(key), field).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HGetAll(ctx context.Context, key string) (sm map[string]string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		sm, err = client.HGetAll(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HIncrBy(ctx context.Context, key string, field string, incr int64) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.HIncrBy(ctx, m.prefixKey(key), field, incr).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HIncrByFloat(ctx context.Context, key string, field string, incr float64) (f float64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		f, err = client.HIncrByFloat(ctx, m.prefixKey(key), field, incr).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HKeys(ctx context.Context, key string) (ss []string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		ss, err = client.HKeys(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HLen(ctx context.Context, key string) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.HLen(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HMGet(ctx context.Context, key string, fields ...string) (vs []interface{}, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		vs, err = client.HMGet(ctx, m.prefixKey(key), fields...).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HMSet(ctx context.Context, key string, fields map[string]interface{}) (s string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.HMSet(ctx, m.prefixKey(key), fields).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HSetNX(ctx context.Context, key string, field string, val interface{}) (b bool, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		b, err = client.HSet(ctx, m.prefixKey(key), field, val).Result()
+	}
+	return
+}
+
+func (m *RedisExt) HVals(ctx context.Context, key string) (ss []string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		ss, err = client.HVals(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+// sorted set apis
 func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -181,6 +309,22 @@ func (m *RedisExt) ZRange(ctx context.Context, key string, start, stop int64) (s
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		ss, err = client.ZRange(ctx, m.prefixKey(key), start, stop).Result()
+	}
+	return
+}
+
+func (m *RedisExt) ZRangeByLex(ctx context.Context, key string, by ZRangeBy) (ss []string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		ss, err = client.ZRangeByLex(ctx, m.prefixKey(key), toRedisZRangeBy(by)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) ZRangeByScore(ctx context.Context, key string, by ZRangeBy) (ss []string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		ss, err = client.ZRangeByScore(ctx, m.prefixKey(key), toRedisZRangeBy(by)).Result()
 	}
 	return
 }
