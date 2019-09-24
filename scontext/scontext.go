@@ -46,3 +46,65 @@ func GetGroupWithDefault(ctx context.Context, dv string) string {
 	}
 	return dv
 }
+
+func getHeaderByKey(ctx context.Context, key string) (val interface{}, ok bool) {
+	head := ctx.Value(ContextKeyHead)
+	if head == nil {
+		ok = false
+		return
+	}
+
+	var header ContextHeader
+	if header, ok = head.(ContextHeader); ok {
+		val, ok = header.ToKV()[key]
+	}
+	return
+}
+
+func GetUid(ctx context.Context) (uid int64, ok bool) {
+	val, ok := getHeaderByKey(ctx, ContextKeyHeadUid)
+	if ok {
+		uid, ok = val.(int64)
+	}
+	return
+}
+
+func GetSource(ctx context.Context) (source int32, ok bool) {
+	val, ok := getHeaderByKey(ctx, ContextKeyHeadSource)
+	if ok {
+		source, ok = val.(int32)
+	}
+	return
+}
+
+func GetIp(ctx context.Context) (ip string, ok bool) {
+	val, ok := getHeaderByKey(ctx, ContextKeyHeadIp)
+	if ok {
+		ip, ok = val.(string)
+	}
+	return
+}
+
+func GetRegion(ctx context.Context) (region string, ok bool) {
+	val, ok := getHeaderByKey(ctx, ContextKeyHeadRegion)
+	if ok {
+		region, ok = val.(string)
+	}
+	return
+}
+
+func GetDt(ctx context.Context) (dt int32, ok bool) {
+	val, ok := getHeaderByKey(ctx, ContextKeyHeadDt)
+	if ok {
+		dt, ok = val.(int32)
+	}
+	return
+}
+
+func GetUnionId(ctx context.Context) (unionId string, ok bool) {
+	val, ok := getHeaderByKey(ctx, ContextKeyHeadUnionId)
+	if ok {
+		unionId, ok = val.(string)
+	}
+	return
+}
