@@ -1,7 +1,6 @@
 module github.com/shawnfeng/sutil
 
 require (
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/ZhengHe-MD/agollo/v4 v4.1.3
 	github.com/ZhengHe-MD/properties v0.2.1
 	github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb
