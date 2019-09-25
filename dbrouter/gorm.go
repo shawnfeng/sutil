@@ -37,7 +37,7 @@ func dialByGorm(info *Sql) (db *gorm.DB, err error) {
 
 	slog.Infof(context.TODO(), "%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
 	gormdb, err := gorm.Open(info.dbType, dataSourceName)
-	if err != nil {
+	if err == nil {
 		gormdb.DB().SetMaxIdleConns(8)
 		gormdb.DB().SetMaxOpenConns(128)
 	}
