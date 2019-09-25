@@ -189,7 +189,6 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []byte, err error) {
 	fun := "Cache.loadValueToCache -->"
 
-	var data []byte
 	value, err := m.load(ctx, key)
 	if err != nil {
 		slog.Warnf(ctx, "%s load err, cache key:%v err:%v", fun, key, err)
