@@ -17,10 +17,9 @@ var RedisNil = fmt.Sprintf("redis: nil")
 type Client struct {
 	client    *redis.Client
 	namespace string
-	wrapper   string
 }
 
-func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
+func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	fun := "NewClient -->"
 
 	config, err := DefaultConfiger.GetConfig(ctx, namespace)
@@ -45,14 +44,12 @@ func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, 
 	return &Client{
 		client:    client,
 		namespace: namespace,
-		wrapper:   wrapper,
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
 	return strings.Join([]string{
 		m.namespace,
-		m.wrapper,
 		key,
 	}, ".")
 }

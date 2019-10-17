@@ -54,7 +54,7 @@ func fromRedisZSlice(rzs []redis2.Z) (zs []Z) {
 }
 
 type ZRangeBy struct {
-	Min, Max string
+	Min, Max      string
 	Offset, Count int64
 }
 
@@ -83,7 +83,6 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
 		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeRedisExt,
 	}
 }
 

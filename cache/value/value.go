@@ -44,7 +44,6 @@ func (m *Cache) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
 		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeCache,
 	}
 }
 
