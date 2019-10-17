@@ -182,7 +182,7 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 	return m.mongoExec(ctx, strong, cluster, table, query)
 }
 
-func (m *Router) mongoPrepare(ctx context.Context, consistency mode, cluster, table string) (coll *mgo.Collection, err error) {
+func (m *Router) mongoPrepare(ctx context.Context, consistency mode, cluster, table string) (sess *mgo.Session, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoPrepare")
 	defer span.Finish()
 
@@ -199,19 +199,17 @@ func (m *Router) mongoPrepare(ctx context.Context, consistency mode, cluster, ta
 		return
 	}
 
-	sess, err := db.getSession(consistency)
+	ss, err := db.getSession(consistency)
 	if err != nil {
 		return
 	}
 
-	if sess == nil {
+	if ss == nil {
 		err = fmt.Errorf("db instance session empty: cluster:%s table:%s type:%s", cluster, table, in.GetType())
 		return
 	}
 
-	sessionCopy := sess.Copy()
-	defer sessionCopy.Close()
-	coll = sessionCopy.DB("").C(table)
+	sess = ss.Copy()
 	return
 }
 
@@ -226,10 +224,12 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 
 	st := stime.NewTimeStat()
 
-	c, err := m.mongoPrepare(ctx, consistency, cluster, table)
+	sess, err := m.mongoPrepare(ctx, consistency, cluster, table)
 	if err != nil {
 		return err
 	}
+	defer sess.Close()
+	coll := sess.DB("").C(table)
 
 	defer func() {
 		dur := st.Duration()
@@ -237,5 +237,5 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
 
-	return query(c)
+	return query(coll)
 }
