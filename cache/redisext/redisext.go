@@ -81,7 +81,7 @@ func (m *RedisExt) getRedisInstance(ctx context.Context) (client *redis.Client, 
 
 func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
-		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Group:     scontext.GetControlRouteGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
 		Wrapper:   cache.WrapperTypeRedisExt,
 	}

@@ -206,18 +206,23 @@ func (m *ApolloConfig) Init(ctx context.Context) (err error) {
 	return
 }
 
-type simpleContextController struct {
+type simpleContextControlRouter struct {
 	group string
 }
 
-func (s simpleContextController) GetGroup() string {
-	return s.group
+func (s simpleContextControlRouter) GetControlRouteGroup() (string, bool) {
+	return s.group, true
+}
+
+func (s simpleContextControlRouter) SetControlRouteGroup(group string) error {
+	s.group = group
+	return nil
 }
 
 func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) (string, bool) {
 	val, ok := m.center.GetStringWithNamespace(ctx, center.DefaultApolloMQNamespace, m.buildKey(ctx, topic, name))
 	if !ok {
-		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultRouteGroup})
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{defaultRouteGroup})
 		val, ok = m.center.GetStringWithNamespace(defaultCtx, center.DefaultApolloMQNamespace, m.buildKey(defaultCtx, topic, name))
 	}
 	return val, ok
@@ -302,7 +307,7 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string {
 	return strings.Join([]string{
 		topic,
-		scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
 		fmt.Sprint(MQTypeKafka),
 		item,
 	}, apolloConfigSep)

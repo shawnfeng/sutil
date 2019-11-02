@@ -44,7 +44,7 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 		log.String(spanLogKeyKey, key))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeWriter,
 		topic:     topic,
 		groupId:   "",
@@ -81,7 +81,7 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	span.LogFields(log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeWriter,
 		topic:     topic,
 		groupId:   "",
@@ -120,7 +120,7 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   groupId,
@@ -171,7 +171,7 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   "",
@@ -222,7 +222,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 		log.String(spanLogKeyTopic, topic))
 
 	conf := &instanceConf{
-		group:     scontext.GetGroupWithDefault(ctx, defaultRouteGroup),
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
 		role:      RoleTypeReader,
 		topic:     topic,
 		groupId:   groupId,
