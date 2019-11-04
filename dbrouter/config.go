@@ -69,7 +69,7 @@ func NewSimpleConfiger(data []byte) (Configer, error) {
 }
 
 func (m *SimpleConfig) GetConfig(ctx context.Context, instance string) *Config {
-	group := scontext.GetGroup(ctx)
+	group := scontext.GetControlRouteGroupWithDefault(ctx, DefaultGroup)
 	info := m.parser.GetConfig(instance, group)
 	return &Config{
 		DBType:   info.DBType,
@@ -179,7 +179,7 @@ func (m *EtcdConfig) setParser(ctx context.Context, parser *Parser) {
 }
 
 func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
-	group := scontext.GetGroup(ctx)
+	group := scontext.GetControlRouteGroupWithDefault(ctx, DefaultGroup)
 	parser := m.getParser(ctx)
 	info := parser.GetConfig(instance, group)
 	return &Config{
