@@ -43,9 +43,3 @@ func (c ConfigerType) String() string {
 }
 
 const DefaultRouteGroup = "default"
-
-// NOTE: 减小 key 所占空间
-const (
-	WrapperTypeCache    = "c"
-	WrapperTypeRedisExt = "e"
-)

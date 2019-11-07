@@ -2,7 +2,6 @@ package value
 
 import (
 	"context"
-	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/trace"
 
 	//"fmt"
@@ -15,7 +14,7 @@ type Test struct {
 	Id int64
 }
 
-func load(key interface{}) (value interface{}, err error) {
+func load(ctx context.Context, key interface{}) (value interface{}, err error) {
 
 	//return nil, fmt.Errorf("not found")
 	return &Test{
@@ -28,7 +27,6 @@ func TestGet(t *testing.T) {
 	_ = trace.InitDefaultTracer("cache.test")
 
 	c := NewCache("base/report", "test", 60*time.Second, load)
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 	WatchUpdate(ctx)
 
 	var test Test

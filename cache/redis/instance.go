@@ -22,11 +22,10 @@ const (
 type InstanceConf struct {
 	Group     string
 	Namespace string
-	Wrapper   string
 }
 
 func (m *InstanceConf) String() string {
-	return fmt.Sprintf("group:%s namespace:%s wrapper:%s", m.Group, m.Namespace, m.Wrapper)
+	return fmt.Sprintf("group:%s namespace:%s", m.Group, m.Namespace)
 }
 
 func instanceConfFromString(s string) (conf *InstanceConf, err error) {
@@ -38,7 +37,6 @@ func instanceConfFromString(s string) (conf *InstanceConf, err error) {
 	conf = &InstanceConf{
 		Group:     items[0],
 		Namespace: items[1],
-		Wrapper:   items[2],
 	}
 	return conf, nil
 }
@@ -58,7 +56,6 @@ func (m *InstanceManager) buildKey(conf *InstanceConf) string {
 	return strings.Join([]string{
 		conf.Group,
 		conf.Namespace,
-		conf.Wrapper,
 	}, keySep)
 }
 
@@ -67,7 +64,7 @@ func (m *InstanceManager) add(key string, client *Client) {
 }
 
 func (m *InstanceManager) newInstance(ctx context.Context, conf *InstanceConf) (*Client, error) {
-	return NewClient(ctx, conf.Namespace, conf.Wrapper)
+	return NewClient(ctx, conf.Namespace)
 }
 
 func (m *InstanceManager) GetInstance(ctx context.Context, conf *InstanceConf) (*Client, error) {
