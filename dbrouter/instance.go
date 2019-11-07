@@ -50,7 +50,7 @@ func (m *InstanceManager) Get(ctx context.Context, instance string) Instancer {
 
 	var err error
 	var in Instancer
-	group := scontext.GetGroup(ctx)
+	group := scontext.GetControlRouteGroupWithDefault(ctx, DefaultGroup)
 
 	if group != DefaultGroup {
 		if !m.isInGroup(group) {

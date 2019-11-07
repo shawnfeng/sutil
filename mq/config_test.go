@@ -124,7 +124,7 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 
 	t.Run("ctx with unknown group should get default value", func(t *testing.T) {
 		ctx := context.TODO()
-		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{"unknown"})
+		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{"unknown"})
 
 		conf := NewApolloConfiger()
 
@@ -136,7 +136,7 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 
 	t.Run("ctx with known group should get its value", func(t *testing.T) {
 		ctx := context.TODO()
-		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{"testgroup"})
+		ctx = context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{"testgroup"})
 
 		conf := NewApolloConfiger()
 

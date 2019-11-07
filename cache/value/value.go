@@ -42,7 +42,7 @@ func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Ca
 
 func (m *Cache) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
-		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Group:     scontext.GetControlRouteGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
 		Wrapper:   cache.WrapperTypeCache,
 	}
