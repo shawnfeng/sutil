@@ -3,8 +3,9 @@ package cache
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
+
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type CacheData interface {
@@ -155,5 +156,19 @@ func (m *Cache) Del(key string) error {
 		return fmt.Errorf("del cache key:%s err:%s", key, err.Error())
 	}
 
+	return nil
+}
+
+func (m *Cache) Decr(key string) error {
+	if err := m.redisClient.Decr(m.fixKey(key)).Err(); err != nil {
+		return fmt.Errorf("Decr cache key:%s err:%s", key, err.Error())
+	}
+	return nil
+}
+
+func (m *Cache) Incr(key string) error {
+	if err := m.redisClient.Incr(m.fixKey(key)).Err(); err != nil {
+		return fmt.Errorf("Incr cache key:%s err:%s", key, err.Error())
+	}
 	return nil
 }

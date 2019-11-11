@@ -3,9 +3,10 @@ package cache
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/go-redis/redis"
 	"github.com/shawnfeng/sutil/slog/slog"
-	"time"
 )
 
 var RedisNil = fmt.Sprintf("redis: nil")
@@ -68,6 +69,10 @@ func (m *RedisClient) Del(keys ...string) *redis.IntCmd {
 
 func (m *RedisClient) Incr(key string) *redis.IntCmd {
 	return m.client.Incr(m.fixKey(key))
+}
+
+func (m *RedisClient) Decr(key string) *redis.IntCmd {
+	return m.client.Decr(m.fixKey(key))
 }
 
 func (m *RedisClient) SetNX(key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
