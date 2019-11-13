@@ -64,7 +64,7 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 		return fmt.Errorf("%s cache key: %v err: %v", fun, key, err)
 	}
 
-	slog.Infof(ctx, "%s miss key: %v, err: %s", fun, key, err)
+	//slog.Infof(ctx, "%s miss key: %v, err: %s", fun, key, err)
 
 	data, err := m.loadValueToCache(ctx, key)
 	if err != nil {
@@ -176,7 +176,7 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 		return err
 	}
 
-	slog.Infof(ctx, "%s key: %v data: %s", fun, key, string(data))
+	//slog.Infof(ctx, "%s key: %v data: %s", fun, key, string(data))
 
 	err = json.Unmarshal(data, value)
 	if err != nil {

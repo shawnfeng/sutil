@@ -40,7 +40,7 @@ func dialBySqlx(info *Sql) (db *sqlx.DB, err error) {
 	slog.Infof(context.TODO(), "%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
 	sqlxdb, err := sqlx.Connect(info.dbType, dataSourceName)
 	if err == nil {
-		sqlxdb.SetMaxIdleConns(8)
+		sqlxdb.SetMaxIdleConns(64)
 		sqlxdb.SetMaxOpenConns(128)
 	}
 	return sqlxdb, err
