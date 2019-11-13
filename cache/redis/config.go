@@ -172,18 +172,23 @@ func (m *ApolloConfig) Init(ctx context.Context) error {
 	return err
 }
 
-type simpleContextController struct {
+type simpleContextControlRouter struct {
 	group string
 }
 
-func (s simpleContextController) GetGroup() string {
-	return s.group
+func (s simpleContextControlRouter) GetControlRouteGroup() (string, bool) {
+	return s.group, true
+}
+
+func (s simpleContextControlRouter) SetControlRouteGroup(group string) error {
+	s.group = group
+	return nil
 }
 
 func (m *ApolloConfig) getConfigStringItemWithFallback(ctx context.Context, namespace, name string) (string, bool) {
 	val, ok := m.center.GetStringWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
-		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{defaultGroup})
 		val, ok = m.center.GetStringWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
 	}
 	return val, ok
@@ -192,7 +197,7 @@ func (m *ApolloConfig) getConfigStringItemWithFallback(ctx context.Context, name
 func (m *ApolloConfig) getConfigIntItemWithFallback(ctx context.Context, namespace, name string) (int, bool) {
 	val, ok := m.center.GetIntWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
 	if !ok {
-		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextController{defaultGroup})
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{defaultGroup})
 		val, ok = m.center.GetIntWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
 	}
 	return val, ok
@@ -281,7 +286,7 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 func (m *ApolloConfig) buildKey(ctx context.Context, namespace, item string) string {
 	return strings.Join([]string{
 		namespace,
-		scontext.GetGroupWithDefault(ctx, defaultGroup),
+		scontext.GetControlRouteGroupWithDefault(ctx, defaultGroup),
 		fmt.Sprint(cache.CacheTypeRedis),
 		item,
 	}, apolloConfigSep)

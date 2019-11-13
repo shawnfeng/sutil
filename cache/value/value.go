@@ -22,7 +22,7 @@ import (
 )
 
 // key类型只支持int（包含有无符号，8，16，32，64位）和string
-type LoadFunc func(key interface{}) (value interface{}, err error)
+type LoadFunc func(ctx context.Context, key interface{}) (value interface{}, err error)
 
 type Cache struct {
 	namespace string
@@ -42,9 +42,8 @@ func NewCache(namespace, prefix string, expire time.Duration, load LoadFunc) *Ca
 
 func (m *Cache) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
-		Group:     scontext.GetGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Group:     scontext.GetControlRouteGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeCache,
 	}
 }
 
@@ -189,7 +188,7 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []byte, err error) {
 	fun := "Cache.loadValueToCache -->"
 
-	value, err := m.load(key)
+	value, err := m.load(ctx, key)
 	if err != nil {
 		slog.Warnf(ctx, "%s load err, cache key:%v err:%v", fun, key, err)
 		data = []byte(err.Error())
@@ -243,5 +242,12 @@ func WatchUpdate(ctx context.Context) {
 }
 
 func init() {
-	_ = SetConfiger(context.Background(), cache.ConfigerTypeSimple)
+	fun := "value.init -->"
+	ctx := context.Background()
+	err := SetConfiger(ctx, cache.ConfigerTypeApollo)
+	if err != nil {
+		slog.Errorf(ctx, "%s set cache configer:%v err:%v", fun, cache.ConfigerTypeApollo, err)
+	} else {
+		slog.Infof(ctx, "%s cache configer:%v been set", fun, cache.ConfigerTypeApollo)
+	}
 }

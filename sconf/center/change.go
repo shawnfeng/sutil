@@ -1,7 +1,7 @@
 package center
 
 import (
-	"github.com/ZhengHe-MD/agollo"
+	"github.com/ZhengHe-MD/agollo/v4"
 	"github.com/pkg/errors"
 )
 

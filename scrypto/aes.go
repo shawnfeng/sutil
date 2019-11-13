@@ -9,6 +9,7 @@ import (
 
 const (
 	BlockMode_CBC = "CBC"
+	BlockMode_ECB = "ECB"
 	Padding_PKCS5 = "PKCS5Padding"
 )
 
@@ -54,6 +55,8 @@ func getEncrypter(block cipher.Block, iv []byte, mode string) (cipher.BlockMode,
 	switch mode {
 	case BlockMode_CBC:
 		return cipher.NewCBCEncrypter(block, iv), nil
+	case BlockMode_ECB:
+		return NewECBEncrypter(block), nil
 	}
 	return nil, fmt.Errorf("not support encrypter block mode: %s", mode)
 }
@@ -61,6 +64,8 @@ func getDecrypter(block cipher.Block, iv []byte, mode string) (cipher.BlockMode,
 	switch mode {
 	case BlockMode_CBC:
 		return cipher.NewCBCDecrypter(block, iv), nil
+	case BlockMode_ECB:
+		return NewECBDecrypter(block), nil
 	}
 	return nil, fmt.Errorf("not support decrypter block mode: %s", mode)
 }
@@ -92,6 +97,24 @@ func CBCPKCS5PaddingAesEncrypt(key []byte, iv []byte, src []byte) ([]byte, error
 //解密数据  CBC  PKCS5Padding
 func CBCPKCS5PaddingAesDecrypt(key []byte, iv []byte, encryptedData []byte) ([]byte, error) {
 	cryptor, err := NewAesCryptor(key, iv, BlockMode_CBC, Padding_PKCS5)
+	if err != nil {
+		return nil, err
+	}
+	return cryptor.Decrypt(encryptedData)
+}
+
+//加密数据 ECB  PKCS5Padding
+func ECBPKCS5PaddingAesEncrypt(key []byte, src []byte) ([]byte, error) {
+	cryptor, err := NewAesCryptor(key, key, BlockMode_ECB, Padding_PKCS5)
+	if err != nil {
+		return nil, err
+	}
+	return cryptor.Encrypt(src)
+}
+
+//解密数据  ECB  PKCS5Padding
+func ECBPKCS5PaddingAesDecrypt(key []byte, encryptedData []byte) ([]byte, error) {
+	cryptor, err := NewAesCryptor(key, key, BlockMode_ECB, Padding_PKCS5)
 	if err != nil {
 		return nil, err
 	}

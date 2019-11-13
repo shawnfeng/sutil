@@ -56,6 +56,27 @@ func (m *Router) StatInfo() []*stat.QueryStat {
 	return m.report.StatInfo()
 }
 
+func (m *Router) sqlPrepare(ctx context.Context, cluster, table string) (db *DB, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.sqlPrepare")
+	defer span.Finish()
+
+	instance := m.configer.GetInstance(ctx, cluster, table)
+	in := m.instances.Get(ctx, generateKey(instance))
+	if in == nil {
+		err = fmt.Errorf("db instance not find: instance:%s", instance)
+		return
+	}
+
+	dbsql, ok := in.(*Sql)
+	if !ok {
+		err = fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
+		return
+	}
+
+	db = dbsql.getDB()
+	return
+}
+
 func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []interface{}) error, tables ...string) error {
 	fun := "Router.SqlExec -->"
 
@@ -67,23 +88,16 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	if len(tables) <= 0 {
 		return fmt.Errorf("tables is empty")
 	}
-
 	table := tables[0]
+
 	span.LogFields(
 		log.String(spanLogKeyCluster, cluster),
 		log.String(spanLogKeyTable, table))
-	instance := m.configer.GetInstance(ctx, cluster, table)
-	in := m.instances.Get(ctx, generateKey(instance))
-	if in == nil {
-		return fmt.Errorf("db instance not find: instance:%s", instance)
-	}
 
-	dbsql, ok := in.(*Sql)
-	if !ok {
-		return fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
+	db, err := m.sqlPrepare(ctx, cluster, table)
+	if err != nil {
+		return err
 	}
-
-	db := dbsql.getDB()
 
 	defer func() {
 		dur := st.Duration()
@@ -97,6 +111,27 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	return query(db, tmptables)
+}
+
+func (m *Router) ormPrepare(ctx context.Context, cluster, table string) (db *GormDB, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.ormPrepare")
+	defer span.Finish()
+
+	instance := m.configer.GetInstance(ctx, cluster, table)
+	in := m.instances.Get(ctx, generateKey(instance))
+	if in == nil {
+		err = fmt.Errorf("db instance not find: instance:%s", instance)
+		return
+	}
+
+	dbsql, ok := in.(*Sql)
+	if !ok {
+		err = fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
+		return
+	}
+
+	db = dbsql.getGormDB()
+	return
 }
 
 func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB, []interface{}) error, tables ...string) error {
@@ -115,18 +150,11 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 	span.LogFields(
 		log.String(spanLogKeyCluster, cluster),
 		log.String(spanLogKeyTable, table))
-	instance := m.configer.GetInstance(ctx, cluster, table)
-	in := m.instances.Get(ctx, generateKey(instance))
-	if in == nil {
-		return fmt.Errorf("db instance not find: instance:%s", instance)
-	}
 
-	dbsql, ok := in.(*Sql)
-	if !ok {
-		return fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
+	db, err := m.ormPrepare(ctx, cluster, table)
+	if err != nil {
+		return err
 	}
-
-	db := dbsql.getGormDB()
 
 	defer func() {
 		dur := st.Duration()
@@ -154,6 +182,37 @@ func (m *Router) MongoExecStrong(ctx context.Context, cluster, table string, que
 	return m.mongoExec(ctx, strong, cluster, table, query)
 }
 
+func (m *Router) mongoPrepare(ctx context.Context, consistency mode, cluster, table string) (sess *mgo.Session, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoPrepare")
+	defer span.Finish()
+
+	instance := m.configer.GetInstance(ctx, cluster, table)
+	in := m.instances.Get(ctx, generateKey(instance))
+	if in == nil {
+		err = fmt.Errorf("db instance not find: cluster:%s table:%s", cluster, table)
+		return
+	}
+
+	db, ok := in.(*dbMongo)
+	if !ok {
+		err = fmt.Errorf("db instance type error: cluster:%s table:%s type:%s", cluster, table, in.GetType())
+		return
+	}
+
+	ss, err := db.getSession(consistency)
+	if err != nil {
+		return
+	}
+
+	if ss == nil {
+		err = fmt.Errorf("db instance session empty: cluster:%s table:%s type:%s", cluster, table, in.GetType())
+		return
+	}
+
+	sess = ss.Copy()
+	return
+}
+
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
 	fun := "Router.mongoExec -->"
 
@@ -165,29 +224,12 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 
 	st := stime.NewTimeStat()
 
-	instance := m.configer.GetInstance(ctx, cluster, table)
-	in := m.instances.Get(ctx, generateKey(instance))
-	if in == nil {
-		return fmt.Errorf("db instance not find: cluster:%s table:%s", cluster, table)
-	}
-
-	db, ok := in.(*dbMongo)
-	if !ok {
-		return fmt.Errorf("db instance type error: cluster:%s table:%s type:%s", cluster, table, in.GetType())
-	}
-
-	sess, err := db.getSession(consistency)
+	sess, err := m.mongoPrepare(ctx, consistency, cluster, table)
 	if err != nil {
 		return err
 	}
-
-	if sess == nil {
-		return fmt.Errorf("db instance session empty: cluster:%s table:%s type:%s", cluster, table, in.GetType())
-	}
-
-	sessionCopy := sess.Copy()
-	defer sessionCopy.Close()
-	c := sessionCopy.DB("").C(table)
+	defer sess.Close()
+	coll := sess.DB("").C(table)
 
 	defer func() {
 		dur := st.Duration()
@@ -195,5 +237,5 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
 
-	return query(c)
+	return query(coll)
 }

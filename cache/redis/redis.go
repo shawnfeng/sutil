@@ -17,10 +17,9 @@ var RedisNil = fmt.Sprintf("redis: nil")
 type Client struct {
 	client    *redis.Client
 	namespace string
-	wrapper   string
 }
 
-func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
+func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	fun := "NewClient -->"
 
 	config, err := DefaultConfiger.GetConfig(ctx, namespace)
@@ -45,14 +44,12 @@ func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, 
 	return &Client{
 		client:    client,
 		namespace: namespace,
-		wrapper:   wrapper,
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
 	return strings.Join([]string{
 		m.namespace,
-		m.wrapper,
 		key,
 	}, ".")
 }
@@ -112,6 +109,84 @@ func (m *Client) SetNX(ctx context.Context, key string, value interface{}, expir
 	return m.client.SetNX(k, value, expiration)
 }
 
+func (m *Client) HSet(ctx context.Context, key string, field string, value interface{}) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HSet", k)
+	return m.client.HSet(k, field, value)
+}
+
+func (m *Client) HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HDel", k)
+	return m.client.HDel(k, fields...)
+}
+
+func (m *Client) HExists(ctx context.Context, key string, field string) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HExists", k)
+	return m.client.HExists(k, field)
+}
+
+func (m *Client) HGet(ctx context.Context, key string, field string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HGet", k)
+	return m.client.HGet(k, field)
+}
+
+func (m *Client) HGetAll(ctx context.Context, key string) *redis.StringStringMapCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HGetAll", k)
+	return m.client.HGetAll(k)
+}
+
+func (m *Client) HIncrBy(ctx context.Context, key string, field string, incr int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HIncrBy", k)
+	return m.client.HIncrBy(k, field, incr)
+}
+
+func (m *Client) HIncrByFloat(ctx context.Context, key string, field string, incr float64) *redis.FloatCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HIncrByFloat", k)
+	return m.client.HIncrByFloat(k, field, incr)
+}
+
+func (m *Client) HKeys(ctx context.Context, key string) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HKeys", k)
+	return m.client.HKeys(k)
+}
+
+func (m *Client) HLen(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HLen", k)
+	return m.client.HLen(k)
+}
+
+func (m *Client) HMGet(ctx context.Context, key string, fields ...string) *redis.SliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HMGet", k)
+	return m.client.HMGet(k, fields...)
+}
+
+func (m *Client) HMSet(ctx context.Context, key string, fields map[string]interface{}) *redis.StatusCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HMSet", k)
+	return m.client.HMSet(k, fields)
+}
+
+func (m *Client) HSetNX(ctx context.Context, key string, field string, val interface{}) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HSetNX", k)
+	return m.client.HSetNX(k, field, val)
+}
+
+func (m *Client) HVals(ctx context.Context, key string) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HVals", k)
+	return m.client.HVals(k)
+}
+
 func (m *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZAdd", k)
@@ -164,6 +239,18 @@ func (m *Client) ZRange(ctx context.Context, key string, start, stop int64) *red
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZRange", k)
 	return m.client.ZRange(k, start, stop)
+}
+
+func (m *Client) ZRangeByLex(ctx context.Context, key string, by redis.ZRangeBy) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRangeByLex", k)
+	return m.client.ZRangeByLex(k, by)
+}
+
+func (m *Client) ZRangeByScore(ctx context.Context, key string, by redis.ZRangeBy) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRangeByScore", k)
+	return m.client.ZRangeByScore(k, by)
 }
 
 func (m *Client) ZRangeWithScores(ctx context.Context, key string, start, stop int64) *redis.ZSliceCmd {

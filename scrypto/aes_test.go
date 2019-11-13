@@ -2,6 +2,7 @@ package scrypto
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"testing"
 )
 
@@ -21,10 +22,46 @@ func Test_CBCPKCS5PaddingAesDecrypt(t *testing.T) {
 	t.Log(string(decrypt), e)
 }
 func Test_AesEncryptString(t *testing.T) {
-	src := "86-12345678901"
-	s, e := AesEncryptString(key, iv, src)
-	t.Log(s, e)
-	s, e = AesDecryptString(key, iv, s)
-	t.Log(s, e)
+	var tests = []struct {
+		input string
+	}{
+		{""},
+		{"86-12345678901"},
+		{"abc"},
+		{"121231223"},
+	}
+	for _, test := range tests {
+		s, _ := AesEncryptString(key, iv, test.input)
+		t.Log(s)
+		s, _ = AesDecryptString(key, iv, s)
+		t.Log(s)
+		if s != test.input {
+			t.Error(test.input)
+		}
+	}
+
+}
+func Test_AesECBEncryptString(t *testing.T) {
+	keys, _ := base64.StdEncoding.DecodeString("aqPmuoOm1CliRUdn3TkTKQ==")
+	var tests = []struct {
+		input string
+	}{
+		{`{"pid":"0","id":"34","name":"测试部门"}`},
+		//{"86-12345678901"},
+		//{"abc"},
+		//{"121231223"},
+	}
+	for _, test := range tests {
+		sb, _ := ECBPKCS5PaddingAesEncrypt(keys, []byte(test.input))
+		s := hex.EncodeToString(sb)
+		t.Log(s)
+		ss, _ := hex.DecodeString(s)
+		sb, _ = ECBPKCS5PaddingAesDecrypt(keys, ss)
+		s = string(sb)
+		t.Log(s)
+		if s != test.input {
+			t.Error(test.input)
+		}
+	}
 
 }
