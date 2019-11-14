@@ -30,7 +30,7 @@ func dialBySqlx(info *Sql) (db *sqlx.DB, err error) {
 
 	var dataSourceName string
 	if info.dbType == DB_TYPE_MYSQL {
-		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s", info.userName, info.passWord, info.dbAddr, info.dbName)
+		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=True&loc=Local", info.userName, info.passWord, info.dbAddr, info.dbName)
 
 	} else if info.dbType == DB_TYPE_POSTGRES {
 		dataSourceName = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
@@ -40,7 +40,7 @@ func dialBySqlx(info *Sql) (db *sqlx.DB, err error) {
 	slog.Infof(context.TODO(), "%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
 	sqlxdb, err := sqlx.Connect(info.dbType, dataSourceName)
 	if err == nil {
-		sqlxdb.SetMaxIdleConns(8)
+		sqlxdb.SetMaxIdleConns(64)
 		sqlxdb.SetMaxOpenConns(128)
 	}
 	return sqlxdb, err

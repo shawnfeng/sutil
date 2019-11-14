@@ -2,7 +2,6 @@ package redisext
 
 import (
 	"context"
-	"github.com/shawnfeng/sutil/cache"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -16,7 +15,6 @@ func TestRedisExt_ZAdd(t *testing.T) {
 	ctx := context.Background()
 
 	re := NewRedisExt("base/report", "test")
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 
 	members := []Z{
 		{1, "one"},
@@ -40,7 +38,6 @@ func TestRedisExt_ZRange(t *testing.T) {
 	ctx := context.Background()
 
 	re := NewRedisExt("base/report", "test")
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 
 	// prepare
 	members := []Z{
@@ -83,7 +80,6 @@ func TestRedisExt_ZRange(t *testing.T) {
 func TestRedisExt_ZRank(t *testing.T) {
 	ctx := context.Background()
 	re := NewRedisExt("base/report", "test")
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 
 	// prepare
 	members := []Z{
@@ -122,7 +118,6 @@ func TestRedisExt_ZRank(t *testing.T) {
 func TestRedisExt_ZCount(t *testing.T) {
 	ctx := context.Background()
 	re := NewRedisExt("base/report", "test")
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 
 	// prepare
 	members := []Z{
@@ -149,7 +144,6 @@ func TestRedisExt_ZCount(t *testing.T) {
 func TestRedisExt_ZScore(t *testing.T) {
 	ctx := context.Background()
 	re := NewRedisExt("base/report", "test")
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 
 	// prepare
 	members := []Z{
@@ -184,7 +178,6 @@ func TestRedisExt_ZScore(t *testing.T) {
 func TestRedisExt_Expire(t *testing.T) {
 	ctx := context.Background()
 	re := NewRedisExt("base/report", "test")
-	_ = SetConfiger(ctx, cache.ConfigerTypeApollo)
 
 	// prepare
 	members := []Z{

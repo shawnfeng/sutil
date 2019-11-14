@@ -54,7 +54,7 @@ func fromRedisZSlice(rzs []redis2.Z) (zs []Z) {
 }
 
 type ZRangeBy struct {
-	Min, Max string
+	Min, Max      string
 	Offset, Count int64
 }
 
@@ -83,7 +83,6 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
 		Group:     scontext.GetControlRouteGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
-		Wrapper:   cache.WrapperTypeRedisExt,
 	}
 }
 
@@ -99,6 +98,14 @@ func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp tim
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		s, err = client.Set(ctx, m.prefixKey(key), val, exp).Result()
+	}
+	return
+}
+
+func (m *RedisExt) Incr(ctx context.Context, key string, val interface{}) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.Incr(ctx, m.prefixKey(key)).Result()
 	}
 	return
 }
