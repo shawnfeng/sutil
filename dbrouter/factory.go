@@ -28,10 +28,10 @@ func generateKey(instance string) string {
 	return instance
 }
 
-func Factory(ctx context.Context, key string, configer Configer) (in Instancer, err error) {
+func Factory(ctx context.Context, key, group string, configer Configer) (in Instancer, err error) {
 	instance := parseKey(key)
 
-	config := configer.GetConfig(ctx, instance)
+	config := configer.GetConfigByGroup(ctx, instance, group)
 	if len(config.DBAddr) == 0 {
 		return nil, fmt.Errorf("config.DBAddr err, key: %s", key)
 	}
@@ -49,6 +49,4 @@ func Factory(ctx context.Context, key string, configer Configer) (in Instancer, 
 	default:
 		return nil, fmt.Errorf("dbType err, key: %s", key)
 	}
-
-	return nil, fmt.Errorf("dbType err, key: %s", key)
 }

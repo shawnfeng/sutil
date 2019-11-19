@@ -34,6 +34,10 @@ func Sync() error {
 }
 
 func Init(logDir, logPref string, service string) {
+	InitV2(logDir, logPref, service, 10240000, 0, 0)
+}
+
+func InitV2(logDir, logPref string, service string, maxSize int, maxAge, maxBackups int) {
 	serviceName = service
 
 	logFile := ""
@@ -44,7 +48,7 @@ func Init(logDir, logPref string, service string) {
 
 	var out io.Writer = os.Stdout
 	if logFile != "" {
-		logger := lumberjack.NewLogger(logFile, 10240000, 0, 0, true, false)
+		logger := lumberjack.NewLogger(logFile, maxSize, maxAge, maxBackups, true, false)
 
 		go func() {
 			for {

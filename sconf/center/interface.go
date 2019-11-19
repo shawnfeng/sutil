@@ -2,85 +2,121 @@ package center
 
 import (
 	"context"
-	"github.com/opentracing/opentracing-go"
+	"fmt"
 )
 
+type ConfigCenterType int
+
+const (
+	ApolloConfigCenter ConfigCenterType = iota
+)
+
+func (c ConfigCenterType) String() string {
+	switch c {
+	case ApolloConfigCenter:
+		return "apollo"
+	default:
+		return "unknown"
+	}
+}
+
+func NewConfigCenter(t ConfigCenterType) (ConfigCenter, error) {
+	fun := "sconfcenter.NewConfigCenter-->"
+	switch t {
+	case ApolloConfigCenter:
+		return newApolloConfigCenter(), nil
+	default:
+		return nil, fmt.Errorf("%s unsupported config center type:%v", fun, t)
+	}
+}
+
 var defaultConfigCenter ConfigCenter
+
+type ConfigObserver interface {
+	HandleChangeEvent(event *ChangeEvent)
+}
 
 type ConfigCenter interface {
 	Init(ctx context.Context, serviceName string, namespaceNames []string) error
 	Stop(ctx context.Context) error
 
-	GetString(ctx context.Context, key string) string
-	GetStringWithNamespace(ctx context.Context, namespace, key string) string
-	GetBool(ctx context.Context, key string) bool
-	GetBoolWithNamespace(ctx context.Context, namespace, key string) bool
-	GetInt(ctx context.Context, key string) int
-	GetIntWithNamespace(ctx context.Context, namespace, key string) int
+	SubscribeNamespaces(ctx context.Context, namespaceNames []string) error
 
-	WatchUpdate(ctx context.Context) <-chan *ChangeEvent
+	GetString(ctx context.Context, key string) (string, bool)
+	GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool)
+	GetBool(ctx context.Context, key string) (bool, bool)
+	GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool)
+	GetInt(ctx context.Context, key string) (int, bool)
+	GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool)
+	GetAllKeys(ctx context.Context) []string
+	GetAllKeysWithNamespace(ctx context.Context, namespace string) []string
+
+	Unmarshal(ctx context.Context, v interface{}) error
+	UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error
+	UnmarshalKey(ctx context.Context, key string, v interface{}) error
+	UnmarshalKeyWithNamespace(ctx context.Context, namespace string, key string, v interface{}) error
+
+	StartWatchUpdate(ctx context.Context)
+	RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func())
 }
 
 func Init(ctx context.Context, serviceName string, namespaceNames []string) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.Init")
-	defer span.Finish()
-
 	defaultConfigCenter = newApolloConfigCenter()
 	return defaultConfigCenter.Init(ctx, serviceName, namespaceNames)
 }
 
 func Stop(ctx context.Context) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.Stop")
-	defer span.Finish()
-
 	return defaultConfigCenter.Stop(ctx)
 }
 
-func GetString(ctx context.Context, key string) string {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetString")
-	defer span.Finish()
+func SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
+	return defaultConfigCenter.SubscribeNamespaces(ctx, namespaceNames)
+}
 
+func GetString(ctx context.Context, key string) (string, bool) {
 	return defaultConfigCenter.GetString(ctx, key)
 }
 
-func GetStringWithNamespace(ctx context.Context, namespace, key string) string {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetStringWithNamespace")
-	defer span.Finish()
-
+func GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool) {
 	return defaultConfigCenter.GetStringWithNamespace(ctx, namespace, key)
 }
 
-func GetBool(ctx context.Context, key string) bool {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetBool")
-	defer span.Finish()
-
+func GetBool(ctx context.Context, key string) (bool, bool) {
 	return defaultConfigCenter.GetBool(ctx, key)
 }
 
-func GetBoolWithNamespace(ctx context.Context, namespace, key string) bool {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetBoolWithNamespace")
-	defer span.Finish()
-
+func GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool) {
 	return defaultConfigCenter.GetBoolWithNamespace(ctx, namespace, key)
 }
 
-func GetInt(ctx context.Context, key string) int {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetInt")
-	defer span.Finish()
-
+func GetInt(ctx context.Context, key string) (int, bool) {
 	return defaultConfigCenter.GetInt(ctx, key)
 }
 
-func GetIntWithNamespace(ctx context.Context, namespace, key string) int {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.GetIntWithNamespace")
-	defer span.Finish()
-
+func GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool) {
 	return defaultConfigCenter.GetIntWithNamespace(ctx, namespace, key)
 }
 
-func WatchUpdate(ctx context.Context) <-chan *ChangeEvent {
-	span, _ := opentracing.StartSpanFromContext(ctx, "sconfcenter.WatchUpdate")
-	defer span.Finish()
+func StartWatchUpdate(ctx context.Context) {
+	defaultConfigCenter.StartWatchUpdate(ctx)
+}
 
-	return defaultConfigCenter.WatchUpdate(ctx)
+func RegisterObserver(ctx context.Context, observer ConfigObserver) (recall func()) {
+	return defaultConfigCenter.RegisterObserver(ctx, observer)
+}
+
+func Unmarshal(ctx context.Context, v interface{}) error {
+	return defaultConfigCenter.Unmarshal(ctx, v)
+}
+
+func UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error {
+	return defaultConfigCenter.UnmarshalWithNamespace(ctx, namespace, v)
+}
+
+func UnmarshalKey(ctx context.Context, key string, v interface{}) error {
+	return defaultConfigCenter.UnmarshalKey(ctx, key, v)
+}
+
+func UnmarshalKeyWithNamespace(ctx context.Context, namespace, key string, v interface{}) error {
+	return defaultConfigCenter.UnmarshalKeyWithNamespace(ctx, namespace, key, v)
 }
