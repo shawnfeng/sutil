@@ -19,6 +19,7 @@ require (
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/pkg/errors v0.8.0
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
+	github.com/prometheus/common v0.2.0
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
 	github.com/segmentio/kafka-go v0.2.4
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
