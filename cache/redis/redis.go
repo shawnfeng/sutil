@@ -75,6 +75,18 @@ func (m *Client) Set(ctx context.Context, key string, value interface{}, expirat
 	return m.client.Set(k, value, expiration)
 }
 
+func (m *Client) GetBit(ctx context.Context, key string, offset int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "GetBit", k)
+	return m.client.GetBit(k, offset)
+}
+
+func (m *Client) SetBit(ctx context.Context, key string, offset int64, value int) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SetBit", k)
+	return m.client.SetBit(k, offset, value)
+}
+
 func (m *Client) Exists(ctx context.Context, key string) *redis.IntCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Exists", k)
