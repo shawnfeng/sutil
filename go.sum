@@ -40,6 +40,7 @@ github.com/ZhengHe-MD/properties v0.2.0 h1:+Ldk3RfgF3I9tz3aqplkQle61IvdJxrnb4P7m
 github.com/ZhengHe-MD/properties v0.2.0/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
 github.com/ZhengHe-MD/properties v0.2.1 h1:EhfDfGMkt/tkenvmaRZ5iwnYF1cZrtDiDcL4RHzBFCA=
 github.com/ZhengHe-MD/properties v0.2.1/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
+github.com/ZhengHe-MD/properties v0.2.2/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
