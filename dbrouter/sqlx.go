@@ -12,6 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"time"
 )
 
 type DB struct {
@@ -40,8 +41,9 @@ func dialBySqlx(info *Sql) (db *sqlx.DB, err error) {
 	slog.Infof(context.TODO(), "%s dbtype:%s datasourcename:%s", fun, info.dbType, dataSourceName)
 	sqlxdb, err := sqlx.Connect(info.dbType, dataSourceName)
 	if err == nil {
-		sqlxdb.SetMaxIdleConns(64)
+		sqlxdb.SetMaxIdleConns(16)
 		sqlxdb.SetMaxOpenConns(128)
+		sqlxdb.SetConnMaxLifetime(time.Hour * 6)
 	}
 	return sqlxdb, err
 }
