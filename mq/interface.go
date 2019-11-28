@@ -143,8 +143,8 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	}
 
 	if err != nil {
-		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
-		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s ReadMsg err: %v, topic: %s", fun, err, topic)
+		return nil, fmt.Errorf("%s, ReadMsg err: %v, topic: %s", fun, err, topic)
 	}
 
 	if len(payload.Value) == 0 {
@@ -194,8 +194,8 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	}
 
 	if err != nil {
-		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
-		return nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s ReadMsg err: %v, topic: %s", fun, err, topic)
+		return nil, fmt.Errorf("%s, ReadMsg err: %v, topic: %s", fun, err, topic)
 	}
 
 	if len(payload.Value) == 0 {
@@ -245,8 +245,8 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	}
 
 	if err != nil {
-		slog.Errorf(ctx, "%s ReadMsg err, topic: %s", fun, topic)
-		return nil, nil, fmt.Errorf("%s, ReadMsg err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s ReadMsg err: %v, topic: %s", fun, err, topic)
+		return nil, nil, fmt.Errorf("%s, ReadMsg err: %v, topic: %s", fun, err, topic)
 	}
 
 	if len(payload.Value) == 0 {
