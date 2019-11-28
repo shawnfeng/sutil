@@ -8,7 +8,7 @@ require (
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
 	github.com/go-redis/redis v6.15.1+incompatible
 	github.com/go-sql-driver/mysql v1.4.1
-	github.com/golang/protobuf v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.0
 	github.com/jinzhu/gorm v1.9.10
 	github.com/jmoiron/sqlx v0.0.0-20170430194603-d9bd385d68c0
@@ -16,10 +16,12 @@ require (
 	github.com/kaneshin/go-pkg v0.0.0-20150919125626-a8e1479186cf
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lib/pq v1.1.1
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.8.0
-	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829
-	github.com/prometheus/common v0.2.0
+	github.com/pkg/errors v0.8.1
+	github.com/prometheus/client_golang v1.2.1
+	github.com/prometheus/common v0.7.0
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
 	github.com/segmentio/kafka-go v0.2.4
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8

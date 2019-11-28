@@ -40,10 +40,12 @@ func NewPromethsInstance(addr string) (*PromethsInstance, error) {
 	return NewPromethsInstanceWichApi(promethuesApi), nil
 }
 func (m *PromethsInstance) Query(ctx context.Context, query string, time time.Time) (model.Value, error) {
-	return m.Api.Query(ctx, query, time)
+	v, _, err := m.Api.Query(ctx, query, time)
+	return v, err
 }
 func (m *PromethsInstance) QueryRange(ctx context.Context, query string, r v1.Range) (model.Value, error) {
-	return m.Api.QueryRange(ctx, query, r)
+	v, _, err := m.Api.QueryRange(ctx, query, r)
+	return v, err
 }
 
 func (m *PromethsInstance) QueryMatrix(ctx context.Context, query string, time time.Time) (model.Matrix, error) {
