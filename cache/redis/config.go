@@ -18,7 +18,7 @@ import (
 
 const (
 	defaultPoolSize          = 128
-	defaultTimeoutNumSeconds = 1
+	defaultTimeoutNumSeconds = 3
 )
 
 type Config struct {
