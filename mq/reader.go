@@ -7,6 +7,7 @@ package mq
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 type Handler interface {
@@ -16,6 +17,8 @@ type Handler interface {
 type Reader interface {
 	FetchMsg(ctx context.Context, value interface{}, ovalue interface{}) (Handler, error)
 	ReadMsg(ctx context.Context, value interface{}, ovalue interface{}) error
+	SetOffsetAt(ctx context.Context, t time.Time) error
+	SetOffset(ctx context.Context, offset int64) error
 	Close() error
 }
 
@@ -48,12 +51,21 @@ func NewPartitionReader(ctx context.Context, topic string, partition int) (Reade
 		return nil, err
 	}
 
-	offset := config.Offset
+	offsetAt := config.OffsetAt
 	mqType := config.MQType
 	switch mqType {
 	case MQTypeKafka:
 		reader := NewKafkaReader(config.MQAddr, topic, "", partition, 1, 10e6, 0)
-		err := reader.SetOffset(offset)
+		if len(offsetAt) == 0 {
+			return nil, fmt.Errorf("no offsetAt config found")
+		}
+
+		t, err := time.Parse("2006-01-02T15:04:05", offsetAt)
+		if err != nil {
+			return nil, err
+		}
+
+		err = reader.SetOffsetAt(ctx, t)
 		if err != nil {
 			return nil, err
 		}

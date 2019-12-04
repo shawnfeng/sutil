@@ -63,6 +63,7 @@ type Config struct {
 	TimeOut        time.Duration
 	CommitInterval time.Duration
 	Offset         int64
+	OffsetAt       string
 }
 
 type KeyParts struct {
@@ -172,15 +173,16 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 }
 
 const (
-	apolloConfigSep        = "."
-	apolloBrokersSep       = ","
-	apolloBrokersKey       = "brokers"
+	apolloConfigSep   = "."
+	apolloBrokersSep  = ","
+	apolloBrokersKey  = "brokers"
+	apolloOffsetAtKey = "offsetat"
 )
 
 type ApolloConfig struct {
 	watchOnce sync.Once
 	ch        chan *center.ChangeEvent
-	center 	  center.ConfigCenter
+	center    center.ConfigCenter
 }
 
 func NewApolloConfiger() *ApolloConfig {
@@ -246,6 +248,13 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 
 	slog.Infof(ctx, "%s got config brokers:%s", fun, brokers)
 
+	offsetAtVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloOffsetAtKey)
+	if !ok {
+		slog.Infof(ctx, "%s no offsetAtVal config founds", fun)
+
+	}
+	slog.Infof(ctx, "%s got config offsetAt:%s", fun, offsetAtVal)
+
 	return &Config{
 		MQType:         MQTypeKafka,
 		MQAddr:         brokers,
@@ -253,6 +262,7 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
+		OffsetAt:       offsetAtVal,
 	}, nil
 }
 

@@ -6,7 +6,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	//	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
 	"github.com/shawnfeng/sutil/scontext"
@@ -36,35 +36,45 @@ func main() {
 	_ = mq.SetConfiger(ctx, mq.ConfigerTypeApollo)
 	mq.WatchUpdate(ctx)
 
-	go func() {
-		var msgs []mq.Message
-		for i := 0; i < 10; i++ {
-			value := &Msg{
-				Id:   1,
-				Body: fmt.Sprintf("%d", i),
+	/*
+		go func() {
+			var msgs []mq.Message
+			for i := 0; i < 3; i++ {
+				value := &Msg{
+					Id:   1,
+					Body: fmt.Sprintf("%d", i),
+				}
+
+				msgs = append(msgs, mq.Message{
+					Key:   value.Body,
+					Value: value,
+				})
+				err := mq.WriteMsg(ctx, topic, value.Body, value)
+				slog.Infof(ctx, "in msg: %v, err:%v", value, err)
 			}
+			err := mq.WriteMsgs(ctx, topic, msgs...)
+			slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
+		}()
+	*/
 
-			msgs = append(msgs, mq.Message{
-				Key:   value.Body,
-				Value: value,
-			})
-			err := mq.WriteMsg(ctx, topic, value.Body, value)
-			slog.Infof(ctx, "in msg: %v, err:%v", value, err)
+	ctx1 := context.Background()
+	/*
+		//err := mq.SetOffsetAt(ctx1, topic, 1, time.Date(2019, time.December, 4, 0, 0, 0, 0, time.UTC))
+		//err := mq.SetOffset(ctx1, topic, 1, -2)
+		if err != nil {
+			slog.Infof(ctx, "2222222222222222,err:%v", err)
 		}
-		err := mq.WriteMsgs(ctx, topic, msgs...)
-		slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
-	}()
-
+	*/
 	go func() {
 		for i := 0; i < 10000; i++ {
 			var msg Msg
-			ctx1 := context.Background()
-			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
-			slog.Infof(ctx, "out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			//ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
+			ctx, err := mq.ReadMsgByPartition(ctx1, topic, 1, &msg)
+			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 		}
 	}()
 
+	time.Sleep(6 * time.Second)
 	defer mq.Close()
 
-	time.Sleep(3 * time.Second)
 }

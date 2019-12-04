@@ -114,6 +114,14 @@ func (m *KafkaReader) Close() error {
 	return m.Reader.Close()
 }
 
+func (m *KafkaReader) SetOffsetAt(ctx context.Context, t time.Time) error {
+	return m.Reader.SetOffsetAt(ctx, t)
+}
+
+func (m *KafkaReader) SetOffset(ctx context.Context, offset int64) error {
+	return m.Reader.SetOffset(offset)
+}
+
 type KafkaWriter struct {
 	*kafka.Writer
 	// NOTE: KafkaWriter 没有 config 的 getter，故在此保留一份
