@@ -15,11 +15,13 @@ import (
 var RedisNil = fmt.Sprintf("redis: nil")
 
 type Client struct {
-	client    *redis.Client
-	namespace string
+	client     *redis.Client
+	namespace  string
+	wrapper    string
+	useWrapper bool
 }
 
-func NewClient(ctx context.Context, namespace string) (*Client, error) {
+func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
 	fun := "NewClient -->"
 
 	config, err := DefaultConfiger.GetConfig(ctx, namespace)
@@ -42,16 +44,26 @@ func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	}
 
 	return &Client{
-		client:    client,
-		namespace: namespace,
+		client:     client,
+		namespace:  namespace,
+		wrapper:    wrapper,
+		useWrapper: config.useWrapper,
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
-	return strings.Join([]string{
+	parts := []string{
 		m.namespace,
+		m.wrapper,
 		key,
-	}, ".")
+	}
+	if !m.useWrapper {
+		parts = []string{
+			m.namespace,
+			key,
+		}
+	}
+	return strings.Join(parts, ".")
 }
 
 func (m *Client) logSpan(ctx context.Context, op, key string) {

@@ -26,7 +26,7 @@ func TestGet(t *testing.T) {
 	ctx := context.Background()
 	_ = trace.InitDefaultTracer("cache.test")
 
-	c := NewCache("base/report", "test", 60*time.Second, load)
+	c := NewCache("test/test", "test", 60*time.Second, load)
 	WatchUpdate(ctx)
 
 	var test Test

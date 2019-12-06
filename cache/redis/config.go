@@ -19,13 +19,15 @@ import (
 const (
 	defaultPoolSize          = 128
 	defaultTimeoutNumSeconds = 3
+	defaultUseWrapper        = true
 )
 
 type Config struct {
-	addr      string
-	namespace string
-	poolSize  int
-	timeout   time.Duration
+	addr       string
+	namespace  string
+	poolSize   int
+	timeout    time.Duration
+	useWrapper bool
 }
 
 type KeyParts struct {
@@ -139,9 +141,10 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 const (
 	apolloConfigSep = "."
 
-	apolloConfigKeyAddr     = "addr"
-	apolloConfigKeyPoolSize = "poolsize"
-	apolloConfigKeyTimeout  = "timeout"
+	apolloConfigKeyAddr       = "addr"
+	apolloConfigKeyPoolSize   = "poolsize"
+	apolloConfigKeyTimeout    = "timeout"
+	apolloConfigKeyUseWrapper = "usewrapper"
 )
 
 type ApolloConfig struct {
@@ -203,6 +206,15 @@ func (m *ApolloConfig) getConfigIntItemWithFallback(ctx context.Context, namespa
 	return val, ok
 }
 
+func (m *ApolloConfig) getConfigBoolItemWithFallback(ctx context.Context, namespace, name string) (bool, bool) {
+	val, ok := m.center.GetBoolWithNamespace(ctx, center.DefaultApolloCacheNamespace, m.buildKey(ctx, namespace, name))
+	if !ok {
+		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{defaultGroup})
+		val, ok = m.center.GetBoolWithNamespace(defaultCtx, center.DefaultApolloCacheNamespace, m.buildKey(defaultCtx, namespace, name))
+	}
+	return val, ok
+}
+
 func (m *ApolloConfig) GetConfig(ctx context.Context, namespace string) (*Config, error) {
 	fun := "ApolloConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get apollo config namespace:%s", fun, namespace)
@@ -228,11 +240,19 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, namespace string) (*Config
 	}
 	slog.Infof(ctx, "%s got config timeout:%v seconds", fun, timeout)
 
+	useWrapper, ok := m.getConfigBoolItemWithFallback(ctx, namespace, apolloConfigKeyUseWrapper)
+	if !ok {
+		useWrapper = defaultUseWrapper
+		slog.Infof(ctx, "%s no usewrapper config found, use default:%v", fun, useWrapper)
+	}
+	slog.Infof(ctx, "%s got config usewrapper:%v", fun, useWrapper)
+
 	return &Config{
-		addr:      addr,
-		namespace: namespace,
-		poolSize:  poolSize,
-		timeout:   time.Duration(timeout) * time.Second,
+		addr:       addr,
+		namespace:  namespace,
+		poolSize:   poolSize,
+		timeout:    time.Duration(timeout) * time.Second,
+		useWrapper: useWrapper,
 	}, nil
 }
 
