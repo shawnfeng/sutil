@@ -183,6 +183,8 @@ github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886 h1:dkA4/6HgXq1Nq09XT
 github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886/go.mod h1:xucuMeiX1TAS2KBgvWFPd0UZN3BnOmHZEggfq28hlfA=
 github.com/segmentio/kafka-go v0.2.4 h1:gib3gdWC+PnrR16gYQ+nf1H1ilXGw6IXLVESRXa9qes=
 github.com/segmentio/kafka-go v0.2.4/go.mod h1:MyX8oKJCSypBXY66FgANfFbqN8aFXAGoLlnR3eKCzoU=
+github.com/segmentio/kafka-go v0.3.4 h1:Mv9AcnCgU14/cU6Vd0wuRdG1FBO0HzXQLnjBduDLy70=
+github.com/segmentio/kafka-go v0.3.4/go.mod h1:OT5KXBPbaJJTcvokhWR2KFmm0niEx3mnccTwjmLvSi4=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb h1:8XB3GJL0SMlYBeVm/CTdqHavrlX7lKsvTE1MuTLE4Vs=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181211043042-d38ab0a61bdb/go.mod h1:9u5PFfVGpGVlGplh2jWs0UqjcY3ptVZ/v5iXpsRGg9M=
 github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8 h1:UEgIO+GShCTkSTPdQj+5UODyJi2FpwMnyZ982jpABs8=
