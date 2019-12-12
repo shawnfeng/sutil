@@ -6,7 +6,7 @@ package main
 
 import (
 	"context"
-	//	"fmt"
+	//"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
 	"github.com/shawnfeng/sutil/scontext"
@@ -68,8 +68,7 @@ func main() {
 	go func() {
 		for i := 0; i < 10000; i++ {
 			var msg Msg
-			//ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group2", &msg)
-			ctx, err := mq.ReadMsgByPartition(ctx1, topic, 1, &msg)
+			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group3", &msg)
 			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 		}
 	}()

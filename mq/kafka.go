@@ -44,6 +44,7 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 		MinBytes:       minBytes,
 		MaxBytes:       maxBytes,
 		CommitInterval: commitInterval,
+		StartOffset:    kafka.LastOffset,
 		//MaxWait:        30 * time.Second,
 	})
 
