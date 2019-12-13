@@ -2,7 +2,9 @@ package center
 
 import (
 	"context"
-	"github.com/ZhengHe-MD/agollo"
+	"github.com/ZhengHe-MD/agollo/v4"
+	"github.com/ZhengHe-MD/properties"
+	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"os"
 	"strings"
@@ -22,6 +24,7 @@ const (
 
 type apolloConfigCenter struct {
 	conf            *agollo.Conf
+	ag              *agollo.Agollo
 	watchUpdateOnce sync.Once
 	changeEventChan chan *ChangeEvent
 }
@@ -58,7 +61,10 @@ func normalizeServiceName(serviceName string) string {
 }
 
 func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, namespaceNames []string) error {
-	fun := "apollo.Init-->"
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.Init")
+	defer span.Finish()
+
+	fun := "apolloConfigCenter.Init-->"
 
 	agollo.SetLogger(slog.GetLogger())
 
@@ -72,65 +78,138 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 	}
 
 	ap.conf = conf
-	go func() {
-		if err := agollo.StartWithConf(ap.conf); err != nil {
-			slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
-		} else {
-			slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
-		}
-	}()
+	ap.ag = agollo.NewAgollo(conf)
+
+	slog.Infof(ctx, "%s start agollo with conf:%v", fun, ap.conf)
+
+	if err := ap.ag.Start(); err != nil {
+		slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
+	} else {
+		slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
+	}
 
 	return nil
 }
 
 func (ap *apolloConfigCenter) Stop(ctx context.Context) error {
-	return agollo.Stop()
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.Stop")
+	defer span.Finish()
+	return ap.ag.Stop()
 }
 
-func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) string {
-	return agollo.GetString(key, "")
+func (ap *apolloConfigCenter) SubscribeNamespaces(ctx context.Context, namespaceNames []string) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.SubscribeNamespaces")
+	defer span.Finish()
+	return ap.ag.SubscribeToNamespaces(namespaceNames...)
 }
 
-func (ap *apolloConfigCenter) GetStringWithNamespace(ctx context.Context, namespace, key string) string {
-	return agollo.GetStringWithNamespace(namespace, key, "")
+func (ap *apolloConfigCenter) GetString(ctx context.Context, key string) (string, bool) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetString")
+	defer span.Finish()
+	return ap.ag.GetString(key)
 }
 
-func (ap *apolloConfigCenter) GetBool(ctx context.Context, key string) bool {
-	return agollo.GetBool(key, false)
+func (ap *apolloConfigCenter) GetStringWithNamespace(ctx context.Context, namespace, key string) (string, bool) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetStringWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetStringWithNamespace(namespace, key)
 }
 
-func (ap *apolloConfigCenter) GetBoolWithNamespace(ctx context.Context, namespace, key string) bool {
-	return agollo.GetBoolWithNamespace(namespace, key, false)
+func (ap *apolloConfigCenter) GetBool(ctx context.Context, key string) (bool, bool) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetBool")
+	defer span.Finish()
+
+	return ap.ag.GetBool(key)
 }
 
-func (ap *apolloConfigCenter) GetInt(ctx context.Context, key string) int {
-	return agollo.GetInt(key, 0)
+func (ap *apolloConfigCenter) GetBoolWithNamespace(ctx context.Context, namespace, key string) (bool, bool) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetBoolWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetBoolWithNamespace(namespace, key)
 }
 
-func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace, key string) int {
-	return agollo.GetIntWithNamespace(namespace, key, 0)
+func (ap *apolloConfigCenter) GetInt(ctx context.Context, key string) (int, bool) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetInt")
+	defer span.Finish()
+
+	return ap.ag.GetInt(key)
 }
 
-func (ap *apolloConfigCenter) WatchUpdate(ctx context.Context) <-chan *ChangeEvent {
-	fun := "sconfcenter.WatchUpdate-->"
+func (ap *apolloConfigCenter) GetIntWithNamespace(ctx context.Context, namespace, key string) (int, bool) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetIntWithNamespace")
+	defer span.Finish()
 
-	ap.watchUpdateOnce.Do(func() {
-		agolloChangeEventChan := agollo.WatchUpdate()
-		go func() {
-		WatchUpdateLoop:
-			for {
-				select {
-				case <-ctx.Done():
-					close(ap.changeEventChan)
-					break WatchUpdateLoop
-				case ace := <-agolloChangeEventChan:
-					ce := fromAgolloChangeEvent(ace)
-					slog.Infof(ctx, "%s receive change event:%v", fun, ce)
-					ap.changeEventChan <- ce
-				}
-			}
-		}()
-	})
-
-	return ap.changeEventChan
+	return ap.ag.GetIntWithNamespace(namespace, key)
 }
+
+func (ap *apolloConfigCenter) GetAllKeys(ctx context.Context) []string {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetAllKeys")
+	defer span.Finish()
+
+	return ap.ag.GetAllKeys("application")
+}
+
+func (ap *apolloConfigCenter) GetAllKeysWithNamespace(ctx context.Context, namespace string) []string {
+	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.GetAllKeysWithNamespace")
+	defer span.Finish()
+
+	return ap.ag.GetAllKeys(namespace)
+}
+
+func (ap *apolloConfigCenter) StartWatchUpdate(ctx context.Context) {
+	ap.ag.StartWatchUpdate()
+}
+
+type agolloObserver struct {
+	observer ConfigObserver
+}
+
+func (o *agolloObserver) HandleChangeEvent(ce *agollo.ChangeEvent) {
+	o.observer.HandleChangeEvent(fromAgolloChangeEvent(ce))
+}
+
+func (ap *apolloConfigCenter) RegisterObserver(ctx context.Context, observer ConfigObserver) func() {
+	return ap.ag.RegisterObserver(&agolloObserver{observer})
+}
+
+func (ap *apolloConfigCenter) Unmarshal(ctx context.Context, v interface{}) error {
+	return ap.UnmarshalWithNamespace(ctx, defaultNamespaceApplication, v)
+}
+
+func (ap *apolloConfigCenter) UnmarshalWithNamespace(ctx context.Context, namespace string, v interface{}) error {
+	var kv = map[string]string{}
+
+	ks := ap.GetAllKeysWithNamespace(ctx, namespace)
+	for _, k := range ks {
+		if v, ok := ap.GetStringWithNamespace(ctx, namespace, k); ok {
+			kv[k] = v
+		}
+	}
+
+	return properties.UnmarshalKV(kv, v)
+}
+
+func (ap *apolloConfigCenter) UnmarshalKey(ctx context.Context, key string, v interface{}) error {
+	return ap.UnmarshalKeyWithNamespace(ctx, defaultNamespaceApplication, key, v)
+}
+
+func (ap *apolloConfigCenter) UnmarshalKeyWithNamespace(ctx context.Context, namespace string, key string, v interface{}) error {
+	var kv = map[string]string{}
+
+	ks := ap.GetAllKeysWithNamespace(ctx, namespace)
+	for _, k := range ks {
+		if v, ok := ap.GetStringWithNamespace(ctx, namespace, k); ok {
+			kv[k] = v
+		}
+	}
+
+	bs, err := properties.Marshal(&kv)
+	if err != nil {
+		return err
+	}
+
+	return properties.UnmarshalKey(key, bs, v)
+}
+

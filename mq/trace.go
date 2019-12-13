@@ -92,7 +92,7 @@ func parsePayload(payload *Payload, opName string, value interface{}) (context.C
 
 	err = json.Unmarshal([]byte(payload.Value), value)
 	if err != nil {
-		return nil, err
+		return ctx, err
 	}
 
 	return ctx, nil

@@ -7,7 +7,11 @@ package mq
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/log"
 	kafka "github.com/segmentio/kafka-go"
+	"strings"
 	"time"
 )
 
@@ -40,6 +44,7 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 		MinBytes:       minBytes,
 		MaxBytes:       maxBytes,
 		CommitInterval: commitInterval,
+		StartOffset:    kafka.LastOffset,
 		//MaxWait:        30 * time.Second,
 	})
 
@@ -48,7 +53,22 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 	}
 }
 
+func (m *KafkaReader) logConfigToSpan(span opentracing.Span) {
+	config := m.Config()
+	span.LogFields(
+		log.String(spanLogKeyMQType, fmt.Sprint(MQTypeKafka)),
+		log.String(spanLogKeyKafkaBrokers, strings.Join(config.Brokers, apolloBrokersSep)),
+		log.String(spanLogKeyKafkaGroupID, config.GroupID),
+		log.Int(spanLogKeyKafkaPartition, config.Partition),
+	)
+}
+
 func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}, ov interface{}) error {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		m.logConfigToSpan(span)
+	}
+
 	msg, err := m.ReadMessage(ctx)
 	if err != nil {
 		return err
@@ -68,6 +88,11 @@ func (m *KafkaReader) ReadMsg(ctx context.Context, v interface{}, ov interface{}
 }
 
 func (m *KafkaReader) FetchMsg(ctx context.Context, v interface{}, ov interface{}) (Handler, error) {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		m.logConfigToSpan(span)
+	}
+
 	msg, err := m.FetchMessage(ctx)
 	if err != nil {
 		return nil, err
@@ -90,43 +115,68 @@ func (m *KafkaReader) Close() error {
 	return m.Reader.Close()
 }
 
+func (m *KafkaReader) SetOffsetAt(ctx context.Context, t time.Time) error {
+	return m.Reader.SetOffsetAt(ctx, t)
+}
+
+func (m *KafkaReader) SetOffset(ctx context.Context, offset int64) error {
+	return m.Reader.SetOffset(offset)
+}
+
 type KafkaWriter struct {
 	*kafka.Writer
+	// NOTE: KafkaWriter 没有 config 的 getter，故在此保留一份
+	config kafka.WriterConfig
 }
 
 func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
-	writer := kafka.NewWriter(kafka.WriterConfig{
+	config := kafka.WriterConfig{
 		Brokers:   brokers,
 		Topic:     topic,
 		Balancer:  &kafka.Hash{},
 		BatchSize: 1,
 		//RequiredAcks: 1,
 		//Async:        true,
-	})
+	}
+	writer := kafka.NewWriter(config)
 
 	return &KafkaWriter{
 		Writer: writer,
+		config: config,
 	}
 }
 
+func (m *KafkaWriter) logConfigToSpan(span opentracing.Span) {
+	config := m.config
+	span.LogFields(
+		log.String(spanLogKeyMQType, fmt.Sprint(MQTypeKafka)),
+		log.String(spanLogKeyKafkaBrokers, strings.Join(config.Brokers, apolloBrokersSep)),
+	)
+}
+
 func (m *KafkaWriter) WriteMsg(ctx context.Context, k string, v interface{}) error {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		m.logConfigToSpan(span)
+	}
+
 	msg, err := json.Marshal(v)
 	if err != nil {
 		return err
 	}
 
-	err = m.WriteMessages(ctx, kafka.Message{
+	return m.WriteMessages(ctx, kafka.Message{
 		Key:   []byte(k),
 		Value: msg,
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *KafkaWriter) WriteMsgs(ctx context.Context, msgs ...Message) error {
+	span := opentracing.SpanFromContext(ctx)
+	if span != nil {
+		m.logConfigToSpan(span)
+	}
+
 	var kmsgs []kafka.Message
 	for _, msg := range msgs {
 		body, err := json.Marshal(msg.Value)
@@ -139,12 +189,7 @@ func (m *KafkaWriter) WriteMsgs(ctx context.Context, msgs ...Message) error {
 		})
 	}
 
-	err := m.WriteMessages(ctx, kmsgs...)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return m.WriteMessages(ctx, kmsgs...)
 }
 
 func (m *KafkaWriter) Close() error {

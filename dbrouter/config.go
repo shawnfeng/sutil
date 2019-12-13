@@ -69,7 +69,7 @@ func NewSimpleConfiger(data []byte) (Configer, error) {
 }
 
 func (m *SimpleConfig) GetConfig(ctx context.Context, instance string) *Config {
-	group := scontext.GetGroup(ctx)
+	group := scontext.GetControlRouteGroupWithDefault(ctx, DefaultGroup)
 	info := m.parser.GetConfig(instance, group)
 	return &Config{
 		DBType:   info.DBType,
@@ -108,7 +108,8 @@ func (m *SimpleConfig) GetGroups(ctx context.Context) []string {
 
 type EtcdConfig struct {
 	etcdAddr []string
-	parser *Parser
+	parser   *Parser
+	parserMu sync.RWMutex
 }
 
 func NewEtcdConfiger(ctx context.Context, dbChangeChan chan dbConfigChange) (Configer, error) {
@@ -142,13 +143,14 @@ func (m *EtcdConfig) init(ctx context.Context, dbChangeChan chan dbConfigChange)
 			slog.Errorf(ctx, "%s init db parser err: ", fun, er.Error())
 		} else {
 			slog.Infof(ctx, "succeed to init new parser")
-			if m.parser != nil {
-				dbConfigChange := compareParsers(*m.parser, *parser)
+
+			if oldParser := m.getParser(ctx); oldParser != nil {
+				dbConfigChange := compareParsers(*oldParser, *parser)
 				slog.Infof(ctx, "parser changes: %+v", dbConfigChange)
-				m.parser = parser
+				m.setParser(ctx, parser)
 				dbChangeChan <- dbConfigChange
 			} else {
-				m.parser = parser
+				m.setParser(ctx, parser)
 			}
 		}
 
@@ -157,14 +159,29 @@ func (m *EtcdConfig) init(ctx context.Context, dbChangeChan chan dbConfigChange)
 		})
 	})
 	// 做一次同步，等parser初始化完成
-	err = <- initCh
+	err = <-initCh
 	close(initCh)
 	return err
 }
 
+func (m *EtcdConfig) getParser(ctx context.Context) *Parser {
+	m.parserMu.RLock()
+	defer m.parserMu.RUnlock()
+
+	return m.parser
+}
+
+func (m *EtcdConfig) setParser(ctx context.Context, parser *Parser) {
+	m.parserMu.Lock()
+	defer m.parserMu.Unlock()
+
+	m.parser = parser
+}
+
 func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
-	group := scontext.GetGroup(ctx)
-	info := m.parser.GetConfig(instance, group)
+	group := scontext.GetControlRouteGroupWithDefault(ctx, DefaultGroup)
+	parser := m.getParser(ctx)
+	info := parser.GetConfig(instance, group)
 	return &Config{
 		DBType:   info.DBType,
 		DBAddr:   info.DBAddr,
@@ -176,7 +193,8 @@ func (m *EtcdConfig) GetConfig(ctx context.Context, instance string) *Config {
 }
 
 func (m *EtcdConfig) GetConfigByGroup(ctx context.Context, instance, group string) *Config {
-	info := m.parser.GetConfig(instance, group)
+	parser := m.getParser(ctx)
+	info := parser.GetConfig(instance, group)
 	return &Config{
 		DBType:   info.DBType,
 		DBAddr:   info.DBAddr,
@@ -188,12 +206,15 @@ func (m *EtcdConfig) GetConfigByGroup(ctx context.Context, instance, group strin
 }
 
 func (m *EtcdConfig) GetInstance(ctx context.Context, cluster, table string) (instance string) {
-	return m.parser.GetInstance(cluster, table)
+	parser := m.getParser(ctx)
+	return parser.GetInstance(cluster, table)
 }
 
 func (m *EtcdConfig) GetGroups(ctx context.Context) []string {
 	var groups []string
-	for group, _ := range m.parser.dbIns {
+	parser := m.getParser(ctx)
+
+	for group, _ := range parser.dbIns {
 		groups = append(groups, group)
 	}
 	return groups

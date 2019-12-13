@@ -11,7 +11,10 @@ import (
 	"github.com/shawnfeng/sutil/slog/slog"
 )
 
-const DefaultGroup = ""
+const(
+	DefaultGroup = ""
+	TestGroup    = "test"
+)
 
 type dbLookupCfg struct {
 	Instance string `json:"instance"`
@@ -32,8 +35,8 @@ type dbInsCfg struct {
 }
 
 type itemDbInsCfg struct {
-	Dbcfg  json.RawMessage `json:"dbcfg"`
-	Group  string          `json:"group"`
+	Dbcfg json.RawMessage `json:"dbcfg"`
+	Group string          `json:"group"`
 }
 
 type dbInsInfo struct {
@@ -70,7 +73,7 @@ func (m *Parser) getConfig(instance, group string) *dbInsInfo {
 		if info, ok := infoMap[instance]; ok {
 			return info
 		}
-	} else {
+	} else if group != TestGroup {
 		if info, ok := infoMap[DefaultGroup]; ok {
 			return info
 		}
@@ -135,7 +138,7 @@ func NewParser(jscfg []byte) (*Parser, error) {
 		}
 
 		if len(ins) == 0 {
-			slog.Errorf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
+			slog.Warnf(context.TODO(), "%s empty instance in cluster:%s", fun, c)
 			continue
 		}
 
@@ -266,7 +269,7 @@ func compareParsers(originParser Parser, newParser Parser) dbConfigChange {
 
 	return dbConfigChange{
 		dbInstanceChange: dbInsChangeMap,
-		dbGroups: groups,
+		dbGroups:         groups,
 	}
 }
 

@@ -79,34 +79,38 @@ func Sync() {
 }
 
 func Init(logdir string, logpref string, level string) {
-	log_level := zap.InfoLevel
+	InitV2(logdir, logpref, level, 10240000, 0, 0)
+}
+
+func InitV2(logDir, logPref string, level string, maxSize int, maxAge, maxBackups int) {
+	logLevel := zap.InfoLevel
 	if level == "TRACE" {
-		log_level = zap.DebugLevel
+		logLevel = zap.DebugLevel
 	} else if level == "DEBUG" {
-		log_level = zap.DebugLevel
+		logLevel = zap.DebugLevel
 	} else if level == "INFO" {
-		log_level = zap.InfoLevel
+		logLevel = zap.InfoLevel
 	} else if level == "WARN" {
-		log_level = zap.WarnLevel
+		logLevel = zap.WarnLevel
 	} else if level == "ERROR" {
-		log_level = zap.ErrorLevel
+		logLevel = zap.ErrorLevel
 	} else if level == "FATAL" {
-		log_level = zap.FatalLevel
+		logLevel = zap.FatalLevel
 	} else if level == "PANIC" {
-		log_level = zap.PanicLevel
+		logLevel = zap.PanicLevel
 	} else {
-		log_level = zap.InfoLevel
+		logLevel = zap.InfoLevel
 	}
 
 	logfile := ""
-	if logdir != "" && logpref != "" {
-		logfile = logdir + "/" + logpref
+	if logDir != "" && logPref != "" {
+		logfile = logDir + "/" + logPref
 	}
 
 	var out io.Writer
 	if len(logfile) > 0 {
 		var ljlogger *lumberjack.Logger
-		ljlogger = lumberjack.NewLogger(logfile, 10240000, 0, 0, true, false)
+		ljlogger = lumberjack.NewLogger(logfile, maxSize, maxAge, maxBackups, true, false)
 
 		go func() {
 			for {
@@ -114,13 +118,9 @@ func Init(logdir string, logpref string, level string) {
 				duration := 3600 - now%3600
 				select {
 				case <-time.After(time.Second * time.Duration(duration)):
-					//st := stime.NewTimeStat()
 					ljlogger.Rotate()
-					//dur := st.Duration()
-					//Infof("rotate tm:%d", dur)
 				}
 			}
-
 		}()
 
 		out = ljlogger
@@ -138,7 +138,7 @@ func Init(logdir string, logpref string, level string) {
 		//zapcore.NewJSONEncoder(enconf),
 		zapcore.NewConsoleEncoder(enconf),
 		w,
-		log_level,
+		logLevel,
 	)
 	logger := zap.New(core)
 	lg = logger.Sugar()

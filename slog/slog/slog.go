@@ -102,5 +102,5 @@ func GetLogger() *Logger {
 }
 
 func (m *Logger) Printf(format string, v ...interface{}) {
-	Errorf(context.Background(), format, v...)
+	Infof(context.Background(), format, v...)
 }

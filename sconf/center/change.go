@@ -1,7 +1,7 @@
 package center
 
 import (
-	"github.com/ZhengHe-MD/agollo"
+	"github.com/ZhengHe-MD/agollo/v4"
 	"github.com/pkg/errors"
 )
 
@@ -11,6 +11,13 @@ const (
 	ADD ChangeType = iota
 	MODIFY
 	DELETE
+)
+
+type ChangeEventSource int
+
+const (
+	Etcd ChangeEventSource = iota
+	Apollo
 )
 
 var (
@@ -31,14 +38,12 @@ func (c ChangeType) String() string {
 }
 
 type ChangeEvent struct {
+	Source ChangeEventSource
+	// Namespace means
+	//   Namespace in Apollo
+	//   Path in Etcd
 	Namespace string
 	Changes   map[string]*Change
-}
-
-type Change struct {
-	OldValue   string
-	NewValue   string
-	ChangeType ChangeType
 }
 
 func fromAgolloChangeEvent(ace *agollo.ChangeEvent) *ChangeEvent {
@@ -49,9 +54,16 @@ func fromAgolloChangeEvent(ace *agollo.ChangeEvent) *ChangeEvent {
 		}
 	}
 	return &ChangeEvent{
+		Source:    Apollo,
 		Namespace: ace.Namespace,
 		Changes:   changes,
 	}
+}
+
+type Change struct {
+	OldValue   string
+	NewValue   string
+	ChangeType ChangeType
 }
 
 func fromAgolloChange(ac *agollo.Change) (change *Change, err error) {
