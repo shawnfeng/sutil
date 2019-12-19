@@ -113,7 +113,7 @@ func (m *RedisExt) Incr(ctx context.Context, key string, val interface{}) (n int
 func (m *RedisExt) IncrBy(ctx context.Context, key string, val int64) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
-		n, err = client.IncrBy(ctx, m.prefixKey(key)).Result()
+		n, err = client.IncrBy(ctx, m.prefixKey(key), val).Result()
 	}
 	return
 }
