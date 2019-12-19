@@ -110,6 +110,14 @@ func (m *RedisExt) Incr(ctx context.Context, key string, val interface{}) (n int
 	return
 }
 
+func (m *RedisExt) IncrBy(ctx context.Context, key string, val int64) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.IncrBy(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
 func (m *RedisExt) SetNX(ctx context.Context, key string, val interface{}, exp time.Duration) (b bool, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {

@@ -103,6 +103,12 @@ func (m *Client) Incr(ctx context.Context, key string) *redis.IntCmd {
 	return m.client.Incr(k)
 }
 
+func (m *Client) IncrBy(ctx context.Context, key string, value int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "IncrBy", k)
+	return m.client.IncrBy(k, value)
+}
+
 func (m *Client) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "SetNX", k)
