@@ -83,6 +83,7 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
 		Group:     scontext.GetControlRouteGroupWithDefault(ctx, cache.DefaultRouteGroup),
 		Namespace: m.namespace,
+		Wrapper:   cache.WrapperTypeRedisExt,
 	}
 }
 
@@ -102,10 +103,50 @@ func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp tim
 	return
 }
 
+func (m *RedisExt) GetBit(ctx context.Context, key string, offset int64) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.GetBit(ctx, m.prefixKey(key), offset).Result()
+	}
+	return
+}
+
+func (m *RedisExt) SetBit(ctx context.Context, key string, offset int64, value int) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.SetBit(ctx, m.prefixKey(key), offset, value).Result()
+	}
+	return
+}
+
 func (m *RedisExt) Incr(ctx context.Context, key string, val interface{}) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		n, err = client.Incr(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) IncrBy(ctx context.Context, key string, val int64) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.IncrBy(ctx, m.prefixKey(key), val).Result()
+	}
+	return
+}
+
+func (m *RedisExt) Decr(ctx context.Context, key string) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.Decr(ctx, m.prefixKey(key)).Result()
+	}
+	return
+}
+
+func (m *RedisExt) DecrBy(ctx context.Context, key string, val int64) (n int64, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.DecrBy(ctx, m.prefixKey(key), val).Result()
 	}
 	return
 }

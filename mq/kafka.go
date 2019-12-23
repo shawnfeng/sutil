@@ -44,6 +44,7 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 		MinBytes:       minBytes,
 		MaxBytes:       maxBytes,
 		CommitInterval: commitInterval,
+		StartOffset:    kafka.LastOffset,
 		//MaxWait:        30 * time.Second,
 	})
 
@@ -112,6 +113,14 @@ func (m *KafkaReader) FetchMsg(ctx context.Context, v interface{}, ov interface{
 
 func (m *KafkaReader) Close() error {
 	return m.Reader.Close()
+}
+
+func (m *KafkaReader) SetOffsetAt(ctx context.Context, t time.Time) error {
+	return m.Reader.SetOffsetAt(ctx, t)
+}
+
+func (m *KafkaReader) SetOffset(ctx context.Context, offset int64) error {
+	return m.Reader.SetOffset(offset)
 }
 
 type KafkaWriter struct {

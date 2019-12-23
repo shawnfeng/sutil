@@ -11,6 +11,14 @@ const (
 	zsetTestKey = "myzset"
 )
 
+func TestRedisExt_Set_(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("test/test", "test")
+	k, v := "hello", "world"
+	_, err := re.Set(ctx, k, v, 10*time.Second)
+	assert.NoError(t, err)
+}
+
 func TestRedisExt_ZAdd(t *testing.T) {
 	ctx := context.Background()
 
@@ -200,4 +208,22 @@ func TestRedisExt_Expire(t *testing.T) {
 	n, err = re.Exists(ctx, zsetTestKey)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), n)
+}
+
+func TestRedisExt_SetBit(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+
+	n, err := re.SetBit(ctx, "bitoptest", 2, 1)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), n)
+}
+
+func TestRedisExt_GetBit(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+
+	n, err := re.GetBit(ctx, "bitoptest", 1)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), n)
 }

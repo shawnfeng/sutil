@@ -43,3 +43,8 @@ func (c ConfigerType) String() string {
 }
 
 const DefaultRouteGroup = "default"
+
+const (
+	WrapperTypeCache    = "c"
+	WrapperTypeRedisExt = "e"
+)

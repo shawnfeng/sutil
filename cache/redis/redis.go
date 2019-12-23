@@ -15,11 +15,13 @@ import (
 var RedisNil = fmt.Sprintf("redis: nil")
 
 type Client struct {
-	client    *redis.Client
-	namespace string
+	client     *redis.Client
+	namespace  string
+	wrapper    string
+	useWrapper bool
 }
 
-func NewClient(ctx context.Context, namespace string) (*Client, error) {
+func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
 	fun := "NewClient -->"
 
 	config, err := DefaultConfiger.GetConfig(ctx, namespace)
@@ -42,16 +44,26 @@ func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	}
 
 	return &Client{
-		client:    client,
-		namespace: namespace,
+		client:     client,
+		namespace:  namespace,
+		wrapper:    wrapper,
+		useWrapper: config.useWrapper,
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
-	return strings.Join([]string{
+	parts := []string{
 		m.namespace,
+		m.wrapper,
 		key,
-	}, ".")
+	}
+	if !m.useWrapper {
+		parts = []string{
+			m.namespace,
+			key,
+		}
+	}
+	return strings.Join(parts, ".")
 }
 
 func (m *Client) logSpan(ctx context.Context, op, key string) {
@@ -73,6 +85,18 @@ func (m *Client) Set(ctx context.Context, key string, value interface{}, expirat
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Set", k)
 	return m.client.Set(k, value, expiration)
+}
+
+func (m *Client) GetBit(ctx context.Context, key string, offset int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "GetBit", k)
+	return m.client.GetBit(k, offset)
+}
+
+func (m *Client) SetBit(ctx context.Context, key string, offset int64, value int) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SetBit", k)
+	return m.client.SetBit(k, offset, value)
 }
 
 func (m *Client) Exists(ctx context.Context, key string) *redis.IntCmd {
@@ -101,6 +125,24 @@ func (m *Client) Incr(ctx context.Context, key string) *redis.IntCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Incr", k)
 	return m.client.Incr(k)
+}
+
+func (m *Client) IncrBy(ctx context.Context, key string, value int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "IncrBy", k)
+	return m.client.IncrBy(k, value)
+}
+
+func (m *Client) Decr(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Decr", k)
+	return m.client.Decr(k)
+}
+
+func (m *Client) DecrBy(ctx context.Context, key string, value int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "DecrBy", k)
+	return m.client.DecrBy(k, value)
 }
 
 func (m *Client) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
