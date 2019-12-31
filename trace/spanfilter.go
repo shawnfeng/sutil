@@ -100,5 +100,9 @@ func (m *spanFilterConfig) HandleChangeEvent(event *center.ChangeEvent) {
 }
 
 func UrlSpanFilter(r *http.Request) bool {
-	return apolloSpanFilterConfig.filterUrl(r.URL.Path)
+	if apolloSpanFilterConfig != nil {
+		return apolloSpanFilterConfig.filterUrl(r.URL.Path)
+	}
+
+	return true
 }
