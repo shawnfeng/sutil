@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ServiceName = "trace"
+	ServiceName      = "trace"
 	DefaultNameSpace = "application"
 )
 
