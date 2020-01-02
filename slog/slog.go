@@ -5,27 +5,13 @@
 package slog
 
 import (
+	"context"
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	//"github.com/shawnfeng/sutil/stime"
-	"github.com/shawnfeng/lumberjack.v2"
-	"io"
-	"os"
 	"sync"
 	"sync/atomic"
 	"time"
-)
 
-// log 级别
-const (
-	LV_TRACE int = 0
-	LV_DEBUG int = 1
-	LV_INFO  int = 2
-	LV_WARN  int = 3
-	LV_ERROR int = 4
-	LV_FATAL int = 5
-	LV_PANIC int = 6
+	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
 )
 
 var (
@@ -41,7 +27,6 @@ var (
 	cnStamp int64
 
 	slogMutex sync.Mutex
-	lg        *zap.SugaredLogger
 
 	logs []string
 )
@@ -66,166 +51,123 @@ func getLogs() []string {
 	return tmp
 }
 
-func TimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2006/01/02 15:04:05.000000"))
-}
-
-func CapitalLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(l.CapitalString())
-}
-
-func Sync() {
-	lg.Sync()
-}
-
-func Init(logdir string, logpref string, level string) {
-	InitV2(logdir, logpref, level, 10240000, 0, 0)
-}
-
-func InitV2(logDir, logPref string, level string, maxSize int, maxAge, maxBackups int) {
-	logLevel := zap.InfoLevel
-	if level == "TRACE" {
-		logLevel = zap.DebugLevel
-	} else if level == "DEBUG" {
-		logLevel = zap.DebugLevel
-	} else if level == "INFO" {
-		logLevel = zap.InfoLevel
-	} else if level == "WARN" {
-		logLevel = zap.WarnLevel
-	} else if level == "ERROR" {
-		logLevel = zap.ErrorLevel
-	} else if level == "FATAL" {
-		logLevel = zap.FatalLevel
-	} else if level == "PANIC" {
-		logLevel = zap.PanicLevel
-	} else {
-		logLevel = zap.InfoLevel
+func convertLevel(level string) xlog.Level {
+	switch level {
+	case "info":
+		return xlog.InfoLevel
+	case "warn":
+		return xlog.WarnLevel
+	case "error":
+		return xlog.ErrorLevel
+	case "fatal":
+		return xlog.FatalLevel
+	case "panic":
+		return xlog.PanicLevel
+	default:
+		return xlog.InfoLevel
 	}
+}
 
-	logfile := ""
-	if logDir != "" && logPref != "" {
-		logfile = logDir + "/" + logPref
-	}
-
-	var out io.Writer
-	if len(logfile) > 0 {
-		var ljlogger *lumberjack.Logger
-		ljlogger = lumberjack.NewLogger(logfile, maxSize, maxAge, maxBackups, true, false)
-
-		go func() {
-			for {
-				now := time.Now().Unix()
-				duration := 3600 - now%3600
-				select {
-				case <-time.After(time.Second * time.Duration(duration)):
-					ljlogger.Rotate()
-				}
-			}
-		}()
-
-		out = ljlogger
-	} else {
-		out = os.Stdout
-	}
-	w := zapcore.AddSync(out)
-
-	enconf := zap.NewProductionEncoderConfig()
-	enconf.EncodeTime = TimeEncoder
-	enconf.CallerKey = "caller"
-	enconf.EncodeCaller = zapcore.FullCallerEncoder
-	enconf.EncodeLevel = CapitalLevelEncoder
-	core := zapcore.NewCore(
-		//zapcore.NewJSONEncoder(enconf),
-		zapcore.NewConsoleEncoder(enconf),
-		w,
-		logLevel,
-	)
-	logger := zap.New(core)
-	lg = logger.Sugar()
+// Init init applog in xlog
+func Init(logdir string, fileName string, level string) {
+	xlog.InitAppLog(logdir, fileName, convertLevel(level))
 }
 
 func init() {
-	Init("", "", "TRACE")
-
 	atomic.StoreInt64(&cnStamp, time.Now().Unix())
 }
 
-func Tracef(format string, v ...interface{}) {
-	lg.Debugf(format, v...)
-	atomic.AddInt64(&cnTrace, 1)
-}
-
+// Traceln xlog.Debug
 func Traceln(v ...interface{}) {
-	lg.Debug(v...)
+	xlog.Debug(context.TODO(), v...)
 	atomic.AddInt64(&cnTrace, 1)
 }
 
-func Debugf(format string, v ...interface{}) {
-	lg.Debugf(format, v...)
-	atomic.AddInt64(&cnDebug, 1)
+// Tracef xlog.Debugf
+func Tracef(format string, v ...interface{}) {
+	xlog.Debugf(context.TODO(), format, v...)
+	atomic.AddInt64(&cnTrace, 1)
 }
 
+// Debugln xlog.Debug
 func Debugln(v ...interface{}) {
-	lg.Debug(v...)
+	xlog.Debug(context.TODO(), v...)
 	atomic.AddInt64(&cnDebug, 1)
 }
 
+// Debugf xlog.Debugf
+func Debugf(format string, v ...interface{}) {
+	xlog.Debugf(context.TODO(), format, v...)
+	atomic.AddInt64(&cnDebug, 1)
+}
+
+// Infof ...
 func Infof(format string, v ...interface{}) {
-	lg.Infof(format, v...)
+	xlog.Infof(context.TODO(), format, v...)
 	atomic.AddInt64(&cnInfo, 1)
 }
 
+// Infoln ...
 func Infoln(v ...interface{}) {
-	lg.Info(v...)
+	xlog.Info(context.TODO(), v...)
 	atomic.AddInt64(&cnInfo, 1)
 }
 
+// Warnf ...
 func Warnf(format string, v ...interface{}) {
-	lg.Warnf(format, v...)
+	xlog.Warnf(context.TODO(), format, v...)
 	atomic.AddInt64(&cnWarn, 1)
 }
 
+// Warnln ...
 func Warnln(v ...interface{}) {
-	lg.Warn(v...)
+	xlog.Warn(context.TODO(), v...)
 	atomic.AddInt64(&cnWarn, 1)
 }
 
+// Errorf ...
 func Errorf(format string, v ...interface{}) {
-	lg.Errorf(format, v...)
+	xlog.Errorf(context.TODO(), format, v...)
 	atomic.AddInt64(&cnError, 1)
 	addLogs("ERROR " + fmt.Sprintf(format, v...))
 }
 
+// Errorln ...
 func Errorln(v ...interface{}) {
-	lg.Error(v...)
+	xlog.Error(context.TODO(), v...)
 	atomic.AddInt64(&cnError, 1)
 	addLogs("ERROR " + fmt.Sprintln(v...))
 }
 
+// Fatalf ...
 func Fatalf(format string, v ...interface{}) {
-	lg.Fatalf(format, v...)
+	xlog.Fatalf(context.TODO(), format, v...)
 	atomic.AddInt64(&cnFatal, 1)
 	addLogs("FATAL " + fmt.Sprintf(format, v...))
 }
 
+// Fatalln ...
 func Fatalln(v ...interface{}) {
-	lg.Fatal(v...)
+	xlog.Fatal(context.TODO(), v...)
 	atomic.AddInt64(&cnFatal, 1)
 	addLogs("FATAL " + fmt.Sprintln(v...))
 }
 
+// Panicf ...
 func Panicf(format string, v ...interface{}) {
-	lg.Panicf(format, v...)
+	xlog.Panicf(context.TODO(), format, v...)
 	atomic.AddInt64(&cnPanic, 1)
 	addLogs("PANIC " + fmt.Sprintf(format, v...))
 }
 
+// Panicln ...
 func Panicln(v ...interface{}) {
-	lg.Panic(v...)
+	xlog.Panic(context.TODO(), v...)
 	atomic.AddInt64(&cnPanic, 1)
 	addLogs("PANIC " + fmt.Sprintln(v...))
 }
 
+// LogStat TODO: 统计日志打印情况，后期都可以去掉
 func LogStat() (map[string]int64, []string) {
 
 	st := map[string]int64{
