@@ -9,11 +9,6 @@ import (
 	"sync"
 )
 
-const (
-	ServiceName      = "trace"
-	DefaultNameSpace = "application"
-)
-
 const FilterUrls = "span_filter_urls"
 
 const ListConfigSep = ","
@@ -33,13 +28,13 @@ func init() {
 		return
 	}
 
-	err = apolloCenter.Init(ctx, ServiceName, nil)
+	err = apolloCenter.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloTraceNamespace})
 	if err != nil {
-		slog.Errorf(ctx, "%s init apollo config center error, service name: %s, namespaces: %s", fun, ServiceName, "")
+		slog.Errorf(ctx, "%s init apollo config center error, service name: %s, namespaces: %s", fun, center.DefaultApolloMiddlewareService, center.DefaultApolloTraceNamespace)
 		return
 	}
 
-	urls, ok := apolloCenter.GetString(ctx, FilterUrls)
+	urls, ok := apolloCenter.GetStringWithNamespace(ctx, center.DefaultApolloTraceNamespace, FilterUrls)
 	if !ok {
 		slog.Errorf(ctx, "%s get %s from apollo failed", fun, FilterUrls)
 		return
@@ -86,7 +81,7 @@ func (m *spanFilterConfig) HandleChangeEvent(event *center.ChangeEvent) {
 	fun := "spanFilterConfig.HandleChangeEvent --> "
 	ctx := context.Background()
 
-	if event.Namespace != DefaultNameSpace {
+	if event.Namespace != center.DefaultApolloTraceNamespace {
 		return
 	}
 
