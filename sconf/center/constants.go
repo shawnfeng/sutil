@@ -5,4 +5,5 @@ const (
 
 	DefaultApolloMQNamespace    = "infra.mq"
 	DefaultApolloCacheNamespace = "infra.cache"
+	DefaultApolloTraceNamespace = "infra.trace"
 )
