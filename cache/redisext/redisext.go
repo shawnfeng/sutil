@@ -119,7 +119,7 @@ func (m *RedisExt) SetBit(ctx context.Context, key string, offset int64, value i
 	return
 }
 
-func (m *RedisExt) Incr(ctx context.Context, key string, val interface{}) (n int64, err error) {
+func (m *RedisExt) Incr(ctx context.Context, key string) (n int64, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		n, err = client.Incr(ctx, m.prefixKey(key)).Result()
