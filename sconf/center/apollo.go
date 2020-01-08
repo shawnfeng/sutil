@@ -100,7 +100,7 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 
 	select {
 	case <-time.After(defaultInitTimeout):
-		slog.Warnf(ctx, "%s init agollo timeout after %v", fun, defaultInitTimeout)
+		slog.Errorf(ctx, "%s init agollo timeout after %v", fun, defaultInitTimeout)
 	case <-startCh:
 	}
 
