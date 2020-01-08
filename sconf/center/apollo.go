@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -18,8 +19,8 @@ const (
 	defaultHostPort             = "apollo-meta.ibanyu.com:30002"
 	defaultCacheDir             = "/tmp/sconfcenter"
 	defaultNamespaceApplication = "application"
-
-	defaultChangeEventSize = 32
+	defaultChangeEventSize      = 32
+	defaultInitTimeout          = 3 * time.Second
 )
 
 type apolloConfigCenter struct {
@@ -77,15 +78,30 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 		conf.NameSpaceNames = []string{defaultNamespaceApplication}
 	}
 
+	for i, namespace := range conf.NameSpaceNames {
+		conf.NameSpaceNames[i] = normalizeServiceName(namespace)
+	}
+
 	ap.conf = conf
 	ap.ag = agollo.NewAgollo(conf)
 
 	slog.Infof(ctx, "%s start agollo with conf:%v", fun, ap.conf)
 
-	if err := ap.ag.Start(); err != nil {
-		slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
-	} else {
-		slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
+	startCh := make(chan int, 1)
+
+	go func() {
+		if err := ap.ag.Start(); err != nil {
+			slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
+		} else {
+			slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
+		}
+		startCh <- 1
+	}()
+
+	select {
+	case <-time.After(defaultInitTimeout):
+		slog.Warnf(ctx, "%s init agollo timeout after %v", fun, defaultInitTimeout)
+	case <-startCh:
 	}
 
 	return nil
@@ -212,4 +228,3 @@ func (ap *apolloConfigCenter) UnmarshalKeyWithNamespace(ctx context.Context, nam
 
 	return properties.UnmarshalKey(key, bs, v)
 }
-

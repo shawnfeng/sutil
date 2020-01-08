@@ -12,6 +12,13 @@ const (
 	testNamespace = "db"
 )
 
+func TestInitCenter(t *testing.T) {
+	ctx := context.Background()
+
+	_ = Init(ctx, "invalid/service", []string{"application"})
+	defer Stop(ctx)
+}
+
 func TestGetTypedVar(t *testing.T) {
 	ctx := context.Background()
 
