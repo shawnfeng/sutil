@@ -73,3 +73,11 @@ func (m *RedisClient) Incr(key string) *redis.IntCmd {
 func (m *RedisClient) SetNX(key string, value interface{}, expiration time.Duration) *redis.BoolCmd {
 	return m.client.SetNX(m.fixKey(key), value, expiration)
 }
+
+func (m *RedisClient) Ttl(key string) *redis.DurationCmd {
+	return m.client.TTL(m.fixKey(key))
+}
+
+func (m *RedisClient) Expire(key string, expiration time.Duration) *redis.BoolCmd {
+	return m.client.Expire(m.fixKey(key), expiration)
+}
