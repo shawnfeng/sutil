@@ -74,7 +74,7 @@ func (m *RedisClient) SetNX(key string, value interface{}, expiration time.Durat
 	return m.client.SetNX(m.fixKey(key), value, expiration)
 }
 
-func (m *RedisClient) Ttl(key string) *redis.DurationCmd {
+func (m *RedisClient) TTL(key string) *redis.DurationCmd {
 	return m.client.TTL(m.fixKey(key))
 }
 
