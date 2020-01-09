@@ -2,6 +2,7 @@ package center
 
 import (
 	"context"
+	"fmt"
 	"github.com/ZhengHe-MD/agollo/v4"
 	"github.com/ZhengHe-MD/properties"
 	"github.com/opentracing/opentracing-go"
@@ -20,7 +21,7 @@ const (
 	defaultCacheDir             = "/tmp/sconfcenter"
 	defaultNamespaceApplication = "application"
 	defaultChangeEventSize      = 32
-	defaultInitTimeout          = 3 * time.Second
+	defaultInitTimeout          = 6 * time.Second
 )
 
 type apolloConfigCenter struct {
@@ -61,7 +62,7 @@ func normalizeServiceName(serviceName string) string {
 	return strings.Replace(serviceName, "/", ".", -1)
 }
 
-func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, namespaceNames []string) error {
+func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, namespaceNames []string) (err error) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "apolloConfigCenter.Init")
 	defer span.Finish()
 
@@ -100,11 +101,12 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 
 	select {
 	case <-time.After(defaultInitTimeout):
-		slog.Errorf(ctx, "%s init agollo timeout after %v", fun, defaultInitTimeout)
+		err = fmt.Errorf("%s init agollo timeout after %v", fun, defaultInitTimeout)
+		slog.Errorf(ctx, err.Error())
 	case <-startCh:
 	}
 
-	return nil
+	return
 }
 
 func (ap *apolloConfigCenter) Stop(ctx context.Context) error {
