@@ -2,6 +2,7 @@ package trace
 
 import (
 	"context"
+	"fmt"
 	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"net/http"
@@ -13,31 +14,23 @@ const FilterUrls = "span_filter_urls"
 
 const ListConfigSep = ","
 
+var initApolloLock sync.Mutex
+
 var apolloCenter center.ConfigCenter
 
 var apolloSpanFilterConfig *spanFilterConfig
 
-func init() {
-	fun := "trace.init --> "
+func InitTraceSpanFilter() error {
+	fun := "TraceSpanFilter.init --> "
 	ctx := context.Background()
 
-	var err error
-	apolloCenter, err = center.NewConfigCenter(center.ApolloConfigCenter)
-	if err != nil {
-		slog.Errorf(ctx, "%s new config center error, center type: %d, err: %s", fun, center.ApolloConfigCenter, err.Error())
-		return
-	}
-
-	err = apolloCenter.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloTraceNamespace})
-	if err != nil {
-		slog.Errorf(ctx, "%s init apollo config center error, service name: %s, namespaces: %s", fun, center.DefaultApolloMiddlewareService, center.DefaultApolloTraceNamespace)
-		return
+	if err := initApolloCenter(ctx); err != nil {
+		return err
 	}
 
 	urls, ok := apolloCenter.GetStringWithNamespace(ctx, center.DefaultApolloTraceNamespace, FilterUrls)
 	if !ok {
-		slog.Errorf(ctx, "%s get %s from apollo failed", fun, FilterUrls)
-		return
+		return fmt.Errorf("not get %s from apollo namespace %s", FilterUrls, center.DefaultApolloTraceNamespace)
 	}
 	slog.Infof(ctx, "%s get %s from apollo: %s", fun, FilterUrls, urls)
 
@@ -47,8 +40,38 @@ func init() {
 		urls: urlList,
 	}
 
-	apolloCenter.StartWatchUpdate(ctx)
 	apolloCenter.RegisterObserver(ctx, apolloSpanFilterConfig)
+	return nil
+}
+
+func initApolloCenter(ctx context.Context) error {
+	if apolloCenter != nil {
+		return nil
+	}
+
+	initApolloLock.Lock()
+	defer initApolloLock.Unlock()
+
+	if apolloCenter != nil {
+		return nil
+	}
+
+	newCenter, err := center.NewConfigCenter(center.ApolloConfigCenter)
+	if err != nil {
+		return fmt.Errorf("new config center error, %s", err.Error())
+	}
+
+	namespaceList := []string{center.DefaultApolloTraceNamespace}
+	err = newCenter.Init(ctx, center.DefaultApolloMiddlewareService, namespaceList)
+	if err != nil {
+		return fmt.Errorf("init apollo with service %s namespace %s error, %s",
+			center.DefaultApolloMiddlewareService, strings.Join(namespaceList, " "), err.Error())
+	}
+
+	newCenter.StartWatchUpdate(ctx)
+
+	apolloCenter = newCenter
+	return nil
 }
 
 type spanFilterConfig struct {
