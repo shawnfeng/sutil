@@ -62,7 +62,8 @@ func initApolloCenter(ctx context.Context) {
 
 		err = apolloCenter.Init(ctx, center.DefaultApolloMiddlewareService, []string{center.DefaultApolloTraceNamespace})
 		if err != nil {
-			slog.Errorf(ctx, "%s init apollo config center error, service name: %s, namespaces: %s", fun, center.DefaultApolloMiddlewareService, center.DefaultApolloTraceNamespace)
+			slog.Errorf(ctx, "%s init apollo config center error, service name: %s, namespaces: %s, err: %s",
+				fun, center.DefaultApolloMiddlewareService, center.DefaultApolloTraceNamespace, err.Error())
 			return
 		}
 
@@ -114,7 +115,6 @@ func (m *spanFilterConfig) HandleChangeEvent(event *center.ChangeEvent) {
 }
 
 func UrlSpanFilter(r *http.Request) bool {
-	slog.Infof(context.TODO(), "hahahahahahaha, url: %s", r.URL.Path)
 	if apolloSpanFilterConfig != nil {
 		return apolloSpanFilterConfig.filterUrl(r.URL.Path)
 	}
