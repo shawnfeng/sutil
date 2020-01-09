@@ -56,20 +56,21 @@ func initApolloCenter(ctx context.Context) error {
 		return nil
 	}
 
-	var err error
-	apolloCenter, err = center.NewConfigCenter(center.ApolloConfigCenter)
+	newCenter, err := center.NewConfigCenter(center.ApolloConfigCenter)
 	if err != nil {
 		return fmt.Errorf("new config center error, %s", err.Error())
 	}
 
 	namespaceList := []string{center.DefaultApolloTraceNamespace}
-	err = apolloCenter.Init(ctx, center.DefaultApolloMiddlewareService, namespaceList)
+	err = newCenter.Init(ctx, center.DefaultApolloMiddlewareService, namespaceList)
 	if err != nil {
 		return fmt.Errorf("init apollo with service %s namespace %s error, %s",
 			center.DefaultApolloMiddlewareService, strings.Join(namespaceList, " "), err.Error())
 	}
 
-	apolloCenter.StartWatchUpdate(ctx)
+	newCenter.StartWatchUpdate(ctx)
+
+	apolloCenter = newCenter
 	return nil
 }
 
