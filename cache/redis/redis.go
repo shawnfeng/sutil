@@ -81,10 +81,36 @@ func (m *Client) Get(ctx context.Context, key string) *redis.StringCmd {
 	return m.client.Get(k)
 }
 
+func (m *Client) MGet(ctx context.Context, keys ...string) *redis.SliceCmd {
+	var fixKey = make([]string, len(keys))
+	for k,v := range keys {
+		key := m.fixKey(v)
+		fixKey[k] = key
+	}
+	m.logSpan(ctx, "MGet", strings.Join(fixKey, "||"))
+	return m.client.MGet(fixKey...)
+}
+
 func (m *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Set", k)
 	return m.client.Set(k, value, expiration)
+}
+
+func (m *Client) MSet(ctx context.Context, pairs ...interface{}) *redis.StatusCmd {
+	var fixPairs = make([]interface{}, len(pairs))
+	var keys []string
+	for k,v := range pairs {
+		if (k & 1) == 0 {
+			key := m.fixKey(v.(string))
+			keys = append(keys, key)
+			fixPairs[k] = key
+		} else {
+			fixPairs[k] = v
+		}
+	}
+	m.logSpan(ctx, "MSet", strings.Join(keys, "||"))
+	return m.client.MSet(fixPairs...)
 }
 
 func (m *Client) GetBit(ctx context.Context, key string, offset int64) *redis.IntCmd {

@@ -95,10 +95,39 @@ func (m *RedisExt) Get(ctx context.Context, key string) (s string, err error) {
 	return
 }
 
+func (m *RedisExt) MGet(ctx context.Context, keys ...string) (v []interface{}, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		var prefixKey = make([]string, len(keys))
+		for k,v := range keys {
+			prefixKey[k] = m.prefixKey(v)
+		}
+		v, err = client.MGet(ctx, prefixKey...).Result()
+	}
+	return
+}
+
 func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp time.Duration) (s string, err error) {
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		s, err = client.Set(ctx, m.prefixKey(key), val, exp).Result()
+	}
+	return
+}
+
+func (m *RedisExt) MSet(ctx context.Context, pairs ...interface{}) (s string, err error) {
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		var prefixPairs = make([]interface{}, len(pairs))
+		for k,v := range pairs {
+			if (k & 1) == 0 {
+				prefixPairs[k] = m.prefixKey(v.(string))
+			} else {
+				prefixPairs[k] = v
+			}
+		}
+
+		s, err = client.MSet(ctx, prefixPairs...).Result()
 	}
 	return
 }
