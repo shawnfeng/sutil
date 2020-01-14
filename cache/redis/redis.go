@@ -82,13 +82,13 @@ func (m *Client) Get(ctx context.Context, key string) *redis.StringCmd {
 }
 
 func (m *Client) MGet(ctx context.Context, keys ...string) *redis.SliceCmd {
-	var fixKey = make([]string, len(keys))
+	var fixKeys = make([]string, len(keys))
 	for k,v := range keys {
 		key := m.fixKey(v)
-		fixKey[k] = key
+		fixKeys[k] = key
 	}
-	m.logSpan(ctx, "MGet", strings.Join(fixKey, "||"))
-	return m.client.MGet(fixKey...)
+	m.logSpan(ctx, "MGet", strings.Join(fixKeys, "||"))
+	return m.client.MGet(fixKeys...)
 }
 
 func (m *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
