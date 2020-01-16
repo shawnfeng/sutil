@@ -18,6 +18,7 @@ import (
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"github.com/shawnfeng/sutil/stime"
 	"time"
 )
 
@@ -50,12 +51,18 @@ func (m *Cache) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 
 func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
-
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Get")
-	defer span.Finish()
+	// TODO 目前统计的是cache层的Get，后面需要拆分为redis层、cache层
+	command :="cache.value.Get"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func(){
+		span.Finish()
+		statReqDuration(m.namespace,command, st.Millisecond())
+	}()
 
 	err := m.getValueFromCache(ctx, key, value)
 	if err == nil {
+		_metricHits.With("namespace", m.namespace, "command", command).Inc()
 		return nil
 	}
 
@@ -63,8 +70,7 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 		slog.Errorf(ctx, "%s cache key: %v err: %v", fun, key, err)
 		return fmt.Errorf("%s cache key: %v err: %v", fun, key, err)
 	}
-
-	//slog.Infof(ctx, "%s miss key: %v, err: %s", fun, key, err)
+	_metricMiss.With("namespace", m.namespace, "command", command).Inc()
 
 	data, err := m.loadValueToCache(ctx, key)
 	if err != nil {
@@ -82,9 +88,14 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	fun := "Cache.Del -->"
+	command :="cache.value.Del"
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Del")
-	defer span.Finish()
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func(){
+		span.Finish()
+		statReqDuration(m.namespace,command, st.Millisecond())
+	}()
 
 	skey, err := m.prefixKey(key)
 	if err != nil {
@@ -107,8 +118,13 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 }
 
 func (m *Cache) Load(ctx context.Context, key interface{}) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "cache.value.Load")
-	defer span.Finish()
+	command :="cache.value.Load"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func(){
+		span.Finish()
+		statReqDuration(m.namespace,command, st.Millisecond())
+	}()
 
 	_, err := m.loadValueToCache(ctx, key)
 	return err
