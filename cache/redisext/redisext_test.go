@@ -2,6 +2,7 @@ package redisext
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -226,4 +227,25 @@ func TestRedisExt_GetBit(t *testing.T) {
 	n, err := re.GetBit(ctx, "bitoptest", 1)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), n)
+}
+
+func TestRedisExt_MSet(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+
+	resp, err := re.MSet(ctx, "setkey1", "setvalue1", "setkey2", "setvalue2")
+	assert.NoError(t, err)
+	assert.Equal(t, "OK", resp)
+}
+
+func TestRedisExt_MGet(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	re.MSet(ctx, "getkey1", "getvalue1", "getkey2", "getvalue2")
+	resp, err := re.MGet(ctx, []string{"getkey1", "getkey2"}...)
+	fmt.Printf("resp:%+v\n", resp)
+	assert.NoError(t, err)
+	assert.Equal(t, len(resp), 2)
+	assert.Contains(t, []string{"getvalue1", "getvalue2"}, resp[0])
+	assert.Contains(t, []string{"getvalue1", "getvalue2"}, resp[1])
 }
