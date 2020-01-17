@@ -67,6 +67,7 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	}
 
 	if err.Error() != redis.RedisNil {
+		statReqErr(m.namespace, command, err)
 		slog.Errorf(ctx, "%s cache key: %v err: %v", fun, key, err)
 		return fmt.Errorf("%s cache key: %v err: %v", fun, key, err)
 	}
@@ -74,12 +75,14 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 	data, err := m.loadValueToCache(ctx, key)
 	if err != nil {
+		statReqErr(m.namespace, command, err)
 		slog.Errorf(ctx, "%s loadValueToCache key: %v err: %v", fun, key, err)
 		return err
 	}
 
 	err = json.Unmarshal(data, value)
 	if err != nil {
+		statReqErr(m.namespace, command, err)
 		return errors.New(string(data))
 	}
 
@@ -99,18 +102,21 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 
 	skey, err := m.prefixKey(key)
 	if err != nil {
+		statReqErr(m.namespace, command, err)
 		slog.Errorf(ctx, "%s fixkey, key: %v err: %v", fun, key, err)
 		return err
 	}
 
 	client, err := redis.DefaultInstanceManager.GetInstance(ctx, m.getInstanceConf(ctx))
 	if err != nil {
+		statReqErr(m.namespace, command, err)
 		slog.Errorf(ctx, "%s get instance err, namespace: %s", fun, m.namespace)
 		return err
 	}
 
 	err = client.Del(ctx, skey).Err()
 	if err != nil {
+		statReqErr(m.namespace, command, err)
 		return fmt.Errorf("del cache key: %v err: %s", key, err.Error())
 	}
 
@@ -127,6 +133,8 @@ func (m *Cache) Load(ctx context.Context, key interface{}) error {
 	}()
 
 	_, err := m.loadValueToCache(ctx, key)
+	statReqErr(m.namespace, command, err)
+
 	return err
 }
 

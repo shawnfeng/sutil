@@ -20,7 +20,13 @@ var(
 		LabelNames: []string{"namespace", "command"},
 		Buckets:    buckets,
 	})
-
+	_metricReqErr= xprometheus.NewCounter(&xprometheus.CounterVecOpts{
+		Namespace:  namespace,
+		Subsystem:  subsystem,
+		Name:       "err_total",
+		Help:       "cache.value error total",
+		LabelNames: []string{"namespace", "command"},
+	})
 	_metricHits= xprometheus.NewCounter(&xprometheus.CounterVecOpts{
 		Namespace:  namespace,
 		Subsystem:  subsystem,
@@ -28,7 +34,6 @@ var(
 		Help:       "cache.value hits total",
 		LabelNames: []string{"namespace", "command"},
 	})
-
 	_metricMiss= xprometheus.NewCounter(&xprometheus.CounterVecOpts{
 		Namespace:  namespace,
 		Subsystem:  subsystem,
@@ -43,3 +48,9 @@ func statReqDuration(namespace,command string, durationMS int64){
 	_metricRequestDuration.With("namespace", namespace, "command", command).Observe(float64(durationMS))
 }
 
+func statReqErr(namespace, command string, err error){
+	if err != nil {
+		_metricReqErr.With("namespace", namespace, "command", command).Inc()
+	}
+	return
+}

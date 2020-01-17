@@ -102,6 +102,7 @@ func (m *RedisExt) Get(ctx context.Context, key string) (s string, err error) {
 	if err == nil {
 		s, err = client.Get(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -121,6 +122,7 @@ func (m *RedisExt) MGet(ctx context.Context, keys ...string) (v []interface{}, e
 		}
 		v, err = client.MGet(ctx, prefixKey...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -136,6 +138,7 @@ func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp tim
 	if err == nil {
 		s, err = client.Set(ctx, m.prefixKey(key), val, exp).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -159,6 +162,7 @@ func (m *RedisExt) MSet(ctx context.Context, pairs ...interface{}) (s string, er
 		}
 		s, err = client.MSet(ctx, prefixPairs...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -174,6 +178,7 @@ func (m *RedisExt) GetBit(ctx context.Context, key string, offset int64) (n int6
 	if err == nil {
 		n, err = client.GetBit(ctx, m.prefixKey(key), offset).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -189,6 +194,7 @@ func (m *RedisExt) SetBit(ctx context.Context, key string, offset int64, value i
 	if err == nil {
 		n, err = client.SetBit(ctx, m.prefixKey(key), offset, value).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -204,6 +210,7 @@ func (m *RedisExt) Incr(ctx context.Context, key string) (n int64, err error) {
 	if err == nil {
 		n, err = client.Incr(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -219,6 +226,7 @@ func (m *RedisExt) IncrBy(ctx context.Context, key string, val int64) (n int64, 
 	if err == nil {
 		n, err = client.IncrBy(ctx, m.prefixKey(key), val).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -234,6 +242,7 @@ func (m *RedisExt) Decr(ctx context.Context, key string) (n int64, err error) {
 	if err == nil {
 		n, err = client.Decr(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -249,6 +258,7 @@ func (m *RedisExt) DecrBy(ctx context.Context, key string, val int64) (n int64, 
 	if err == nil {
 		n, err = client.DecrBy(ctx, m.prefixKey(key), val).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -264,6 +274,7 @@ func (m *RedisExt) SetNX(ctx context.Context, key string, val interface{}, exp t
 	if err == nil {
 		b, err = client.SetNX(ctx, m.prefixKey(key), val, exp).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -279,6 +290,7 @@ func (m *RedisExt) Exists(ctx context.Context, key string) (n int64, err error) 
 	if err == nil {
 		n, err = client.Exists(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -294,6 +306,7 @@ func (m *RedisExt) Del(ctx context.Context, key string) (n int64, err error) {
 	if err == nil {
 		n, err = client.Del(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -309,6 +322,7 @@ func (m *RedisExt) Expire(ctx context.Context, key string, expiration time.Durat
 	if err == nil {
 		b, err = client.Expire(ctx, m.prefixKey(key), expiration).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -325,6 +339,7 @@ func (m *RedisExt) HSet(ctx context.Context, key string, field string, value int
 	if err == nil {
 		b, err = client.HSet(ctx, m.prefixKey(key), field, value).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -340,6 +355,7 @@ func (m *RedisExt) HDel(ctx context.Context, key string, fields ...string) (n in
 	if err == nil {
 		n, err = client.HDel(ctx, m.prefixKey(key), fields...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -355,6 +371,7 @@ func (m *RedisExt) HExists(ctx context.Context, key string, field string) (b boo
 	if err == nil {
 		b, err = client.HExists(ctx, m.prefixKey(key), field).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -370,6 +387,7 @@ func (m *RedisExt) HGet(ctx context.Context, key string, field string) (s string
 	if err == nil {
 		s, err = client.HGet(ctx, m.prefixKey(key), field).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -385,6 +403,7 @@ func (m *RedisExt) HGetAll(ctx context.Context, key string) (sm map[string]strin
 	if err == nil {
 		sm, err = client.HGetAll(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -400,6 +419,7 @@ func (m *RedisExt) HIncrBy(ctx context.Context, key string, field string, incr i
 	if err == nil {
 		n, err = client.HIncrBy(ctx, m.prefixKey(key), field, incr).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -415,6 +435,7 @@ func (m *RedisExt) HIncrByFloat(ctx context.Context, key string, field string, i
 	if err == nil {
 		f, err = client.HIncrByFloat(ctx, m.prefixKey(key), field, incr).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -430,6 +451,7 @@ func (m *RedisExt) HKeys(ctx context.Context, key string) (ss []string, err erro
 	if err == nil {
 		ss, err = client.HKeys(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -445,6 +467,7 @@ func (m *RedisExt) HLen(ctx context.Context, key string) (n int64, err error) {
 	if err == nil {
 		n, err = client.HLen(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -460,6 +483,7 @@ func (m *RedisExt) HMGet(ctx context.Context, key string, fields ...string) (vs 
 	if err == nil {
 		vs, err = client.HMGet(ctx, m.prefixKey(key), fields...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -475,6 +499,7 @@ func (m *RedisExt) HMSet(ctx context.Context, key string, fields map[string]inte
 	if err == nil {
 		s, err = client.HMSet(ctx, m.prefixKey(key), fields).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -490,6 +515,7 @@ func (m *RedisExt) HSetNX(ctx context.Context, key string, field string, val int
 	if err == nil {
 		b, err = client.HSet(ctx, m.prefixKey(key), field, val).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -505,6 +531,7 @@ func (m *RedisExt) HVals(ctx context.Context, key string) (ss []string, err erro
 	if err == nil {
 		ss, err = client.HVals(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -521,6 +548,7 @@ func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, 
 	if err == nil {
 		n, err = client.ZAdd(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -536,6 +564,7 @@ func (m *RedisExt) ZAddNX(ctx context.Context, key string, members []Z) (n int64
 	if err == nil {
 		n, err = client.ZAddNX(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -551,6 +580,7 @@ func (m *RedisExt) ZAddNXCh(ctx context.Context, key string, members []Z) (n int
 	if err == nil {
 		n, err = client.ZAddNXCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -566,6 +596,7 @@ func (m *RedisExt) ZAddXX(ctx context.Context, key string, members []Z) (n int64
 	if err == nil {
 		n, err = client.ZAddXX(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -581,6 +612,7 @@ func (m *RedisExt) ZAddXXCh(ctx context.Context, key string, members []Z) (n int
 	if err == nil {
 		n, err = client.ZAddXXCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -596,6 +628,7 @@ func (m *RedisExt) ZAddCh(ctx context.Context, key string, members []Z) (n int64
 	if err == nil {
 		n, err = client.ZAddCh(ctx, m.prefixKey(key), toRedisZSlice(members)...).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -611,6 +644,7 @@ func (m *RedisExt) ZCard(ctx context.Context, key string) (n int64, err error) {
 	if err == nil {
 		n, err = client.ZCard(ctx, m.prefixKey(key)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -626,6 +660,7 @@ func (m *RedisExt) ZCount(ctx context.Context, key, min, max string) (n int64, e
 	if err == nil {
 		n, err = client.ZCount(ctx, m.prefixKey(key), min, max).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -641,6 +676,7 @@ func (m *RedisExt) ZRange(ctx context.Context, key string, start, stop int64) (s
 	if err == nil {
 		ss, err = client.ZRange(ctx, m.prefixKey(key), start, stop).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -656,6 +692,7 @@ func (m *RedisExt) ZRangeByLex(ctx context.Context, key string, by ZRangeBy) (ss
 	if err == nil {
 		ss, err = client.ZRangeByLex(ctx, m.prefixKey(key), toRedisZRangeBy(by)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -671,6 +708,7 @@ func (m *RedisExt) ZRangeByScore(ctx context.Context, key string, by ZRangeBy) (
 	if err == nil {
 		ss, err = client.ZRangeByScore(ctx, m.prefixKey(key), toRedisZRangeBy(by)).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -688,6 +726,7 @@ func (m *RedisExt) ZRangeWithScores(ctx context.Context, key string, start, stop
 		rzs, err = client.ZRangeWithScores(ctx, m.prefixKey(key), start, stop).Result()
 		zs = fromRedisZSlice(rzs)
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -703,6 +742,7 @@ func (m *RedisExt) ZRevRange(ctx context.Context, key string, start, stop int64)
 	if err == nil {
 		ss, err = client.ZRevRange(ctx, m.prefixKey(key), start, stop).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -720,6 +760,7 @@ func (m *RedisExt) ZRevRangeWithScores(ctx context.Context, key string, start, s
 		rzs, err = client.ZRevRangeWithScores(ctx, m.prefixKey(key), start, stop).Result()
 		zs = fromRedisZSlice(rzs)
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -735,6 +776,7 @@ func (m *RedisExt) ZRank(ctx context.Context, key string, member string) (n int6
 	if err == nil {
 		n, err = client.ZRank(ctx, m.prefixKey(key), member).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -750,6 +792,7 @@ func (m *RedisExt) ZRevRank(ctx context.Context, key string, member string) (n i
 	if err == nil {
 		n, err = client.ZRevRank(ctx, m.prefixKey(key), member).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -765,6 +808,7 @@ func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) 
 	if err == nil {
 		n, err = client.ZRem(ctx, m.prefixKey(key), members).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -780,6 +824,7 @@ func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, 
 	if err == nil {
 		f, err = client.ZIncr(ctx, m.prefixKey(key), member.toRedisZ()).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -795,6 +840,7 @@ func (m *RedisExt) ZIncrNX(ctx context.Context, key string, member Z) (f float64
 	if err == nil {
 		f, err = client.ZIncrNX(ctx, m.prefixKey(key), member.toRedisZ()).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -810,6 +856,7 @@ func (m *RedisExt) ZIncrXX(ctx context.Context, key string, member Z) (f float64
 	if err == nil {
 		f, err = client.ZIncrXX(ctx, m.prefixKey(key), member.toRedisZ()).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -825,6 +872,7 @@ func (m *RedisExt) ZIncrBy(ctx context.Context, key string, increment float64, m
 	if err == nil {
 		f, err = client.ZIncrBy(ctx, m.prefixKey(key), increment, member).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
@@ -840,6 +888,7 @@ func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f flo
 	if err == nil {
 		f, err = client.ZScore(ctx, m.prefixKey(key), member).Result()
 	}
+	statReqErr(m.namespace, command, err)
 	return
 }
 
