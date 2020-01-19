@@ -52,12 +52,12 @@ func (m *Cache) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 	fun := "Cache.Get -->"
 	// TODO 目前统计的是cache层的Get，后面需要拆分为redis层、cache层
-	command :="cache.value.Get"
+	command := "cache.value.Get"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 
 	err := m.getValueFromCache(ctx, key, value)
@@ -91,13 +91,13 @@ func (m *Cache) Get(ctx context.Context, key, value interface{}) error {
 
 func (m *Cache) Del(ctx context.Context, key interface{}) error {
 	fun := "Cache.Del -->"
-	command :="cache.value.Del"
+	command := "cache.value.Del"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 
 	skey, err := m.prefixKey(key)
@@ -124,12 +124,12 @@ func (m *Cache) Del(ctx context.Context, key interface{}) error {
 }
 
 func (m *Cache) Load(ctx context.Context, key interface{}) error {
-	command :="cache.value.Load"
+	command := "cache.value.Load"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 
 	_, err := m.loadValueToCache(ctx, key)

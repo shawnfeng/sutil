@@ -1,15 +1,15 @@
 package redisext
 
-import(
+import (
 	"gitlab.pri.ibanyu.com/middleware/seaweed/xstat/xmetric/xprometheus"
 )
 
-const(
+const (
 	namespace = "palfish"
 	subsystem = "redis_requests"
 )
 
-var(
+var (
 	buckets = []float64{5, 10, 25, 50, 100, 250, 500, 1000, 2500}
 
 	_metricRequestDuration = xprometheus.NewHistogram(&xprometheus.HistogramVecOpts{
@@ -21,7 +21,7 @@ var(
 		Buckets:    buckets,
 	})
 
-	_metricReqErr= xprometheus.NewCounter(&xprometheus.CounterVecOpts{
+	_metricReqErr = xprometheus.NewCounter(&xprometheus.CounterVecOpts{
 		Namespace:  namespace,
 		Subsystem:  subsystem,
 		Name:       "err_total",
@@ -30,11 +30,11 @@ var(
 	})
 )
 
-func statReqDuration(namespace,command string, durationMS int64){
+func statReqDuration(namespace, command string, durationMS int64) {
 	_metricRequestDuration.With("namespace", namespace, "command", command).Observe(float64(durationMS))
 }
 
-func statReqErr(namespace, command string, err error){
+func statReqErr(namespace, command string, err error) {
 	if err != nil {
 		_metricReqErr.With("namespace", namespace, "command", command).Inc()
 	}

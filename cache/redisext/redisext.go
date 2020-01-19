@@ -94,9 +94,9 @@ func (m *RedisExt) Get(ctx context.Context, key string) (s string, err error) {
 	command := "redisext.Get"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -107,12 +107,12 @@ func (m *RedisExt) Get(ctx context.Context, key string) (s string, err error) {
 }
 
 func (m *RedisExt) MGet(ctx context.Context, keys ...string) (v []interface{}, err error) {
-	command :="redisext.MGet"
+	command := "redisext.MGet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -127,12 +127,12 @@ func (m *RedisExt) MGet(ctx context.Context, keys ...string) (v []interface{}, e
 }
 
 func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp time.Duration) (s string, err error) {
-	command:="redisext.Set"
+	command := "redisext.Set"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -143,12 +143,12 @@ func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp tim
 }
 
 func (m *RedisExt) MSet(ctx context.Context, pairs ...interface{}) (s string, err error) {
-	command :="redisext.MSet"
+	command := "redisext.MSet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -167,12 +167,12 @@ func (m *RedisExt) MSet(ctx context.Context, pairs ...interface{}) (s string, er
 }
 
 func (m *RedisExt) GetBit(ctx context.Context, key string, offset int64) (n int64, err error) {
-	command :="redisext.GetBit"
+	command := "redisext.GetBit"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -186,9 +186,9 @@ func (m *RedisExt) SetBit(ctx context.Context, key string, offset int64, value i
 	command := "redisext.SetBit"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -199,12 +199,12 @@ func (m *RedisExt) SetBit(ctx context.Context, key string, offset int64, value i
 }
 
 func (m *RedisExt) Incr(ctx context.Context, key string) (n int64, err error) {
-	command :="redisext.Incr"
+	command := "redisext.Incr"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -215,12 +215,12 @@ func (m *RedisExt) Incr(ctx context.Context, key string) (n int64, err error) {
 }
 
 func (m *RedisExt) IncrBy(ctx context.Context, key string, val int64) (n int64, err error) {
-	command :="redisext.IncrBy"
+	command := "redisext.IncrBy"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -231,12 +231,12 @@ func (m *RedisExt) IncrBy(ctx context.Context, key string, val int64) (n int64, 
 }
 
 func (m *RedisExt) Decr(ctx context.Context, key string) (n int64, err error) {
-	command :="redisext.Decr"
+	command := "redisext.Decr"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -247,12 +247,12 @@ func (m *RedisExt) Decr(ctx context.Context, key string) (n int64, err error) {
 }
 
 func (m *RedisExt) DecrBy(ctx context.Context, key string, val int64) (n int64, err error) {
-	command :="redisext.DecrBy"
+	command := "redisext.DecrBy"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -266,9 +266,9 @@ func (m *RedisExt) SetNX(ctx context.Context, key string, val interface{}, exp t
 	command := "redisext.SetNX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -282,9 +282,9 @@ func (m *RedisExt) Exists(ctx context.Context, key string) (n int64, err error) 
 	command := "redisext.Exists"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -295,12 +295,12 @@ func (m *RedisExt) Exists(ctx context.Context, key string) (n int64, err error) 
 }
 
 func (m *RedisExt) Del(ctx context.Context, key string) (n int64, err error) {
-	command :="redisext.Del"
+	command := "redisext.Del"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -311,12 +311,12 @@ func (m *RedisExt) Del(ctx context.Context, key string) (n int64, err error) {
 }
 
 func (m *RedisExt) Expire(ctx context.Context, key string, expiration time.Duration) (b bool, err error) {
-	command :="redisext.Expire"
+	command := "redisext.Expire"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -328,12 +328,12 @@ func (m *RedisExt) Expire(ctx context.Context, key string, expiration time.Durat
 
 // hashes apis
 func (m *RedisExt) HSet(ctx context.Context, key string, field string, value interface{}) (b bool, err error) {
-	command :="redisext.HSet"
+	command := "redisext.HSet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -344,12 +344,12 @@ func (m *RedisExt) HSet(ctx context.Context, key string, field string, value int
 }
 
 func (m *RedisExt) HDel(ctx context.Context, key string, fields ...string) (n int64, err error) {
-	command :="redisext.HDel"
+	command := "redisext.HDel"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -360,12 +360,12 @@ func (m *RedisExt) HDel(ctx context.Context, key string, fields ...string) (n in
 }
 
 func (m *RedisExt) HExists(ctx context.Context, key string, field string) (b bool, err error) {
-	command :="redisext.HExists"
+	command := "redisext.HExists"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -376,12 +376,12 @@ func (m *RedisExt) HExists(ctx context.Context, key string, field string) (b boo
 }
 
 func (m *RedisExt) HGet(ctx context.Context, key string, field string) (s string, err error) {
-	command :="redisext.HGet"
+	command := "redisext.HGet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -392,12 +392,12 @@ func (m *RedisExt) HGet(ctx context.Context, key string, field string) (s string
 }
 
 func (m *RedisExt) HGetAll(ctx context.Context, key string) (sm map[string]string, err error) {
-	command :="redisext.HGetAll"
+	command := "redisext.HGetAll"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -408,12 +408,12 @@ func (m *RedisExt) HGetAll(ctx context.Context, key string) (sm map[string]strin
 }
 
 func (m *RedisExt) HIncrBy(ctx context.Context, key string, field string, incr int64) (n int64, err error) {
-	command :="redisext.HIncrBy"
+	command := "redisext.HIncrBy"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -424,12 +424,12 @@ func (m *RedisExt) HIncrBy(ctx context.Context, key string, field string, incr i
 }
 
 func (m *RedisExt) HIncrByFloat(ctx context.Context, key string, field string, incr float64) (f float64, err error) {
-	command :="redisext.HIncrByFloat"
+	command := "redisext.HIncrByFloat"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -440,12 +440,12 @@ func (m *RedisExt) HIncrByFloat(ctx context.Context, key string, field string, i
 }
 
 func (m *RedisExt) HKeys(ctx context.Context, key string) (ss []string, err error) {
-	command :="redisext.HKeys"
+	command := "redisext.HKeys"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -456,12 +456,12 @@ func (m *RedisExt) HKeys(ctx context.Context, key string) (ss []string, err erro
 }
 
 func (m *RedisExt) HLen(ctx context.Context, key string) (n int64, err error) {
-	command :="redisext.HLen"
+	command := "redisext.HLen"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -472,12 +472,12 @@ func (m *RedisExt) HLen(ctx context.Context, key string) (n int64, err error) {
 }
 
 func (m *RedisExt) HMGet(ctx context.Context, key string, fields ...string) (vs []interface{}, err error) {
-	command :="redisext.HMGet"
+	command := "redisext.HMGet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -488,12 +488,12 @@ func (m *RedisExt) HMGet(ctx context.Context, key string, fields ...string) (vs 
 }
 
 func (m *RedisExt) HMSet(ctx context.Context, key string, fields map[string]interface{}) (s string, err error) {
-	command :="redisext.HMSet"
+	command := "redisext.HMSet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -504,12 +504,12 @@ func (m *RedisExt) HMSet(ctx context.Context, key string, fields map[string]inte
 }
 
 func (m *RedisExt) HSetNX(ctx context.Context, key string, field string, val interface{}) (b bool, err error) {
-	command :="redisext.HSetNX"
+	command := "redisext.HSetNX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -520,12 +520,12 @@ func (m *RedisExt) HSetNX(ctx context.Context, key string, field string, val int
 }
 
 func (m *RedisExt) HVals(ctx context.Context, key string) (ss []string, err error) {
-	command :="redisext.HVals"
+	command := "redisext.HVals"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -537,12 +537,12 @@ func (m *RedisExt) HVals(ctx context.Context, key string) (ss []string, err erro
 
 // sorted set apis
 func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, err error) {
-	command :="redisext.ZAdd"
+	command := "redisext.ZAdd"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -553,12 +553,12 @@ func (m *RedisExt) ZAdd(ctx context.Context, key string, members []Z) (n int64, 
 }
 
 func (m *RedisExt) ZAddNX(ctx context.Context, key string, members []Z) (n int64, err error) {
-	command :="redisext.ZAddNX"
+	command := "redisext.ZAddNX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -569,12 +569,12 @@ func (m *RedisExt) ZAddNX(ctx context.Context, key string, members []Z) (n int64
 }
 
 func (m *RedisExt) ZAddNXCh(ctx context.Context, key string, members []Z) (n int64, err error) {
-	command :="redisext.ZAddNXCh"
+	command := "redisext.ZAddNXCh"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -585,12 +585,12 @@ func (m *RedisExt) ZAddNXCh(ctx context.Context, key string, members []Z) (n int
 }
 
 func (m *RedisExt) ZAddXX(ctx context.Context, key string, members []Z) (n int64, err error) {
-	command :="redisext.ZAddXX"
+	command := "redisext.ZAddXX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -601,12 +601,12 @@ func (m *RedisExt) ZAddXX(ctx context.Context, key string, members []Z) (n int64
 }
 
 func (m *RedisExt) ZAddXXCh(ctx context.Context, key string, members []Z) (n int64, err error) {
-	command :="redisext.ZAddXXCh"
+	command := "redisext.ZAddXXCh"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -617,12 +617,12 @@ func (m *RedisExt) ZAddXXCh(ctx context.Context, key string, members []Z) (n int
 }
 
 func (m *RedisExt) ZAddCh(ctx context.Context, key string, members []Z) (n int64, err error) {
-	command :="redisext.ZAddCh"
+	command := "redisext.ZAddCh"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -633,12 +633,12 @@ func (m *RedisExt) ZAddCh(ctx context.Context, key string, members []Z) (n int64
 }
 
 func (m *RedisExt) ZCard(ctx context.Context, key string) (n int64, err error) {
-	command :="redisext.ZCard"
+	command := "redisext.ZCard"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -649,12 +649,12 @@ func (m *RedisExt) ZCard(ctx context.Context, key string) (n int64, err error) {
 }
 
 func (m *RedisExt) ZCount(ctx context.Context, key, min, max string) (n int64, err error) {
-	command :="redisext.ZCount"
+	command := "redisext.ZCount"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -665,12 +665,12 @@ func (m *RedisExt) ZCount(ctx context.Context, key, min, max string) (n int64, e
 }
 
 func (m *RedisExt) ZRange(ctx context.Context, key string, start, stop int64) (ss []string, err error) {
-	command :="redisext.ZRange"
+	command := "redisext.ZRange"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -681,12 +681,12 @@ func (m *RedisExt) ZRange(ctx context.Context, key string, start, stop int64) (s
 }
 
 func (m *RedisExt) ZRangeByLex(ctx context.Context, key string, by ZRangeBy) (ss []string, err error) {
-	command :="redisext.ZRangeByLex"
+	command := "redisext.ZRangeByLex"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -697,12 +697,12 @@ func (m *RedisExt) ZRangeByLex(ctx context.Context, key string, by ZRangeBy) (ss
 }
 
 func (m *RedisExt) ZRangeByScore(ctx context.Context, key string, by ZRangeBy) (ss []string, err error) {
-	command :="redisext.ZRangeByScore"
+	command := "redisext.ZRangeByScore"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -713,12 +713,12 @@ func (m *RedisExt) ZRangeByScore(ctx context.Context, key string, by ZRangeBy) (
 }
 
 func (m *RedisExt) ZRangeWithScores(ctx context.Context, key string, start, stop int64) (zs []Z, err error) {
-	command :="redisext.ZRangeWithScores"
+	command := "redisext.ZRangeWithScores"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	var rzs []redis2.Z
 	client, err := m.getRedisInstance(ctx)
@@ -731,12 +731,12 @@ func (m *RedisExt) ZRangeWithScores(ctx context.Context, key string, start, stop
 }
 
 func (m *RedisExt) ZRevRange(ctx context.Context, key string, start, stop int64) (ss []string, err error) {
-	command :="redisext.ZRevRange"
+	command := "redisext.ZRevRange"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -747,12 +747,12 @@ func (m *RedisExt) ZRevRange(ctx context.Context, key string, start, stop int64)
 }
 
 func (m *RedisExt) ZRevRangeWithScores(ctx context.Context, key string, start, stop int64) (zs []Z, err error) {
-	command :="redisext.ZRevRangeWithScores"
+	command := "redisext.ZRevRangeWithScores"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	var rzs []redis2.Z
 	client, err := m.getRedisInstance(ctx)
@@ -765,12 +765,12 @@ func (m *RedisExt) ZRevRangeWithScores(ctx context.Context, key string, start, s
 }
 
 func (m *RedisExt) ZRank(ctx context.Context, key string, member string) (n int64, err error) {
-	command :="redisext.ZRank"
+	command := "redisext.ZRank"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -781,12 +781,12 @@ func (m *RedisExt) ZRank(ctx context.Context, key string, member string) (n int6
 }
 
 func (m *RedisExt) ZRevRank(ctx context.Context, key string, member string) (n int64, err error) {
-	command :="redisext.ZRevRank"
+	command := "redisext.ZRevRank"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -797,12 +797,12 @@ func (m *RedisExt) ZRevRank(ctx context.Context, key string, member string) (n i
 }
 
 func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) (n int64, err error) {
-	command :="redisext.ZRem"
+	command := "redisext.ZRem"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -813,12 +813,12 @@ func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) 
 }
 
 func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, err error) {
-	command :="redisext.ZIncr"
+	command := "redisext.ZIncr"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -829,12 +829,12 @@ func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, 
 }
 
 func (m *RedisExt) ZIncrNX(ctx context.Context, key string, member Z) (f float64, err error) {
-	command :="redisext.ZIncrNX"
+	command := "redisext.ZIncrNX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -845,12 +845,12 @@ func (m *RedisExt) ZIncrNX(ctx context.Context, key string, member Z) (f float64
 }
 
 func (m *RedisExt) ZIncrXX(ctx context.Context, key string, member Z) (f float64, err error) {
-	command :="redisext.ZIncrXX"
+	command := "redisext.ZIncrXX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -861,12 +861,12 @@ func (m *RedisExt) ZIncrXX(ctx context.Context, key string, member Z) (f float64
 }
 
 func (m *RedisExt) ZIncrBy(ctx context.Context, key string, increment float64, member string) (f float64, err error) {
-	command :="redisext.ZIncrBy"
+	command := "redisext.ZIncrBy"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -877,12 +877,12 @@ func (m *RedisExt) ZIncrBy(ctx context.Context, key string, increment float64, m
 }
 
 func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f float64, err error) {
-	command :="redisext.ZScore"
+	command := "redisext.ZScore"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
 	st := stime.NewTimeStat()
-	defer func(){
+	defer func() {
 		span.Finish()
-		statReqDuration(m.namespace,command, st.Millisecond())
+		statReqDuration(m.namespace, command, st.Millisecond())
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
