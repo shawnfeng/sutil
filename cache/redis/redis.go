@@ -83,7 +83,7 @@ func (m *Client) Get(ctx context.Context, key string) *redis.StringCmd {
 
 func (m *Client) MGet(ctx context.Context, keys ...string) *redis.SliceCmd {
 	var fixKeys = make([]string, len(keys))
-	for k,v := range keys {
+	for k, v := range keys {
 		key := m.fixKey(v)
 		fixKeys[k] = key
 	}
@@ -100,7 +100,7 @@ func (m *Client) Set(ctx context.Context, key string, value interface{}, expirat
 func (m *Client) MSet(ctx context.Context, pairs ...interface{}) *redis.StatusCmd {
 	var fixPairs = make([]interface{}, len(pairs))
 	var keys []string
-	for k,v := range pairs {
+	for k, v := range pairs {
 		if (k & 1) == 0 {
 			key := m.fixKey(v.(string))
 			keys = append(keys, key)
