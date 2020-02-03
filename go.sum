@@ -12,6 +12,8 @@ github.com/ZhengHe-MD/agollo/v4 v4.1.3 h1:qsJ6oWrb+tYp16RUS2X3Ez6yE3f55y1rYlxdcR
 github.com/ZhengHe-MD/agollo/v4 v4.1.3/go.mod h1:Cze1dOFujMfuqY5mZWzz1vvJ0ZdpDQ77PC5m2J/qv+4=
 github.com/ZhengHe-MD/properties v0.2.1 h1:EhfDfGMkt/tkenvmaRZ5iwnYF1cZrtDiDcL4RHzBFCA=
 github.com/ZhengHe-MD/properties v0.2.1/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
+github.com/ZhengHe-MD/properties v0.2.2 h1:iAwyAQYilOAyx6NW7PdBtX+Nk+6v5IwAMc2wHpuqVmc=
+github.com/ZhengHe-MD/properties v0.2.2/go.mod h1:6d7Dapy6sSqC/QRwv8HTZ7h6yxvYQsyIcKBdYJJbyLE=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
