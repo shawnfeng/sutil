@@ -10,7 +10,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/slog/slog"
-	stat "github.com/shawnfeng/sutil/stat"
+	"github.com/shawnfeng/sutil/stat"
 	"github.com/shawnfeng/sutil/stime"
 	"gopkg.in/mgo.v2"
 )
@@ -63,13 +63,13 @@ func (m *Router) sqlPrepare(ctx context.Context, cluster, table string) (db *DB,
 	instance := m.configer.GetInstance(ctx, cluster, table)
 	in := m.instances.Get(ctx, generateKey(instance))
 	if in == nil {
-		err = fmt.Errorf("db instance not find: instance:%s", instance)
+		err = fmt.Errorf("db instance not find: cluster:%s table:%s instance:%s", cluster, table, instance)
 		return
 	}
 
 	dbsql, ok := in.(*Sql)
 	if !ok {
-		err = fmt.Errorf("db instance type error: instance:%s, dbtype:%s", instance, in.GetType())
+		err = fmt.Errorf("db instance type error: cluster:%s table:%s instance:%s, dbtype:%s", cluster, table, instance, in.GetType())
 		return
 	}
 
