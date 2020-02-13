@@ -37,10 +37,10 @@ func TestApolloConfig_GetConfig(t *testing.T) {
 	ctx := context.TODO()
 
 	conf := NewApolloConfiger()
-
+	conf.Init(ctx)
 	t.Run("valid topic", func(t *testing.T) {
 		topic := defaultTestTopic
-		config, err := conf.GetConfig(ctx, topic)
+		config, err := conf.GetConfig(ctx, topic, MQTypeKafka)
 		assert.Equal(t, err, nil)
 		assert.Equal(t, config.MQType, MQTypeKafka)
 		assert.Equal(t, config.Topic, topic)
@@ -49,9 +49,18 @@ func TestApolloConfig_GetConfig(t *testing.T) {
 
 	t.Run("invalid topic", func(t *testing.T) {
 		topic := "topic.never.exist"
-		config, err := conf.GetConfig(ctx, topic)
+		config, err := conf.GetConfig(ctx, topic, MQTypeKafka)
 		assert.True(t, config == nil)
 		assert.NotEqual(t, err, nil)
+	})
+
+	t.Run("delay topic", func(t *testing.T) {
+		topic := defaultTestTopic
+		config, err := conf.GetConfig(ctx, topic, MQTypeDelay)
+		assert.Equal(t, err, nil)
+		assert.Equal(t, config.MQType, MQTypeDelay)
+		assert.Equal(t, config.Topic, topic)
+		assert.True(t, len(config.MQAddr) > 0)
 	})
 }
 
@@ -63,15 +72,18 @@ func TestApolloConfig_buildKey(t *testing.T) {
 		topic          string
 		item           string
 		expectedString string
+		mqType         MQType
 	}{
-		{defaultTestTopic, "brokers", fmt.Sprintf("%s.default.kafka.brokers", defaultTestTopic)},
-		{"topic", "timeout", "topic.default.kafka.timeout"},
+		{defaultTestTopic, "brokers", fmt.Sprintf("%s.default.kafka.brokers", defaultTestTopic), MQTypeKafka},
+		{"topic", "timeout", "topic.default.kafka.timeout", MQTypeKafka},
+		{defaultTestTopic, "brokers", fmt.Sprintf("%s.default.delay.brokers", defaultTestTopic), MQTypeDelay},
 	}
 
 	for _, c := range cases {
-		assert.Equal(t, conf.buildKey(ctx, c.topic, c.item), c.expectedString)
+		assert.Equal(t, conf.buildKey(ctx, c.topic, c.item, c.mqType), c.expectedString)
 	}
 }
+
 
 func TestApolloConfig_ParseKey(t *testing.T) {
 	ctx := context.TODO()
@@ -102,6 +114,11 @@ func TestApolloConfig_ParseKey(t *testing.T) {
 			true,
 			nil,
 		},
+		{
+			"base.changeboard.event.default.delay.brokers",
+			false,
+			&KeyParts{"base.changeboard.event", "default"},
+		},
 	}
 
 	for _, c := range cases {
@@ -116,7 +133,7 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 		ctx := context.TODO()
 		conf := NewApolloConfiger()
 
-		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey, MQTypeKafka)
 		assert.True(t, ok)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
 		slog.Infof(ctx, "got brokers:%s", brokersVal)
@@ -128,7 +145,7 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 
 		conf := NewApolloConfiger()
 
-		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey, MQTypeKafka)
 		assert.True(t, ok)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
 		slog.Infof(ctx, "got brokers:%s", brokersVal)
@@ -140,7 +157,18 @@ func TestApolloConfig_getConfigItemWithFallback(t *testing.T) {
 
 		conf := NewApolloConfiger()
 
-		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey)
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey, MQTypeKafka)
+		assert.True(t, ok)
+		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
+		slog.Infof(ctx, "got brokers:%s", brokersVal)
+	})
+
+	t.Run("empty ctx should get default delay value", func(t *testing.T) {
+		ctx := context.TODO()
+		conf := NewApolloConfiger()
+		conf.Init(ctx)
+
+		brokersVal, ok := conf.getConfigItemWithFallback(ctx, defaultTestTopic, apolloBrokersKey, MQTypeDelay)
 		assert.True(t, ok)
 		assert.True(t, len(brokersVal) > 0, "got brokers:", brokersVal)
 		slog.Infof(ctx, "got brokers:%s", brokersVal)
