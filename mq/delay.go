@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/shawnfeng/sutil/slog"
 	"github.com/shawnfeng/sutil/snetutil"
 	"gitlab.pri.ibanyu.com/middleware/delayqueue/model"
 	"gitlab.pri.ibanyu.com/middleware/delayqueue/processor"
@@ -20,8 +19,8 @@ const (
 	defaultRequestSleep = 300 * time.Millisecond
 )
 
-type ACKHandler interface {
-	ACK(ctx context.Context) error
+type AckHandler interface {
+	Ack(ctx context.Context) error
 }
 
 type DelayHandler struct {
@@ -36,7 +35,7 @@ func NewDelayHandler(cli *DelayClient, jobID string) *DelayHandler {
 	}
 }
 
-func (p *DelayHandler) ACK(ctx context.Context) error {
+func (p *DelayHandler) Ack(ctx context.Context) error {
 	return p.cli.Ack(ctx, p.jobID)
 }
 
@@ -114,6 +113,7 @@ func NewDefaultDelayClient(ctx context.Context, topic string) (*DelayClient, err
 	return client, nil
 }
 
+// Write 发布任务
 func (p *DelayClient) Write(ctx context.Context, value interface{}, ttlSeconds, delaySeconds uint32, tries uint16) (jobID string, err error) {
 	fun := "DelayClient.Write --> "
 	span := opentracing.SpanFromContext(ctx)
@@ -123,7 +123,7 @@ func (p *DelayClient) Write(ctx context.Context, value interface{}, ttlSeconds, 
 
 	msg, err1 := json.Marshal(value)
 	if err1 != nil {
-		err = err1
+		err = fmt.Errorf("%s json marshal, value = %v", err1, value)
 		return
 	}
 	res := new(writeRes)
@@ -147,12 +147,13 @@ func (p *DelayClient) Write(ctx context.Context, value interface{}, ttlSeconds, 
 	return
 }
 
+// Read 消费任务
 func (p *DelayClient) Read(ctx context.Context, ttrSeconds uint32) (job *Job, err error) {
+
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
 		p.logConfigToSpan(span)
 	}
-
 	res := new(readRes)
 	req := &processor.Consume{
 		Queue:      p.queue,
@@ -161,16 +162,14 @@ func (p *DelayClient) Read(ctx context.Context, ttrSeconds uint32) (job *Job, er
 	path := fmt.Sprintf("/base/delayqueue/%s/job/consume", p.namespace)
 	for {
 		time.Sleep(defaultRequestSleep)
-		err := p.httpInvoke(ctx, path, req, res)
+		err = p.httpInvoke(ctx, path, req, res)
 		if err != nil {
-			slog.Errorf("http invoke, path = %s, err = %s", path, model.ErrNotFound)
+			break
 		}
 		if res.Msg == model.ErrNotFound.Error() {
-			slog.Errorf("job timeout, path = %s, err = %s", path, res.Msg)
 			continue
 		}
 		if res.Ret == -1 {
-			slog.Errorf("http invoke, path = %s, err = %s", path, res.Msg)
 			break
 		}
 		if res.Data.Ent.Job == nil {
@@ -182,6 +181,7 @@ func (p *DelayClient) Read(ctx context.Context, ttrSeconds uint32) (job *Job, er
 	return
 }
 
+// Ack 确认消费
 func (p *DelayClient) Ack(ctx context.Context, jobID string) error {
 	fun := "DelayClient.Ack -->"
 	span := opentracing.SpanFromContext(ctx)

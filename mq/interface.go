@@ -267,7 +267,7 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 func WriteDelayMsg(ctx context.Context, topic string, value interface{}, delaySeconds uint32) (jobID string, err error) {
 	fun := "mq.WriteDelayMsg -->"
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteMsg")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteDelayMsg")
 	defer span.Finish()
 	span.LogFields(
 		log.String(spanLogKeyTopic, topic))
@@ -305,7 +305,7 @@ func WriteDelayMsg(ctx context.Context, topic string, value interface{}, delaySe
 }
 
 // 读完消息后不会自动确认
-func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, ACKHandler, error) {
+func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, AckHandler, error) {
 	fun := "mq.ReadDelayMsg -->"
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadDelayMsg")
@@ -362,9 +362,9 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 
 // 读完自动确认
 func AckReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, error) {
-	fun := "mq.ReadDelayMsg -->"
+	fun := "mq.AckReadDelayMsg -->"
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadDelayMsg")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.AckReadDelayMsg")
 	defer span.Finish()
 	span.LogFields(
 		log.String(spanLogKeyTopic, topic))
@@ -408,7 +408,7 @@ func AckReadDelayMsg(ctx context.Context, topic string, value interface{}) (cont
 	if len(payload.Value) == 0 {
 		return context.TODO(), nil
 	}
-	mctx, err := parsePayload(&payload, "mq.ReadDelayMsg", value)
+	mctx, err := parsePayload(&payload, "mq.AckReadDelayMsg", value)
 	mspan := opentracing.SpanFromContext(mctx)
 	if mspan != nil {
 		defer mspan.Finish()

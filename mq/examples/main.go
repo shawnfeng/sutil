@@ -85,8 +85,10 @@ func main() {
 	go func() {
 		for i := 0; i < 10; i ++ {
 			var msg Msg
-			ctx, err := mq.ReadDelayMsg(ctx1, topic, &msg)
+			ctx, ack, err := mq.ReadDelayMsg(ctx1, topic, &msg)
 			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			err = ack.ACK(ctx)
+			slog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 			time.Sleep(1 * time.Second)
 		}
 	}()
