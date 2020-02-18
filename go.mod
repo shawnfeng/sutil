@@ -2,7 +2,7 @@ module github.com/shawnfeng/sutil
 
 require (
 	github.com/ZhengHe-MD/agollo/v4 v4.1.3
-	github.com/ZhengHe-MD/properties v0.2.1
+	github.com/ZhengHe-MD/properties v0.2.2
 	github.com/bitly/go-simplejson v0.4.4-0.20140701141959-3378bdcb5ceb
 	github.com/coreos/etcd v3.3.17+incompatible
 	github.com/fzzy/radix v0.4.9-0.20141113025130-a3a55de9c594
