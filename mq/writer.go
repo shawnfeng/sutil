@@ -16,7 +16,7 @@ type Writer interface {
 }
 
 func NewWriter(ctx context.Context, topic string) (Writer, error) {
-	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	config, err := DefaultConfiger.GetConfig(ctx, topic, MQTypeKafka)
 	if err != nil {
 		return nil, err
 	}

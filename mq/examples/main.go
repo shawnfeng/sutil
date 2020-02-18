@@ -57,6 +57,15 @@ func main() {
 		}()
 	*/
 
+	go func() {
+		msg := &Msg{
+			Id:   1,
+			Body: "test",
+		}
+		jobID, err := mq.WriteDelayMsg(ctx, topic, msg, 5)
+		slog.Infof(ctx, "write delay msg, jobID = %s, err = %v", jobID, err)
+	}()
+
 	ctx1 := context.Background()
 	/*
 		//err := mq.SetOffsetAt(ctx1, topic, 1, time.Date(2019, time.December, 4, 0, 0, 0, 0, time.UTC))
@@ -65,15 +74,26 @@ func main() {
 			slog.Infof(ctx, "2222222222222222,err:%v", err)
 		}
 	*/
+	//go func() {
+	//	for i := 0; i < 10000; i++ {
+	//		var msg Msg
+	//		ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group3", &msg)
+	//		slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+	//	}
+	//}()
+
 	go func() {
-		for i := 0; i < 10000; i++ {
+		for i := 0; i < 10; i ++ {
 			var msg Msg
-			ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group3", &msg)
+			ctx, ack, err := mq.ReadDelayMsg(ctx1, topic, &msg)
 			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			err = ack.ACK(ctx)
+			slog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
-	time.Sleep(6 * time.Second)
+	time.Sleep(15 * time.Second)
 	defer mq.Close()
 
 }
