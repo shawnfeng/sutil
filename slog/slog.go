@@ -32,6 +32,11 @@ func Init(logdir string, fileName string, level string) {
 	xlog.InitAppLog(logdir, fileName, convertLevel(level))
 }
 
+// Sync sync of app logger
+func Sync() {
+	xlog.AppLogSync()
+}
+
 // Traceln xlog.Debug
 func Traceln(v ...interface{}) {
 	xlog.Debug(context.TODO(), v...)

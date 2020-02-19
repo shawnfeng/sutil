@@ -19,6 +19,11 @@ func Init(logDir, fileName string, service string) {
 	xlog.SetStatLogService(service)
 }
 
+// Sync sync of stat log
+func Sync() {
+	xlog.StatLogSync()
+}
+
 // LogKV 打印info日志，进行统计
 func LogKV(ctx context.Context, name string, keysAndValues ...interface{}) {
 	xlog.StatInfow(ctx, name, keysAndValues...)
