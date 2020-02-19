@@ -4,7 +4,11 @@
 
 package slog
 
-import "testing"
+import (
+	"testing"
+
+	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
+)
 
 func TestShowLog(t *testing.T) {
 	t0(t)
@@ -13,6 +17,8 @@ func TestShowLog(t *testing.T) {
 
 func t0(t *testing.T) {
 
+	// 直接用xlog.Error, skip:4, slog.Error, skip:5, slog/slog.Error, skip:6
+	xlog.SetAppLogSkip(5)
 	Tracef("Tracef %s", "TT")
 	Debugf("Debugf %s", "TT")
 	Infof("Infof %s", "TT")
@@ -31,7 +37,6 @@ func t0(t *testing.T) {
 
 	Infoln("FF")
 	Infoln("FF")
-
 }
 
 func t1(t *testing.T) {

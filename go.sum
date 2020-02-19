@@ -1,6 +1,7 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.37.4/go.mod h1:NHPJ89PdicEuT9hdPXMROBD91xc5uRDxsMtSB16k7hw=
+git.apache.org/thrift.git v0.0.0-20150427210205-dc799ca07862 h1:rQ4+nsplyraYCLXgJ+9cHSn+8OF/A8VuSQAwG1Jb7/4=
 git.apache.org/thrift.git v0.0.0-20150427210205-dc799ca07862/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
@@ -182,6 +183,10 @@ github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhe
 github.com/xdg/stringprep v1.0.0/go.mod h1:Jhud4/sHMO4oL310DaZAKk9ZaJ08SJfe+sJh0HrGL1Y=
 gitlab.pri.ibanyu.com/middleware/seaweed v1.0.20 h1:YZcUyy1D748m1N8geRNI3osz5VxvIcJKsVDs/XhvZ38=
 gitlab.pri.ibanyu.com/middleware/seaweed v1.0.20/go.mod h1:MpSbv4ZwqbtESMEils0BcjET3+Qp+XeWtAwLqbk07fg=
+gitlab.pri.ibanyu.com/middleware/seaweed v1.0.23 h1:KmA8zVmIiRtIAt0acitscHmXSlYPInNdud2UBcU1q8E=
+gitlab.pri.ibanyu.com/middleware/seaweed v1.0.23/go.mod h1:MpSbv4ZwqbtESMEils0BcjET3+Qp+XeWtAwLqbk07fg=
+gitlab.pri.ibanyu.com/middleware/seaweed v1.0.24 h1:PHu4yOjs0al1PHC/DA2Pmb8pfbGpPryYDj+VECHAamw=
+gitlab.pri.ibanyu.com/middleware/seaweed v1.0.24/go.mod h1:MpSbv4ZwqbtESMEils0BcjET3+Qp+XeWtAwLqbk07fg=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.5.0/go.mod h1:sABNBOSYdrvTF6hTgEIbc7YasKWGhgEQZyfxyTvoXHQ=

@@ -27,7 +27,7 @@ require (
 	github.com/stretchrcom/testify v1.2.2 // indirect
 	github.com/uber/jaeger-client-go v2.20.1+incompatible
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
-	gitlab.pri.ibanyu.com/middleware/seaweed v1.0.20
+	gitlab.pri.ibanyu.com/middleware/seaweed v1.0.24
 
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
