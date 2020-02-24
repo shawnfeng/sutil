@@ -333,11 +333,11 @@ func FetchDelayMsg(ctx context.Context, topic string, value interface{}) (contex
 	err = json.Unmarshal(job.Body, &payload)
 	if err != nil {
 		slog.Errorf(ctx, "%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
-		return nil, nil ,fmt.Errorf("%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
+		return nil, nil, fmt.Errorf("%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
 	}
 	err = json.Unmarshal(job.Body, &value)
 	if err != nil {
-		return nil, nil,err
+		return nil, nil, err
 	}
 
 	handler := NewDelayHandler(client, job.ID)

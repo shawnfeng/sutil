@@ -84,7 +84,6 @@ func TestApolloConfig_buildKey(t *testing.T) {
 	}
 }
 
-
 func TestApolloConfig_ParseKey(t *testing.T) {
 	ctx := context.TODO()
 	conf := NewApolloConfiger()

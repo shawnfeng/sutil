@@ -268,7 +268,7 @@ func (m *InstanceManager) getReader(ctx context.Context, conf *instanceConf) Rea
 	return reader
 }
 
-func (m *InstanceManager) getDelayClient(ctx context.Context, conf *instanceConf) *DelayClient{
+func (m *InstanceManager) getDelayClient(ctx context.Context, conf *instanceConf) *DelayClient {
 	fun := "InstanceManager.getDelayClient"
 
 	in := m.get(ctx, conf)

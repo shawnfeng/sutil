@@ -58,9 +58,9 @@ func (c ConfigerType) String() string {
 
 const (
 	defaultTimeout = 3 * time.Second
-	defaultTTR = 3600 // 1 hour
-	defaultTTL = 3600 * 24 // 1 day
-	defaultTries = 1
+	defaultTTR     = 3600      // 1 hour
+	defaultTTL     = 3600 * 24 // 1 day
+	defaultTries   = 1
 )
 
 type Config struct {
@@ -71,9 +71,9 @@ type Config struct {
 	CommitInterval time.Duration
 	Offset         int64
 	OffsetAt       string
-	TTR            uint32    // time to run
-	TTL            uint32    // time to live
-	Tries          uint16    // delay tries
+	TTR            uint32 // time to run
+	TTL            uint32 // time to live
+	Tries          uint16 // delay tries
 }
 
 type KeyParts struct {
@@ -85,7 +85,7 @@ var DefaultConfiger Configer
 
 type Configer interface {
 	Init(ctx context.Context) error
-	GetConfig(ctx context.Context,topic string, mqType MQType) (*Config, error)
+	GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error)
 	ParseKey(ctx context.Context, k string) (*KeyParts, error)
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
@@ -120,7 +120,7 @@ func (m *SimpleConfig) Init(ctx context.Context) error {
 	return nil
 }
 
-func (m *SimpleConfig) GetConfig(ctx context.Context,topic string, mqType MQType) (*Config, error) {
+func (m *SimpleConfig) GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error) {
 	fun := "SimpleConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get simple config topic:%s", fun, topic)
 
@@ -163,7 +163,7 @@ func (m *EtcdConfig) Init(ctx context.Context) error {
 	return nil
 }
 
-func (m *EtcdConfig) GetConfig(ctx context.Context,topic string, mqType MQType) (*Config, error) {
+func (m *EtcdConfig) GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error) {
 	fun := "EtcdConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get etcd config topic:%s", fun, topic)
 	// TODO
@@ -243,7 +243,7 @@ func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic stri
 	return val, ok
 }
 
-func (m *ApolloConfig) GetConfig(ctx context.Context,topic string, mqType MQType) (*Config, error) {
+func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error) {
 	fun := "ApolloConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get mq config topic:%s", fun, topic)
 
