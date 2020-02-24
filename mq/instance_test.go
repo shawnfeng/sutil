@@ -119,7 +119,7 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 			Source:    center.Apollo,
 			Namespace: center.DefaultApolloMQNamespace,
 			Changes: map[string]*center.Change{
-				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers"): {
+				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers", MQTypeKafka): {
 					ChangeType: center.MODIFY,
 				},
 			},
@@ -151,7 +151,7 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 			Source:    center.Apollo,
 			Namespace: center.DefaultApolloMQNamespace,
 			Changes: map[string]*center.Change{
-				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers"): {
+				apolloConfig.buildKey(ctx, defaultTestTopic, "brokers", MQTypeKafka): {
 					ChangeType: center.MODIFY,
 				},
 			},
@@ -163,4 +163,24 @@ func TestInstanceManager_applyChangeEvent_apolloConfig(t *testing.T) {
 		modifiedIn := m.get(ctx, conf)
 		assert.NotEqual(t, modifiedIn, in)
 	})
+}
+
+func TestInstanceManager_getDelayClient(t *testing.T) {
+	ctx := context.TODO()
+	_ = SetConfiger(ctx, ConfigerTypeApollo)
+	t.Run("test get delay client", func(t *testing.T) {
+		m := NewInstanceManager()
+		conf := &instanceConf{
+			group:     "unknown",
+			role:      RoleTypeDelayClient,
+			topic:     defaultTestTopic,
+			groupId:   "g1",
+			partition: 0,
+		}
+		client := m.getDelayClient(ctx, conf)
+
+		assert.Equal(t, "palfish.test", client.namespace)
+		assert.Equal(t, "test", client.queue)
+	})
+
 }

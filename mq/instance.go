@@ -22,6 +22,7 @@ type MQRoleType int
 const (
 	RoleTypeReader MQRoleType = iota
 	RoleTypeWriter
+	RoleTypeDelayClient
 )
 
 var (
@@ -34,6 +35,8 @@ func (t MQRoleType) String() string {
 		return "reader"
 	case RoleTypeWriter:
 		return "writer"
+	case RoleTypeDelayClient:
+		return "delay"
 	}
 	// unreachable
 	return ""
@@ -45,6 +48,8 @@ func MQRoleTypeFromInt(it int) (t MQRoleType, err error) {
 		t = RoleTypeReader
 	case 1:
 		t = RoleTypeWriter
+	case 2:
+		t = RoleTypeDelayClient
 	default:
 		err = InvalidMqRoleTypeStringErr
 	}
@@ -126,6 +131,9 @@ func (m *InstanceManager) newInstance(ctx context.Context, conf *instanceConf) (
 
 	case RoleTypeWriter:
 		return NewWriter(ctx, conf.topic)
+
+	case RoleTypeDelayClient:
+		return NewDefaultDelayClient(ctx, conf.topic)
 
 	default:
 		return nil, fmt.Errorf("role %d error", conf.role)
@@ -258,6 +266,22 @@ func (m *InstanceManager) getReader(ctx context.Context, conf *instanceConf) Rea
 	}
 
 	return reader
+}
+
+func (m *InstanceManager) getDelayClient(ctx context.Context, conf *instanceConf) *DelayClient {
+	fun := "InstanceManager.getDelayClient"
+
+	in := m.get(ctx, conf)
+	if in == nil {
+		return nil
+	}
+
+	client, ok := in.(*DelayClient)
+	if ok == false {
+		slog.Errorf(ctx, "%s in.(Reader) err, topic: %s", fun, conf.topic)
+		return nil
+	}
+	return client
 }
 
 func (m *InstanceManager) getWriter(ctx context.Context, conf *instanceConf) Writer {

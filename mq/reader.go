@@ -25,7 +25,7 @@ type Reader interface {
 //CommitInterval indicates the interval at which offsets are committed to
 // the broker.  If 0, commits will be handled synchronously.
 func NewGroupReader(ctx context.Context, topic, groupId string) (Reader, error) {
-	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	config, err := DefaultConfiger.GetConfig(ctx, topic, MQTypeKafka)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ const (
 )
 
 func NewPartitionReader(ctx context.Context, topic string, partition int) (Reader, error) {
-	config, err := DefaultConfiger.GetConfig(ctx, topic)
+	config, err := DefaultConfiger.GetConfig(ctx, topic, MQTypeKafka)
 	if err != nil {
 		return nil, err
 	}

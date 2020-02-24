@@ -6,6 +6,7 @@ package mq
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
@@ -261,6 +262,160 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 			log.String(spanLogKeyTopic, topic))
 	}
 	return mctx, handler, err
+}
+
+func WriteDelayMsg(ctx context.Context, topic string, value interface{}, delaySeconds uint32) (jobID string, err error) {
+	fun := "mq.WriteDelayMsg -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.WriteDelayMsg")
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic))
+
+	conf := &instanceConf{
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeDelayClient,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	client := defaultInstanceManager.getDelayClient(ctx, conf)
+	if client == nil {
+		slog.Errorf(ctx, "%s getDelayClient err, topic: %s", fun, topic)
+		err = fmt.Errorf("%s, getDelayClient err, topic: %s", fun, topic)
+		return
+	}
+
+	payload, err := generatePayload(ctx, value)
+	if err != nil {
+		slog.Errorf(ctx, "%s generatePayload err, topic: %s", fun, topic)
+		err = fmt.Errorf("%s, generatePayload err, topic: %s", fun, topic)
+		return
+	}
+
+	st := stime.NewTimeStat()
+	defer func() {
+		dur := st.Duration()
+		if dur > mqOpDurationLimit {
+			slog.Infof(ctx, "%s slow topic:%s dur:%d", fun, topic, dur)
+		}
+	}()
+
+	return client.Write(ctx, payload, client.ttlSeconds, delaySeconds, client.tries)
+}
+
+// FetchDelayMsg 读完消息后不会自动确认
+func FetchDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, AckHandler, error) {
+	fun := "mq.FetchDelayMsg -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchDelayMsg")
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic))
+
+	conf := &instanceConf{
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeDelayClient,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	client := defaultInstanceManager.getDelayClient(ctx, conf)
+
+	var payload Payload
+	st := stime.NewTimeStat()
+
+	job, err := client.Read(ctx, client.ttrSeconds)
+	if err != nil {
+		slog.Errorf(ctx, "%s Read err: %v, topic: %s", fun, err, topic)
+		return nil, nil, fmt.Errorf("%s, Read err: %v, topic: %s", fun, err, topic)
+	}
+	err = json.Unmarshal(job.Body, &payload)
+	if err != nil {
+		slog.Errorf(ctx, "%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
+		return nil, nil, fmt.Errorf("%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
+	}
+	err = json.Unmarshal(job.Body, &value)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	handler := NewDelayHandler(client, job.ID)
+
+	dur := st.Duration()
+	if dur > mqOpDurationLimit {
+		slog.Infof(ctx, "%s slow topic:%s  dur:%d", fun, topic, dur)
+	}
+
+	if len(payload.Value) == 0 {
+		return context.TODO(), handler, nil
+	}
+	mctx, err := parsePayload(&payload, "mq.FetchDelayMsg", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+		mspan.LogFields(
+			log.String(spanLogKeyTopic, topic))
+	}
+	return mctx, handler, nil
+}
+
+// ReadDelayMsg 读完自动确认
+func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, error) {
+	fun := "mq.ReadDelayMsg -->"
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadDelayMsg")
+	defer span.Finish()
+	span.LogFields(
+		log.String(spanLogKeyTopic, topic))
+
+	conf := &instanceConf{
+		group:     scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
+		role:      RoleTypeDelayClient,
+		topic:     topic,
+		groupId:   "",
+		partition: 0,
+	}
+	client := defaultInstanceManager.getDelayClient(ctx, conf)
+
+	var payload Payload
+	st := stime.NewTimeStat()
+
+	job, err := client.Read(ctx, client.ttrSeconds)
+	if err != nil {
+		slog.Errorf(ctx, "%s Read err: %v, topic: %s", fun, err, topic)
+		return nil, fmt.Errorf("%s, Read err: %v, topic: %s", fun, err, topic)
+	}
+	err = json.Unmarshal(job.Body, &payload)
+	if err != nil {
+		slog.Errorf(ctx, "%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
+		return nil, fmt.Errorf("%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
+	}
+	err = json.Unmarshal(job.Body, &value)
+	if err != nil {
+		return nil, err
+	}
+
+	dur := st.Duration()
+	if dur > mqOpDurationLimit {
+		slog.Infof(ctx, "%s slow topic:%s  dur:%d", fun, topic, dur)
+	}
+	err = client.Ack(ctx, job.ID)
+	if err != nil {
+		slog.Errorf(ctx, "%s, delay Ack err: %v, jobID", fun, err, job.ID)
+		return nil, err
+	}
+	if len(payload.Value) == 0 {
+		return context.TODO(), nil
+	}
+	mctx, err := parsePayload(&payload, "mq.ReadDelayMsg", value)
+	mspan := opentracing.SpanFromContext(mctx)
+	if mspan != nil {
+		defer mspan.Finish()
+		mspan.LogFields(
+			log.String(spanLogKeyTopic, topic))
+	}
+	return mctx, nil
 }
 
 func SetConfiger(ctx context.Context, configerType ConfigerType) error {
