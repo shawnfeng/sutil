@@ -24,10 +24,12 @@ require (
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
 	github.com/stretchr/testify v1.4.0
 	github.com/uber/jaeger-client-go v2.20.1+incompatible
+	github.com/ugorji/go v1.1.7 // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
 	gitlab.pri.ibanyu.com/middleware/delayqueue v0.0.0-20200213090847-cd24af2bd1f2
 	gitlab.pri.ibanyu.com/middleware/seaweed v1.0.20
 	go.uber.org/zap v1.10.0
+	golang.org/x/tools v0.0.0-20191120001058-ad01d5993d97 // indirect
 
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 
