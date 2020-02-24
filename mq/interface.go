@@ -304,11 +304,11 @@ func WriteDelayMsg(ctx context.Context, topic string, value interface{}, delaySe
 	return client.Write(ctx, payload, client.ttlSeconds, delaySeconds, client.tries)
 }
 
-// 读完消息后不会自动确认
-func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, AckHandler, error) {
-	fun := "mq.ReadDelayMsg -->"
+// FetchDelayMsg 读完消息后不会自动确认
+func FetchDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, AckHandler, error) {
+	fun := "mq.FetchDelayMsg -->"
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadDelayMsg")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.FetchDelayMsg")
 	defer span.Finish()
 	span.LogFields(
 		log.String(spanLogKeyTopic, topic))
@@ -350,7 +350,7 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 	if len(payload.Value) == 0 {
 		return context.TODO(), handler, nil
 	}
-	mctx, err := parsePayload(&payload, "mq.ReadDelayMsg", value)
+	mctx, err := parsePayload(&payload, "mq.FetchDelayMsg", value)
 	mspan := opentracing.SpanFromContext(mctx)
 	if mspan != nil {
 		defer mspan.Finish()
@@ -360,11 +360,11 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 	return mctx, handler, nil
 }
 
-// 读完自动确认
-func AckReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, error) {
-	fun := "mq.AckReadDelayMsg -->"
+// ReadDelayMsg 读完自动确认
+func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context.Context, error) {
+	fun := "mq.ReadDelayMsg -->"
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.AckReadDelayMsg")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mq.ReadDelayMsg")
 	defer span.Finish()
 	span.LogFields(
 		log.String(spanLogKeyTopic, topic))
@@ -408,7 +408,7 @@ func AckReadDelayMsg(ctx context.Context, topic string, value interface{}) (cont
 	if len(payload.Value) == 0 {
 		return context.TODO(), nil
 	}
-	mctx, err := parsePayload(&payload, "mq.AckReadDelayMsg", value)
+	mctx, err := parsePayload(&payload, "mq.ReadDelayMsg", value)
 	mspan := opentracing.SpanFromContext(mctx)
 	if mspan != nil {
 		defer mspan.Finish()
