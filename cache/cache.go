@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
+	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"time"
 )
@@ -105,7 +106,7 @@ func (m *Cache) GetCache(key string, data CacheData) error {
 	err := m.getData(key, data)
 	if err == nil {
 		return nil
-	} else if err.Error() == RedisNil {
+	} else if err.Error() == constants.RedisNil {
 		// 空的情况也返回正常
 		return nil
 
@@ -125,7 +126,7 @@ func (m *Cache) Get(key string, data CacheData) error {
 		return nil
 	}
 
-	if err != nil && err.Error() != RedisNil {
+	if err != nil && err.Error() != constants.RedisNil {
 		slog.Errorf(context.TODO(), "%s cache key:%s err:%s", fun, key, err)
 		return fmt.Errorf("%s cache key:%s err:%s", fun, key, err)
 	}

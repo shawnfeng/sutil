@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	redis2 "github.com/go-redis/redis"
-	"github.com/shawnfeng/sutil/cache"
+	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
@@ -81,7 +81,7 @@ func (m *RedisExt) getRedisInstance(ctx context.Context) (client *redis.Client, 
 
 func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 	return &redis.InstanceConf{
-		Group:     scontext.GetControlRouteGroupWithDefault(ctx, cache.DefaultRouteGroup),
+		Group:     scontext.GetControlRouteGroupWithDefault(ctx, constants.DefaultRouteGroup),
 		Namespace: m.namespace,
 	}
 }
@@ -452,7 +452,7 @@ func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f flo
 	return
 }
 
-func SetConfiger(ctx context.Context, configerType cache.ConfigerType) error {
+func SetConfiger(ctx context.Context, configerType constants.ConfigerType) error {
 	fun := "Cache.SetConfiger-->"
 	configer, err := redis.NewConfiger(configerType)
 	if err != nil {
@@ -471,10 +471,10 @@ func WatchUpdate(ctx context.Context) {
 func init() {
 	fun := "redisext.init -->"
 	ctx := context.Background()
-	err := SetConfiger(ctx, cache.ConfigerTypeApollo)
+	err := SetConfiger(ctx, constants.ConfigerTypeApollo)
 	if err != nil {
-		slog.Errorf(ctx, "%s set redisext configer:%v err:%v", fun, cache.ConfigerTypeApollo, err)
+		slog.Errorf(ctx, "%s set redisext configer:%v err:%v", fun, constants.ConfigerTypeApollo, err)
 	} else {
-		slog.Infof(ctx, "%s redisext configer:%v been set", fun, cache.ConfigerTypeApollo)
+		slog.Infof(ctx, "%s redisext configer:%v been set", fun, constants.ConfigerTypeApollo)
 	}
 }

@@ -7,7 +7,7 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/cache"
+	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
@@ -42,13 +42,13 @@ type Configer interface {
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
 
-func NewConfiger(configType cache.ConfigerType) (Configer, error) {
+func NewConfiger(configType constants.ConfigerType) (Configer, error) {
 	switch configType {
-	case cache.ConfigerTypeSimple:
+	case constants.ConfigerTypeSimple:
 		return NewSimpleConfiger(), nil
-	case cache.ConfigerTypeEtcd:
+	case constants.ConfigerTypeEtcd:
 		return NewEtcdConfiger(), nil
-	case cache.ConfigerTypeApollo:
+	case constants.ConfigerTypeApollo:
 		return NewApolloConfiger(), nil
 	default:
 		return nil, fmt.Errorf("configType %d error", configType)
@@ -264,7 +264,7 @@ func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
 
 	var changes = map[string]*center.Change{}
 	for k, ce := range event.Changes {
-		if strings.Contains(k, fmt.Sprint(cache.CacheTypeRedis)) {
+		if strings.Contains(k, fmt.Sprint(constants.CacheTypeRedis)) {
 			changes[k] = ce
 		}
 	}
@@ -287,7 +287,7 @@ func (m *ApolloConfig) buildKey(ctx context.Context, namespace, item string) str
 	return strings.Join([]string{
 		namespace,
 		scontext.GetControlRouteGroupWithDefault(ctx, defaultGroup),
-		fmt.Sprint(cache.CacheTypeRedis),
+		fmt.Sprint(constants.CacheTypeRedis),
 		item,
 	}, apolloConfigSep)
 }
