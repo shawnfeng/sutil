@@ -11,6 +11,7 @@ import (
 	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,12 +21,15 @@ type MQType int
 
 const (
 	MQTypeKafka MQType = iota
+	MQTypeDelay
 )
 
 func (t MQType) String() string {
 	switch t {
 	case MQTypeKafka:
 		return "kafka"
+	case MQTypeDelay:
+		return "delay"
 	default:
 		return ""
 	}
@@ -54,6 +58,9 @@ func (c ConfigerType) String() string {
 
 const (
 	defaultTimeout = 3 * time.Second
+	defaultTTR     = 3600      // 1 hour
+	defaultTTL     = 3600 * 24 // 1 day
+	defaultTries   = 1
 )
 
 type Config struct {
@@ -64,6 +71,9 @@ type Config struct {
 	CommitInterval time.Duration
 	Offset         int64
 	OffsetAt       string
+	TTR            uint32 // time to run
+	TTL            uint32 // time to live
+	Tries          uint16 // delay tries
 }
 
 type KeyParts struct {
@@ -75,7 +85,7 @@ var DefaultConfiger Configer
 
 type Configer interface {
 	Init(ctx context.Context) error
-	GetConfig(ctx context.Context, topic string) (*Config, error)
+	GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error)
 	ParseKey(ctx context.Context, k string) (*KeyParts, error)
 	Watch(ctx context.Context) <-chan *center.ChangeEvent
 }
@@ -110,12 +120,12 @@ func (m *SimpleConfig) Init(ctx context.Context) error {
 	return nil
 }
 
-func (m *SimpleConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
+func (m *SimpleConfig) GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error) {
 	fun := "SimpleConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get simple config topic:%s", fun, topic)
 
 	return &Config{
-		MQType:         MQTypeKafka,
+		MQType:         mqType,
 		MQAddr:         m.mqAddr,
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
@@ -153,7 +163,7 @@ func (m *EtcdConfig) Init(ctx context.Context) error {
 	return nil
 }
 
-func (m *EtcdConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
+func (m *EtcdConfig) GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error) {
 	fun := "EtcdConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get etcd config topic:%s", fun, topic)
 	// TODO
@@ -177,6 +187,9 @@ const (
 	apolloBrokersSep  = ","
 	apolloBrokersKey  = "brokers"
 	apolloOffsetAtKey = "offsetat"
+	apolloTTRKey      = "ttr"
+	apolloTTLKey      = "ttl"
+	apolloTriesKey    = "tries"
 )
 
 type ApolloConfig struct {
@@ -221,20 +234,20 @@ func (s simpleContextControlRouter) SetControlRouteGroup(group string) error {
 	return nil
 }
 
-func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string) (string, bool) {
-	val, ok := m.center.GetStringWithNamespace(ctx, center.DefaultApolloMQNamespace, m.buildKey(ctx, topic, name))
+func (m *ApolloConfig) getConfigItemWithFallback(ctx context.Context, topic string, name string, mqType MQType) (string, bool) {
+	val, ok := m.center.GetStringWithNamespace(ctx, center.DefaultApolloMQNamespace, m.buildKey(ctx, topic, name, mqType))
 	if !ok {
 		defaultCtx := context.WithValue(ctx, scontext.ContextKeyControl, simpleContextControlRouter{defaultRouteGroup})
-		val, ok = m.center.GetStringWithNamespace(defaultCtx, center.DefaultApolloMQNamespace, m.buildKey(defaultCtx, topic, name))
+		val, ok = m.center.GetStringWithNamespace(defaultCtx, center.DefaultApolloMQNamespace, m.buildKey(defaultCtx, topic, name, mqType))
 	}
 	return val, ok
 }
 
-func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, error) {
+func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQType) (*Config, error) {
 	fun := "ApolloConfig.GetConfig-->"
 	slog.Infof(ctx, "%s get mq config topic:%s", fun, topic)
 
-	brokersVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloBrokersKey)
+	brokersVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloBrokersKey, mqType)
 	if !ok {
 		return nil, fmt.Errorf("%s no brokers config found", fun)
 	}
@@ -248,21 +261,54 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string) (*Config, er
 
 	slog.Infof(ctx, "%s got config brokers:%s", fun, brokers)
 
-	offsetAtVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloOffsetAtKey)
+	offsetAtVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloOffsetAtKey, mqType)
 	if !ok {
 		slog.Infof(ctx, "%s no offsetAtVal config founds", fun)
 
 	}
 	slog.Infof(ctx, "%s got config offsetAt:%s", fun, offsetAtVal)
 
+	ttrVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloTTRKey, mqType)
+	if !ok {
+		slog.Infof(ctx, "%s no ttrVal config founds", fun)
+	}
+	ttr, err := strconv.ParseUint(ttrVal, 10, 32)
+	if err != nil {
+		ttr = defaultTTR
+	}
+	slog.Infof(ctx, "%s got config TTR:%d", fun, ttr)
+
+	ttlVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloTTLKey, mqType)
+	if !ok {
+		slog.Infof(ctx, "%s no ttlVal config founds", fun)
+	}
+	ttl, err := strconv.ParseUint(ttlVal, 10, 32)
+	if err != nil {
+		ttl = defaultTTL
+	}
+	slog.Infof(ctx, "%s got config TTL:%d", fun, ttl)
+
+	triesVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloTriesKey, mqType)
+	if !ok {
+		slog.Infof(ctx, "%s no triesVal config founds", fun)
+	}
+	tries, err := strconv.ParseUint(triesVal, 10, 16)
+	if err != nil {
+		tries = defaultTries
+	}
+	slog.Infof(ctx, "%s got config triesVal:%s", fun, triesVal)
+
 	return &Config{
-		MQType:         MQTypeKafka,
+		MQType:         mqType,
 		MQAddr:         brokers,
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
 		Offset:         FirstOffset,
 		OffsetAt:       offsetAtVal,
+		TTR:            uint32(ttr),
+		TTL:            uint32(ttl),
+		Tries:          uint16(tries),
 	}, nil
 }
 
@@ -294,7 +340,7 @@ func (ob *apolloObserver) HandleChangeEvent(event *center.ChangeEvent) {
 	// TODO: filter different mq types
 	var changes = map[string]*center.Change{}
 	for k, ce := range event.Changes {
-		if strings.Contains(k, fmt.Sprint(MQTypeKafka)) {
+		if strings.Contains(k, fmt.Sprint(MQTypeKafka)) || strings.Contains(k, fmt.Sprint(MQTypeDelay)) {
 			changes[k] = ce
 		}
 	}
@@ -314,11 +360,11 @@ func (m *ApolloConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	return m.ch
 }
 
-func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string) string {
+func (m *ApolloConfig) buildKey(ctx context.Context, topic, item string, mqType MQType) string {
 	return strings.Join([]string{
 		topic,
 		scontext.GetControlRouteGroupWithDefault(ctx, defaultRouteGroup),
-		fmt.Sprint(MQTypeKafka),
+		fmt.Sprint(mqType),
 		item,
 	}, apolloConfigSep)
 }

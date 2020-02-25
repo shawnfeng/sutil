@@ -15,11 +15,13 @@ import (
 var RedisNil = fmt.Sprintf("redis: nil")
 
 type Client struct {
-	client    *redis.Client
-	namespace string
+	client     *redis.Client
+	namespace  string
+	wrapper    string
+	useWrapper bool
 }
 
-func NewClient(ctx context.Context, namespace string) (*Client, error) {
+func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
 	fun := "NewClient -->"
 
 	config, err := DefaultConfiger.GetConfig(ctx, namespace)
@@ -42,16 +44,26 @@ func NewClient(ctx context.Context, namespace string) (*Client, error) {
 	}
 
 	return &Client{
-		client:    client,
-		namespace: namespace,
+		client:     client,
+		namespace:  namespace,
+		wrapper:    wrapper,
+		useWrapper: config.useWrapper,
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
-	return strings.Join([]string{
+	parts := []string{
 		m.namespace,
+		m.wrapper,
 		key,
-	}, ".")
+	}
+	if !m.useWrapper {
+		parts = []string{
+			m.namespace,
+			key,
+		}
+	}
+	return strings.Join(parts, ".")
 }
 
 func (m *Client) logSpan(ctx context.Context, op, key string) {
@@ -69,10 +81,48 @@ func (m *Client) Get(ctx context.Context, key string) *redis.StringCmd {
 	return m.client.Get(k)
 }
 
+func (m *Client) MGet(ctx context.Context, keys ...string) *redis.SliceCmd {
+	var fixKeys = make([]string, len(keys))
+	for k, v := range keys {
+		key := m.fixKey(v)
+		fixKeys[k] = key
+	}
+	m.logSpan(ctx, "MGet", strings.Join(fixKeys, "||"))
+	return m.client.MGet(fixKeys...)
+}
+
 func (m *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Set", k)
 	return m.client.Set(k, value, expiration)
+}
+
+func (m *Client) MSet(ctx context.Context, pairs ...interface{}) *redis.StatusCmd {
+	var fixPairs = make([]interface{}, len(pairs))
+	var keys []string
+	for k, v := range pairs {
+		if (k & 1) == 0 {
+			key := m.fixKey(v.(string))
+			keys = append(keys, key)
+			fixPairs[k] = key
+		} else {
+			fixPairs[k] = v
+		}
+	}
+	m.logSpan(ctx, "MSet", strings.Join(keys, "||"))
+	return m.client.MSet(fixPairs...)
+}
+
+func (m *Client) GetBit(ctx context.Context, key string, offset int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "GetBit", k)
+	return m.client.GetBit(k, offset)
+}
+
+func (m *Client) SetBit(ctx context.Context, key string, offset int64, value int) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SetBit", k)
+	return m.client.SetBit(k, offset, value)
 }
 
 func (m *Client) Exists(ctx context.Context, key string) *redis.IntCmd {
@@ -335,6 +385,84 @@ func (m *Client) ZScore(ctx context.Context, key string, member string) *redis.F
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZScore", k)
 	return m.client.ZScore(k, member)
+}
+
+func (m *Client) LIndex(ctx context.Context, key string, index int64) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LIndex", k)
+	return m.client.LIndex(k, index)
+}
+
+func (m *Client) LInsert(ctx context.Context, key, op string, pivot, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LInsert", k)
+	return m.client.LInsert(k, op, pivot, value)
+}
+
+func (m *Client) LLen(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LLen", k)
+	return m.client.LLen(k)
+}
+
+func (m *Client) LPop(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LPop", k)
+	return m.client.LPop(k)
+}
+
+func (m *Client) LPush(ctx context.Context, key string, values ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LPush", k)
+	return m.client.LPush(k, values...)
+}
+
+func (m *Client) LPushX(ctx context.Context, key string, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LPushX", k)
+	return m.client.LPushX(k, value)
+}
+
+func (m *Client) LRange(ctx context.Context, key string, start, stop int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LRange", k)
+	return m.client.LRange(k, start, stop)
+}
+
+func (m *Client) LRem(ctx context.Context, key string, count int64, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LRem", k)
+	return m.client.LRem(k, count, value)
+}
+
+func (m *Client) LSet(ctx context.Context, key string, index int64, value interface{}) *redis.StatusCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LSet", k)
+	return m.client.LSet(k, index, value)
+}
+
+func (m *Client) LTrim(ctx context.Context, key string, start, stop int64) *redis.StatusCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LTrim", k)
+	return m.client.LTrim(k, start, stop)
+}
+
+func (m *Client) RPop(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "RPop", k)
+	return m.client.RPop(k)
+}
+
+func (m *Client) RPush(ctx context.Context, key string, values ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "RPush", k)
+	return m.client.RPush(k, values...)
+}
+
+func (m *Client) RPushX(ctx context.Context, key string, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "RPushX", k)
+	return m.client.RPushX(k, value)
 }
 
 func (m *Client) Close(ctx context.Context) error {

@@ -71,7 +71,6 @@ func (m *InstanceManager) Get(ctx context.Context, instance string) Instancer {
 			slog.Errorf(ctx, "%s NewInstance err, instance: %s, err: %s", fun, instance, err.Error())
 			return nil
 		}
-
 	}
 
 	return in
