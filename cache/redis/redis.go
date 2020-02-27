@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/shawnfeng/sutil/cache"
+	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"strings"
 	"time"
@@ -69,9 +69,9 @@ func (m *Client) fixKey(key string) string {
 func (m *Client) logSpan(ctx context.Context, op, key string) {
 	if span := opentracing.SpanFromContext(ctx); span != nil {
 		span.LogFields(
-			log.String(cache.SpanLogOp, op),
-			log.String(cache.SpanLogKeyKey, key),
-			log.String(cache.SpanLogCacheType, fmt.Sprint(cache.CacheTypeRedis)))
+			log.String(constants.SpanLogOp, op),
+			log.String(constants.SpanLogKeyKey, key),
+			log.String(constants.SpanLogCacheType, fmt.Sprint(constants.CacheTypeRedis)))
 	}
 }
 
