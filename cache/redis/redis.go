@@ -51,6 +51,31 @@ func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, 
 	}, err
 }
 
+func NewDefaultClient(ctx context.Context, namespace, addr, wrapper string, poolSize int, useWrapper bool, timeout time.Duration) (*Client, error) {
+	fun := "NewDefaultClient -->"
+
+	client := redis.NewClient(&redis.Options{
+		Addr:               addr,
+		DialTimeout:        3 * timeout,
+		ReadTimeout:        timeout,
+		WriteTimeout:       timeout,
+		PoolSize:           poolSize,
+		PoolTimeout:        2 * timeout,
+	})
+
+	pong, err := client.Ping().Result()
+	if err != nil {
+		slog.Errorf(ctx, "%s Ping: %s err: %s", fun, pong, err)
+	}
+
+	return &Client{
+		client:     client,
+		namespace:  namespace,
+		wrapper:    wrapper,
+		useWrapper: useWrapper,
+	}, err
+}
+
 func (m *Client) fixKey(key string) string {
 	parts := []string{
 		m.namespace,
@@ -463,6 +488,12 @@ func (m *Client) RPushX(ctx context.Context, key string, value interface{}) *red
 	k := m.fixKey(key)
 	m.logSpan(ctx, "RPushX", k)
 	return m.client.RPushX(k, value)
+}
+
+func (m *Client) TTL(ctx context.Context, key string) *redis.DurationCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "TTL", k)
+	return m.client.TTL(k)
 }
 
 func (m *Client) Close(ctx context.Context) error {

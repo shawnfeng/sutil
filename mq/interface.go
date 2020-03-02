@@ -281,8 +281,8 @@ func WriteDelayMsg(ctx context.Context, topic string, value interface{}, delaySe
 	}
 	client := defaultInstanceManager.getDelayClient(ctx, conf)
 	if client == nil {
-		slog.Errorf(ctx, "%s getDelayClient err, topic: %s", fun, topic)
-		err = fmt.Errorf("%s, getDelayClient err, topic: %s", fun, topic)
+		slog.Errorf(ctx, "%s getDelayClient nil, topic: %s", fun, topic)
+		err = fmt.Errorf("%s, getDelayClient nil, topic: %s", fun, topic)
 		return
 	}
 
@@ -321,6 +321,11 @@ func FetchDelayMsg(ctx context.Context, topic string, value interface{}) (contex
 		partition: 0,
 	}
 	client := defaultInstanceManager.getDelayClient(ctx, conf)
+	if client == nil {
+		slog.Errorf(ctx, "%s getDelayClient nil, topic: %s", fun, topic)
+		err := fmt.Errorf("%s, getDelayClient nil, topic: %s", fun, topic)
+		return nil, nil, err
+	}
 
 	var payload Payload
 	st := stime.NewTimeStat()
@@ -377,6 +382,11 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 		partition: 0,
 	}
 	client := defaultInstanceManager.getDelayClient(ctx, conf)
+	if client == nil {
+		slog.Errorf(ctx, "%s getDelayClient nil, topic: %s", fun, topic)
+		err := fmt.Errorf("%s, getDelayClient nil, topic: %s", fun, topic)
+		return nil, err
+	}
 
 	var payload Payload
 	st := stime.NewTimeStat()

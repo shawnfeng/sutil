@@ -8,12 +8,13 @@
 
 package value
 
-import (
+import  (
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/opentracing/opentracing-go"
+	"github.com/shawnfeng/sutil/cache"
 	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
