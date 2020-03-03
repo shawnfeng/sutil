@@ -20,11 +20,11 @@ type CacheData interface {
 
 // 采用json进行序列化的的cache
 type Cache struct {
-	expire      int
-	redisClient *RedisClient
-	prefix      string
-	isNamespace bool
-	namespace   string
+	expire        int
+	redisClient   *RedisClient
+	prefix        string
+	withNamespace bool
+	namespace     string
 }
 
 // redis 地址列表，key前缀，过期时间
@@ -66,11 +66,11 @@ func NewCacheByNamespace(ctx context.Context, namespace, prefix string, expire i
 		slog.Errorf(ctx, "%s GetConfig, namespace: %s err: %s", fun, namespace, err.Error())
 	}
 	return &Cache{
-		expire:      expire,
-		redisClient: client,
-		prefix:      prefix,
-		isNamespace: true,
-		namespace:   namespace,
+		expire:        expire,
+		redisClient:   client,
+		prefix:        prefix,
+		withNamespace: true,
+		namespace:     namespace,
 	}, err
 }
 
@@ -78,26 +78,25 @@ func (m *Cache) setData(key string, data CacheData) error {
 	fun := "Cache.setData -->"
 	sdata, merr := data.Marshal()
 	if merr != nil {
-		slog.Errorf(context.TODO(), "%s marshal err, cache key:%s err:%s", fun, key, merr)
 		sdata = []byte(merr.Error())
+		merr = fmt.Errorf("%s marshal err, cache key:%s err:%s", fun, key, merr)
 	}
 
 	client, err := m.getRedisClient()
 	if err != nil {
-		slog.Errorf(context.Background(), "%s get redis client err:%s", fun, err.Error())
 		return fmt.Errorf("%s get redis client err:%s", fun, err.Error())
 	}
 
 	err = client.Set(m.fixKey(key), sdata, time.Duration(m.expire)*time.Second).Err()
 	if err != nil {
-		slog.Errorf(context.TODO(), "%s set err, cache key:%s err:%s", fun, key, err)
+		return fmt.Errorf("%s set err, cache key:%s err:%s", fun, key, err)
 	}
 
 	if merr != nil {
 		return merr
 	}
 
-	return err
+	return nil
 }
 
 func (m *Cache) fixKey(key string) string {
@@ -163,16 +162,23 @@ func (m *Cache) Get(key string, data CacheData) error {
 	err = data.Load(key)
 	if err != nil {
 		slog.Warnf(context.TODO(), "%s load err, cache key:%s err:%s", fun, key, err)
+		return err
 	}
 
-	return m.setData(key, data)
-
+	err = m.setData(key, data)
+	if err != nil {
+		slog.Warnf(context.TODO(), "%s setData err, key:%s, err:%s", fun, key, err)
+	}
+	return err
 }
 
 func (m *Cache) Set(key string, data CacheData) error {
-	//fun := "Cache.Set -->"
-
-	return m.setData(key, data)
+	fun := "Cache.Set -->"
+	err := m.setData(key, data)
+	if err != nil {
+		slog.Errorf(context.TODO(), "%s setData err, key:%s, err:%s", fun, key, err)
+	}
+	return err
 }
 
 func (m *Cache) Del(key string) error {
@@ -180,10 +186,12 @@ func (m *Cache) Del(key string) error {
 
 	client, err := m.getRedisClient()
 	if err != nil {
+		slog.Errorf(context.TODO(), "%s get redis client err:%s", fun, err.Error())
 		return fmt.Errorf("%s get redis client err:%s", fun, err.Error())
 	}
 	err = client.Del(m.fixKey(key)).Err()
 	if err != nil {
+		slog.Errorf(context.TODO(), "del cache key:%s err:%s", key, err.Error())
 		return fmt.Errorf("del cache key:%s err:%s", key, err.Error())
 	}
 
@@ -192,7 +200,7 @@ func (m *Cache) Del(key string) error {
 
 // get namespace update client
 func (m *Cache) getRedisClient() (*RedisClient, error) {
-	if m.isNamespace {
+	if m.withNamespace {
 		return NewRedisByNamespace(context.Background(), m.namespace)
 	}
 	return m.redisClient, nil
