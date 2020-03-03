@@ -161,7 +161,7 @@ func (m *InstanceManager) Watch(ctx context.Context) {
 	fun := "InstanceManager.Watch-->"
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Panicf(ctx, "%s recover r: %v", fun, r)
+			slog.Errorf(ctx, "%s recover r: %v", fun, r)
 		}
 	}()
 	m.watchOnce.Do(func() {
