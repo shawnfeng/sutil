@@ -3,8 +3,10 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 type Test struct {
@@ -62,22 +64,27 @@ func TestCache_Set(t *testing.T) {
 
 func TestCache_Get(t *testing.T) {
 	ctx := context.Background()
-	c, err  := NewCacheByNamespace(ctx, "test/test","test",60)
+	c, err  := NewCacheByNamespace(ctx, "base/test","test",60)
 	if err != nil {
 		t.Errorf("NewCacheByNamespace err: %s", err.Error())
 	}
-	WatchUpdate(ctx)
+	//WatchUpdate(ctx)
 	var test Test
-	err = c.Get("test", &test)
-	if err != nil {
-		t.Errorf("Get err: %s", err.Error())
+	for {
+		err = c.Get("test", &test)
+		if err != nil {
+			t.Errorf("Get err: %s", err.Error())
+			return
+		}
+		fmt.Println(test)
+		time.Sleep(time.Second)
 	}
-	t.Log(test)
-	c.Del("test")
-	// load
-	err = c.Get("test", &test)
-	if err != nil {
-		t.Errorf("Get err: %s", err.Error())
-	}
-	assert.Equal(t, 1, test.ID)
+	//t.Log(test)
+	//c.Del("test")
+	//// load
+	//err = c.Get("test", &test)
+	//if err != nil {
+	//	t.Errorf("Get err: %s", err.Error())
+	//}
+	//assert.Equal(t, 1, test.ID)
 }

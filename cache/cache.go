@@ -231,4 +231,5 @@ func init() {
 	} else {
 		slog.Infof(ctx, "%s cache configer:%v been set", fun, constants.ConfigerTypeApollo)
 	}
+	WatchUpdate(ctx)
 }

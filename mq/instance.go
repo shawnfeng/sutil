@@ -231,6 +231,11 @@ func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.Chang
 
 func (m *InstanceManager) watch(ctx context.Context) {
 	fun := "InstanceManager.watch-->"
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Panicf(ctx, "%s recover r: %v", fun, r)
+		}
+	}()
 	m.watchOnce.Do(func() {
 		slog.Infof(ctx, "%s start watching updates", fun)
 		ceChan := DefaultConfiger.Watch(ctx)

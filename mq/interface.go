@@ -456,4 +456,5 @@ func init() {
 	} else {
 		slog.Infof(ctx, "%s mq configer:%v been set", fun, ConfigerTypeApollo)
 	}
+	WatchUpdate(ctx)
 }
