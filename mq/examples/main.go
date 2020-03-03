@@ -23,7 +23,7 @@ type Msg struct {
 func main() {
 
 	_ = trace.InitDefaultTracer("mq.test")
-	topic := "palfish.test.test"
+	topic := "palfish.test.test1"
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, scontext.ContextKeyHead, "hahahaha")
