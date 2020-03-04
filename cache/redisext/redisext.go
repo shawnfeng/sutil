@@ -3,6 +3,7 @@ package redisext
 import (
 	"context"
 	"fmt"
+	"github.com/shawnfeng/sutil/cache"
 	"time"
 
 	redis2 "github.com/go-redis/redis"
@@ -917,4 +918,5 @@ func init() {
 	} else {
 		slog.Infof(ctx, "%s redisext configer:%v been set", fun, constants.ConfigerTypeApollo)
 	}
+	WatchUpdate(ctx)
 }
