@@ -250,7 +250,7 @@ func setHttpDefaultClient() {
 		Transport: &http.Transport{
 			MaxIdleConnsPerHost: 128,
 			MaxConnsPerHost:     1024,
-			IdleConnTimeout:     time.Hour,
+			IdleConnTimeout:     600 * time.Second,
 		},
 		Timeout: 0,
 	}
