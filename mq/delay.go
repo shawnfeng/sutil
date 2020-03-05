@@ -240,3 +240,18 @@ func parseTopic(topic string) (namespace, queue string, err error) {
 	queue = topic[index+1:]
 	return
 }
+
+func init()  {
+	setHttpDefaultClient()
+}
+
+func setHttpDefaultClient() {
+	snetutil.DefaultClient = &http.Client{
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost: 128,
+			MaxConnsPerHost:     1024,
+			IdleConnTimeout:     600 * time.Second,
+		},
+		Timeout: 0,
+	}
+}
