@@ -7,6 +7,10 @@ package dbrouter
 import (
 	"context"
 	"fmt"
+	"errors"
+
+	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/slog/slog"
@@ -110,7 +114,13 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 		tmptables = append(tmptables, item)
 	}
 
-	return query(db, tmptables)
+	if !Entry(table){
+		xlog.Errorf(ctx, "trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", cluster, table)
+		return errors.New("sql cause breaker, because too many timeout")
+	}
+	err = query(db, tmptables)
+	statBreaker(table, err)
+	return err
 }
 
 func (m *Router) ormPrepare(ctx context.Context, cluster, table string) (db *GormDB, err error) {
@@ -167,7 +177,14 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 		tmptables = append(tmptables, item)
 	}
 
-	return query(db, tmptables)
+	if !Entry(table){
+		xlog.Errorf(ctx, "trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", cluster, table)
+		return errors.New("sql cause breaker, because too many timeout")
+	}
+
+	err = query(db, tmptables)
+	statBreaker(table, err)
+	return err
 }
 
 func (m *Router) MongoExecEventual(ctx context.Context, cluster, table string, query func(*mgo.Collection) error) error {
