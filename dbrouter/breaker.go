@@ -40,7 +40,7 @@ type Breaker struct {
 var bm *BreakerManager
 
 func statBreaker(table string, err error) {
-	if err != nil && strings.Contains(err.Error(), "timeout") {
+	if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "invalid connection")) {
 		bm.Lock.Lock()
 		if _, ok := bm.Breakers[table]; !ok {
 			breaker := new(Breaker)
@@ -57,8 +57,10 @@ func Entry(table string) bool {
 	bm.Lock.Lock()
 	breaker := bm.Breakers[table]
 	bm.Lock.Unlock()
-	if atomic.LoadInt32(&breaker.Rejected) == 1 {
-		return false
+	if breaker != nil {
+		if atomic.LoadInt32(&breaker.Rejected) == 1 {
+			return false
+		}
 	}
 	return true
 }
