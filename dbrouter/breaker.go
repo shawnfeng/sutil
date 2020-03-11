@@ -21,17 +21,18 @@ const (
 	globalThresholdKey   = "global.threshold"   // 精度内阈值
 	globalBreakerGapKey  = "global.breakergap"  // 触发熔断后的熔断间隔,单位: 秒
 
-	clearWindow = time.Second * 1
+	clearWindow       = time.Second * 1
+	defaultThreshold  = 10
+	defaultBreakerGap = 10
 )
 
 // TOOD 简单计数法实现熔断操作，后续改为滑动窗口或三方组件的方式
 type BreakerManager struct {
-	Lock     sync.Mutex
+	lock     sync.Mutex
 	Breakers map[string]*Breaker
 }
 
 type Breaker struct {
-	Lock          sync.Mutex
 	Rejected      int32
 	RejectedStart int64
 	Count         int32
@@ -41,26 +42,24 @@ var bm *BreakerManager
 
 func statBreaker(table string, err error) {
 	if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "invalid connection")) {
-		bm.Lock.Lock()
+		bm.lock.Lock()
 		if _, ok := bm.Breakers[table]; !ok {
 			breaker := new(Breaker)
 			breaker.Run()
 			bm.Breakers[table] = breaker
 		}
 		breaker := bm.Breakers[table]
-		bm.Lock.Unlock()
+		bm.lock.Unlock()
 		atomic.AddInt32(&breaker.Count, 1)
 	}
 }
 
 func Entry(table string) bool {
-	bm.Lock.Lock()
+	bm.lock.Lock()
 	breaker := bm.Breakers[table]
-	bm.Lock.Unlock()
+	bm.lock.Unlock()
 	if breaker != nil {
-		if atomic.LoadInt32(&breaker.Rejected) == 1 {
-			return false
-		}
+		return atomic.LoadInt32(&breaker.Rejected) != 1
 	}
 	return true
 }
@@ -87,12 +86,12 @@ func (breaker *Breaker) Run() {
 				threshold, exist := configCenter.GetIntWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalThresholdKey)
 				if !exist {
 					xlog.Warnf(context.TODO(), "dbrouter: get threshold from apollo failed, exist: %v", exist)
-					threshold = 10
+					threshold = defaultThreshold
 				}
 				breakerGap, exist := configCenter.GetIntWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalBreakerGapKey)
 				if !exist {
 					xlog.Warnf(context.TODO(), "dbrouter: get breakGap from apollo failed, exist: %v", exist)
-					breakerGap = 10
+					breakerGap = defaultBreakerGap
 				}
 				if atomic.LoadInt32(&breaker.Count) > int32(threshold) {
 					atomic.StoreInt32(&breaker.Rejected, 1)
