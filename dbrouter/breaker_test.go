@@ -4,12 +4,13 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"fmt"
 )
 
 func TestEntry(t *testing.T) {
 	go func() {
 		for {
-			Entry("test")
+			fmt.Printf("Entry: %v\n", Entry("test"))
 			time.Sleep(time.Millisecond * 1000)
 		}
 	}()

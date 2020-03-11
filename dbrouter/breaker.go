@@ -2,7 +2,6 @@ package dbrouter
 
 import (
 	"context"
-	"fmt"
 	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
 	"strings"
 	"sync"
@@ -23,6 +22,7 @@ const (
 	globalBreakerGapKey  = "global.breakergap"  // 触发熔断后的熔断间隔,单位: 秒
 )
 
+// TOOD 简单计数法实现熔断操作，后续改为滑动窗口或三方组件的方式
 type BreakerManager struct {
 	Lock     sync.Mutex
 	Breakers map[string]*Breaker
@@ -56,10 +56,8 @@ func Entry(table string) bool {
 	breaker := bm.Breakers[table]
 	bm.Lock.Unlock()
 	if atomic.LoadInt32(&breaker.Rejected) == 1 {
-		fmt.Println("rejected...")
 		return false
 	}
-	fmt.Println("accepted...")
 	return true
 }
 
