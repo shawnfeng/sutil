@@ -20,6 +20,8 @@ const (
 	globalGranularityKey = "global.granularity" // 精度
 	globalThresholdKey   = "global.threshold"   // 精度内阈值
 	globalBreakerGapKey  = "global.breakergap"  // 触发熔断后的熔断间隔,单位: 秒
+
+	clearWindow = time.Second * 1
 )
 
 // TOOD 简单计数法实现熔断操作，后续改为滑动窗口或三方组件的方式
@@ -74,8 +76,11 @@ func (breaker *Breaker) Run() {
 			granularity = time.Second * 1
 		}
 		tickC := time.Tick(granularity)
+		clearTickC := time.Tick(clearWindow)
 		for {
 			select {
+			case <-clearTickC:
+				atomic.StoreInt32(&breaker.Count, 0)
 			case <-tickC:
 				threshold, exist := configCenter.GetIntWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalThresholdKey)
 				if !exist {
@@ -96,7 +101,6 @@ func (breaker *Breaker) Run() {
 						atomic.StoreInt32(&breaker.Rejected, 0)
 					}
 				}
-				atomic.StoreInt32(&breaker.Count, 0)
 			}
 		}
 	}()
