@@ -2,14 +2,13 @@ package dbrouter
 
 import (
 	"context"
-	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/shawnfeng/sutil/sconf/center"
-	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 var (
@@ -68,12 +67,12 @@ func (breaker *Breaker) Run() {
 	go func() {
 		granularityStr, exist := configCenter.GetStringWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalGranularityKey)
 		if !exist {
-			xlog.Warnf(context.TODO(), "dbrouter: get granularity from apollo failed, exist: %v", exist)
+			slog.Warnf(context.TODO(), "dbrouter: get granularity from apollo failed, exist: %v", exist)
 			granularityStr = "1s"
 		}
 		granularity, err := time.ParseDuration(granularityStr)
 		if err != nil {
-			xlog.Warnf(context.TODO(), "dbrouter: granularity in apollo is invalid, %s", granularityStr)
+			slog.Warnf(context.TODO(), "dbrouter: granularity in apollo is invalid, %s", granularityStr)
 			granularity = time.Second * 1
 		}
 		tickC := time.Tick(granularity)
@@ -85,12 +84,12 @@ func (breaker *Breaker) Run() {
 			case <-tickC:
 				threshold, exist := configCenter.GetIntWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalThresholdKey)
 				if !exist {
-					xlog.Warnf(context.TODO(), "dbrouter: get threshold from apollo failed, exist: %v", exist)
+					slog.Warnf(context.TODO(), "dbrouter: get threshold from apollo failed, exist: %v", exist)
 					threshold = defaultThreshold
 				}
 				breakerGap, exist := configCenter.GetIntWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalBreakerGapKey)
 				if !exist {
-					xlog.Warnf(context.TODO(), "dbrouter: get breakGap from apollo failed, exist: %v", exist)
+					slog.Warnf(context.TODO(), "dbrouter: get breakGap from apollo failed, exist: %v", exist)
 					breakerGap = defaultBreakerGap
 				}
 				if atomic.LoadInt32(&breaker.Count) > int32(threshold) {
@@ -124,6 +123,6 @@ func init() {
 	bm = &BreakerManager{Breakers: make(map[string]*Breaker)}
 	err := initConfig()
 	if err != nil {
-		slog.Panicf("dbrouter: init apollo config failed, err: %v", err)
+		slog.Panicf(context.TODO(), "dbrouter: init apollo config failed, err: %v", err)
 	}
 }

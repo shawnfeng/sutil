@@ -6,10 +6,8 @@ package dbrouter
 
 import (
 	"context"
-	"fmt"
 	"errors"
-
-	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
+	"fmt"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
@@ -115,7 +113,7 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	}
 
 	if !Entry(table){
-		xlog.Errorf(ctx, "trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", cluster, table)
+		slog.Errorf(ctx, "trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", cluster, table)
 		return errors.New("sql cause breaker, because too many timeout")
 	}
 	err = query(db, tmptables)
@@ -178,7 +176,7 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 	}
 
 	if !Entry(table){
-		xlog.Errorf(ctx, "trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", cluster, table)
+		slog.Errorf(ctx, "trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", cluster, table)
 		return errors.New("sql cause breaker, because too many timeout")
 	}
 
