@@ -2,9 +2,9 @@ package dbrouter
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
-	"fmt"
 )
 
 func TestEntry(t *testing.T) {

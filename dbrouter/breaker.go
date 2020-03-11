@@ -20,7 +20,7 @@ const (
 	globalThresholdKey   = "global.threshold"   // 精度内阈值
 	globalBreakerGapKey  = "global.breakergap"  // 触发熔断后的熔断间隔,单位: 秒
 
-	clearWindow       = time.Second * 1
+	checkTick         = time.Millisecond * 25
 	defaultThreshold  = 10
 	defaultBreakerGap = 10
 )
@@ -75,13 +75,14 @@ func (breaker *Breaker) Run() {
 			slog.Warnf(context.TODO(), "dbrouter: granularity in apollo is invalid, %s", granularityStr)
 			granularity = time.Second * 1
 		}
-		tickC := time.Tick(granularity)
-		clearTickC := time.Tick(clearWindow)
+		granularityTickC := time.Tick(granularity)
+		checkTickC := time.Tick(checkTick)
 		for {
 			select {
-			case <-clearTickC:
+			case <-granularityTickC:
 				atomic.StoreInt32(&breaker.Count, 0)
-			case <-tickC:
+				// check 1s/checkTick times in 1s
+			case <-checkTickC:
 				threshold, exist := configCenter.GetIntWithNamespace(context.TODO(), center.DefaultApolloMysqlNamespace, globalThresholdKey)
 				if !exist {
 					slog.Warnf(context.TODO(), "dbrouter: get threshold from apollo failed, exist: %v", exist)
