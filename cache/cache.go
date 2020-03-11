@@ -76,10 +76,12 @@ func NewCacheByNamespace(ctx context.Context, namespace, prefix string, expire i
 
 func (m *Cache) setData(key string, data CacheData) error {
 	fun := "Cache.setData -->"
+	expire := time.Duration(m.expire) * time.Second
 	sdata, merr := data.Marshal()
 	if merr != nil {
 		sdata = []byte(merr.Error())
 		merr = fmt.Errorf("%s marshal err, cache key:%s err:%s", fun, key, merr)
+		expire = constants.CacheDirtyExpireTime
 	}
 
 	client, err := m.getRedisClient()
@@ -87,7 +89,7 @@ func (m *Cache) setData(key string, data CacheData) error {
 		return fmt.Errorf("%s get redis client err:%s", fun, err.Error())
 	}
 
-	err = client.Set(m.fixKey(key), sdata, time.Duration(m.expire)*time.Second).Err()
+	err = client.Set(m.fixKey(key), sdata, expire).Err()
 	if err != nil {
 		return fmt.Errorf("%s set err, cache key:%s err:%s", fun, key, err)
 	}
