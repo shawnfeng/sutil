@@ -216,8 +216,12 @@ func SetConfiger(ctx context.Context, configerType constants.ConfigerType) error
 		return err
 	}
 	slog.Infof(ctx, "%s %v configer created", fun, configerType)
+	err = configer.Init(ctx)
+	if err != nil {
+		slog.Errorf(ctx, "%s init configer err:%v", fun, err)
+	}
 	redis.DefaultConfiger = configer
-	return redis.DefaultConfiger.Init(ctx)
+	return err
 }
 
 func WatchUpdate(ctx context.Context) {
