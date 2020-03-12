@@ -7,11 +7,13 @@ package redis
 import (
 	"context"
 	"fmt"
+	"runtime"
+	"strings"
+	"sync"
+
 	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/sconf/center"
 	"github.com/shawnfeng/sutil/slog/slog"
-	"strings"
-	"sync"
 )
 
 const (
@@ -160,8 +162,10 @@ func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.Chang
 func (m *InstanceManager) Watch(ctx context.Context) {
 	fun := "InstanceManager.Watch-->"
 	defer func() {
-		if r := recover(); r != nil {
-			slog.Errorf(ctx, "%s recover r: %v", fun, r)
+		if err := recover(); err != nil {
+			buf := make([]byte, 4096)
+			buf = buf[:runtime.Stack(buf, false)]
+			slog.Errorf(ctx, "%s recover err: %v, stack: %s", fun, err, string(buf))
 		}
 	}()
 	m.watchOnce.Do(func() {
