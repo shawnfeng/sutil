@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
-	"github.com/shawnfeng/sutil/cache"
+	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"strings"
 	"time"
@@ -51,6 +51,31 @@ func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, 
 	}, err
 }
 
+func NewDefaultClient(ctx context.Context, namespace, addr, wrapper string, poolSize int, useWrapper bool, timeout time.Duration) (*Client, error) {
+	fun := "NewDefaultClient -->"
+
+	client := redis.NewClient(&redis.Options{
+		Addr:               addr,
+		DialTimeout:        3 * timeout,
+		ReadTimeout:        timeout,
+		WriteTimeout:       timeout,
+		PoolSize:           poolSize,
+		PoolTimeout:        2 * timeout,
+	})
+
+	pong, err := client.Ping().Result()
+	if err != nil {
+		slog.Errorf(ctx, "%s Ping: %s err: %s", fun, pong, err)
+	}
+
+	return &Client{
+		client:     client,
+		namespace:  namespace,
+		wrapper:    wrapper,
+		useWrapper: useWrapper,
+	}, err
+}
+
 func (m *Client) fixKey(key string) string {
 	parts := []string{
 		m.namespace,
@@ -69,9 +94,9 @@ func (m *Client) fixKey(key string) string {
 func (m *Client) logSpan(ctx context.Context, op, key string) {
 	if span := opentracing.SpanFromContext(ctx); span != nil {
 		span.LogFields(
-			log.String(cache.SpanLogOp, op),
-			log.String(cache.SpanLogKeyKey, key),
-			log.String(cache.SpanLogCacheType, fmt.Sprint(cache.CacheTypeRedis)))
+			log.String(constants.SpanLogOp, op),
+			log.String(constants.SpanLogKeyKey, key),
+			log.String(constants.SpanLogCacheType, fmt.Sprint(constants.CacheTypeRedis)))
 	}
 }
 
@@ -385,6 +410,90 @@ func (m *Client) ZScore(ctx context.Context, key string, member string) *redis.F
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZScore", k)
 	return m.client.ZScore(k, member)
+}
+
+func (m *Client) LIndex(ctx context.Context, key string, index int64) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LIndex", k)
+	return m.client.LIndex(k, index)
+}
+
+func (m *Client) LInsert(ctx context.Context, key, op string, pivot, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LInsert", k)
+	return m.client.LInsert(k, op, pivot, value)
+}
+
+func (m *Client) LLen(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LLen", k)
+	return m.client.LLen(k)
+}
+
+func (m *Client) LPop(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LPop", k)
+	return m.client.LPop(k)
+}
+
+func (m *Client) LPush(ctx context.Context, key string, values ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LPush", k)
+	return m.client.LPush(k, values...)
+}
+
+func (m *Client) LPushX(ctx context.Context, key string, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LPushX", k)
+	return m.client.LPushX(k, value)
+}
+
+func (m *Client) LRange(ctx context.Context, key string, start, stop int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LRange", k)
+	return m.client.LRange(k, start, stop)
+}
+
+func (m *Client) LRem(ctx context.Context, key string, count int64, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LRem", k)
+	return m.client.LRem(k, count, value)
+}
+
+func (m *Client) LSet(ctx context.Context, key string, index int64, value interface{}) *redis.StatusCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LSet", k)
+	return m.client.LSet(k, index, value)
+}
+
+func (m *Client) LTrim(ctx context.Context, key string, start, stop int64) *redis.StatusCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "LTrim", k)
+	return m.client.LTrim(k, start, stop)
+}
+
+func (m *Client) RPop(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "RPop", k)
+	return m.client.RPop(k)
+}
+
+func (m *Client) RPush(ctx context.Context, key string, values ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "RPush", k)
+	return m.client.RPush(k, values...)
+}
+
+func (m *Client) RPushX(ctx context.Context, key string, value interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "RPushX", k)
+	return m.client.RPushX(k, value)
+}
+
+func (m *Client) TTL(ctx context.Context, key string) *redis.DurationCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "TTL", k)
+	return m.client.TTL(k)
 }
 
 func (m *Client) Close(ctx context.Context) error {

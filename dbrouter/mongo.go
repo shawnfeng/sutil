@@ -5,9 +5,17 @@
 package dbrouter
 
 import (
-	"gopkg.in/mgo.v2"
 	"sync"
 	"time"
+
+	"gopkg.in/mgo.v2"
+)
+
+const (
+	defaultSyncTimeout   = time.Second * 10
+	defaultSocketTimeout = time.Second * 10
+	defaultPoolLimit     = 128
+	defaultDialTimeout   = time.Second * 5
 )
 
 type dbMongo struct {
@@ -26,7 +34,7 @@ func (m *dbMongo) GetType() string {
 func NewMongo(dbtype, dbname, user, passwd string, addrs []string, timeout time.Duration) (*dbMongo, error) {
 
 	if timeout == 0 {
-		timeout = 5 * time.Second
+		timeout = defaultDialTimeout
 	}
 
 	info := &mgo.DialInfo{
@@ -35,7 +43,7 @@ func NewMongo(dbtype, dbname, user, passwd string, addrs []string, timeout time.
 		Database:  dbname,
 		Username:  user,
 		Password:  passwd,
-		PoolLimit: 128,
+		PoolLimit: defaultPoolLimit,
 	}
 
 	return &dbMongo{
@@ -60,31 +68,8 @@ func dialConsistency(info *mgo.DialInfo, consistency mode) (session *mgo.Session
 	if err != nil {
 		return
 	}
-	session.SetSyncTimeout(1 * time.Minute)
-	session.SetSocketTimeout(1 * time.Minute)
-
-	switch consistency {
-	case eventual:
-		session.SetMode(mgo.Eventual, true)
-	case monotonic:
-		session.SetMode(mgo.Monotonic, true)
-	case strong:
-		session.SetMode(mgo.Strong, true)
-	}
-
-	return
-}
-
-func dialConsistencyWithUrl(url string, timeout time.Duration, consistency mode) (session *mgo.Session, err error) {
-
-	session, err = mgo.DialWithTimeout(url, timeout)
-	if err != nil {
-		return
-	}
-	// 看Dial内部的实现
-	session.SetSyncTimeout(1 * time.Minute)
-	// 不设置这个在执行写入，表不存在时候会报 read tcp 127.0.0.1:27017: i/o timeout
-	session.SetSocketTimeout(1 * time.Minute)
+	session.SetSyncTimeout(defaultSyncTimeout)
+	session.SetSocketTimeout(defaultSocketTimeout)
 
 	switch consistency {
 	case eventual:
@@ -109,7 +94,6 @@ func (m *dbMongo) checkGetSession(consistency mode) *mgo.Session {
 func (m *dbMongo) initSession(consistency mode) (*mgo.Session, error) {
 	m.sessMu.Lock()
 	defer m.sessMu.Unlock()
-	//fmt.Println("CCCCCC", m.session)
 
 	if m.session[consistency] != nil {
 		return m.session[consistency], nil
