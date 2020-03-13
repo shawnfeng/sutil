@@ -1,6 +1,7 @@
 package dbrouter
 
 import (
+	"bytes"
 	"context"
 	"strings"
 	"sync"
@@ -39,23 +40,25 @@ type Breaker struct {
 
 var bm *BreakerManager
 
-func statBreaker(table string, err error) {
+func statBreaker(cluster, table string, err error) {
 	if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "invalid connection")) {
+		key := concat(cluster, "_", table)
 		bm.lock.Lock()
-		if _, ok := bm.Breakers[table]; !ok {
+		if _, ok := bm.Breakers[key]; !ok {
 			breaker := new(Breaker)
 			breaker.Run()
-			bm.Breakers[table] = breaker
+			bm.Breakers[key] = breaker
 		}
-		breaker := bm.Breakers[table]
+		breaker := bm.Breakers[key]
 		bm.lock.Unlock()
 		atomic.AddInt32(&breaker.Count, 1)
 	}
 }
 
-func Entry(table string) bool {
+func Entry(cluster, table string) bool {
+	key := concat(cluster, "_", table)
 	bm.lock.Lock()
-	breaker := bm.Breakers[table]
+	breaker := bm.Breakers[key]
 	bm.lock.Unlock()
 	if breaker != nil {
 		return atomic.LoadInt32(&breaker.Rejected) != 1
@@ -118,6 +121,14 @@ func initConfig() error {
 		return err
 	}
 	return nil
+}
+
+func concat(strings ...string) string {
+	var buffer bytes.Buffer
+	for _, s := range strings {
+		buffer.WriteString(s)
+	}
+	return buffer.String()
 }
 
 func init() {
