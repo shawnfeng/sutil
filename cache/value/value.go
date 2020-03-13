@@ -8,7 +8,7 @@
 
 package value
 
-import  (
+import (
 	"context"
 	"encoding/json"
 	"errors"
@@ -213,17 +213,20 @@ func (m *Cache) getValueFromCache(ctx context.Context, key, value interface{}) e
 
 func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []byte, err error) {
 	fun := "Cache.loadValueToCache -->"
+	expire := m.expire
 
 	value, err := m.load(ctx, key)
 	if err != nil {
 		slog.Warnf(ctx, "%s load err, cache key:%v err:%v", fun, key, err)
 		data = []byte(err.Error())
+		expire = constants.CacheDirtyExpireTime
 
 	} else {
 		data, err = json.Marshal(value)
 		if err != nil {
 			slog.Errorf(ctx, "%s marshal err, cache key:%v err:%v", fun, key, err)
 			data = []byte(err.Error())
+			expire = constants.CacheDirtyExpireTime
 		}
 	}
 
@@ -239,7 +242,7 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []b
 		return nil, err
 	}
 
-	rerr := client.Set(ctx, skey, data, m.expire).Err()
+	rerr := client.Set(ctx, skey, data, expire).Err()
 	if rerr != nil {
 		slog.Errorf(ctx, "%s set err, cache key:%v rerr:%v", fun, key, rerr)
 	}
@@ -259,8 +262,12 @@ func SetConfiger(ctx context.Context, configerType constants.ConfigerType) error
 		return err
 	}
 	slog.Infof(ctx, "%s %v configer created", fun, configerType)
+	err = configer.Init(ctx)
+	if err != nil {
+		slog.Errorf(ctx, "%s init configer err:%v", fun, err)
+	}
 	redis.DefaultConfiger = configer
-	return redis.DefaultConfiger.Init(ctx)
+	return err
 }
 
 func WatchUpdate(ctx context.Context) {

@@ -17,6 +17,13 @@ import (
 )
 
 const (
+	apolloConfigSep = "."
+
+	apolloConfigKeyAddr       = "addr"
+	apolloConfigKeyPoolSize   = "poolsize"
+	apolloConfigKeyTimeout    = "timeout"
+	apolloConfigKeyUseWrapper = "usewrapper"
+
 	defaultPoolSize          = 128
 	defaultTimeoutNumSeconds = 3
 	defaultUseWrapper        = true
@@ -138,14 +145,6 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 	return nil
 }
 
-const (
-	apolloConfigSep = "."
-
-	apolloConfigKeyAddr       = "addr"
-	apolloConfigKeyPoolSize   = "poolsize"
-	apolloConfigKeyTimeout    = "timeout"
-	apolloConfigKeyUseWrapper = "usewrapper"
-)
 
 type ApolloConfig struct {
 	watchOnce sync.Once

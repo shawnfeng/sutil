@@ -2,11 +2,16 @@ package cache
 
 import (
 	"context"
+	"time"
+
 	go_redis "github.com/go-redis/redis"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
-	"time"
+)
+
+const (
+	defaultTimeout = time.Second * 2
 )
 
 func NewCommonRedis(serverName string, poolSize int) (*RedisClient, error) {
@@ -24,8 +29,8 @@ func NewRedisByNamespace(ctx context.Context, namespace string) (*RedisClient, e
 		slog.Errorf(ctx, "%s GetInstance: namespace %s, err: %s", fun, namespace, err.Error())
 	}
 	return &RedisClient{
-		client:      client,
-		namespace:   namespace,
+		client:    client,
+		namespace: namespace,
 	}, err
 }
 
@@ -38,14 +43,14 @@ func getInstanceConf(ctx context.Context, namespace string) *redis.InstanceConf 
 }
 
 type RedisClient struct {
-	client      *redis.Client
-	namespace   string
+	client    *redis.Client
+	namespace string
 }
 
 func newRedisClient(addr, serverName string, poolSize int) (*RedisClient, error) {
 	fun := "newRedisClient-->"
 
-	client, err := redis.NewDefaultClient(context.Background(), serverName, addr, WrapperTypeCache, poolSize, false, time.Second)
+	client, err := redis.NewDefaultClient(context.Background(), serverName, addr, WrapperTypeCache, poolSize, false, defaultTimeout)
 	if err != nil {
 		slog.Errorf(context.TODO(), "%s NewDefaultClient: serverName %s err: %s", fun, serverName, err.Error())
 	}
