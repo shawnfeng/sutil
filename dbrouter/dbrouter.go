@@ -109,8 +109,10 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	for _, item := range tables {
 		tmptables = append(tmptables, item)
 	}
+	err = query(db, tmptables)
+	statReqErr(table, err)
 
-	return query(db, tmptables)
+	return err
 }
 
 func (m *Router) ormPrepare(ctx context.Context, cluster, table string) (db *GormDB, err error) {
@@ -166,8 +168,10 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 	for _, item := range tables {
 		tmptables = append(tmptables, item)
 	}
+	err = query(db, tmptables)
+	statReqErr(table, err)
 
-	return query(db, tmptables)
+	return err
 }
 
 func (m *Router) MongoExecEventual(ctx context.Context, cluster, table string, query func(*mgo.Collection) error) error {
@@ -236,6 +240,8 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 		m.report.IncQuery(cluster, table, st.Duration())
 		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
+	err = query(coll)
+	statReqErr(table, err)
 
-	return query(coll)
+	return err
 }
