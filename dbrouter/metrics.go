@@ -19,9 +19,10 @@ var (
 	})
 )
 
-func statReqErr(clusterTable string, err error) {
+func statReqErr(cluster, table string, err error) {
 	if err != nil {
-		_metricReqErr.With(xprometheus.LabelSource, clusterTable).Inc()
+		source := cluster + "." + table
+		_metricReqErr.With(xprometheus.LabelSource, source).Inc()
 	}
 	return
 }

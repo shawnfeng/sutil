@@ -2,12 +2,17 @@ package constants
 
 import (
 	"fmt"
+	"time"
 )
 
 const (
 	SpanLogKeyKey    = "key"
 	SpanLogCacheType = "cache"
 	SpanLogOp        = "op"
+)
+
+const (
+	CacheDirtyExpireTime = time.Second * 60
 )
 
 var RedisNil = fmt.Sprintf("redis: nil")
