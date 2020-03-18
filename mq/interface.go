@@ -459,7 +459,7 @@ func init() {
 	WatchUpdate(ctx)
 }
 
-func wrapperTopicFromContext(ctx context.Context, topic string) string {
+func wrapTopicFromContext(ctx context.Context, topic string) string {
 	group, ok := scontext.GetControlRouteGroup(ctx)
 	if !ok {
 		return topic
