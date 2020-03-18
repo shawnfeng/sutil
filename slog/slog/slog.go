@@ -7,7 +7,7 @@ package slog
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/slog"
+	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
 )
 
 func formatFromContext(ctx context.Context, includeHead bool, format string) string {
@@ -26,73 +26,73 @@ func vFromContext(ctx context.Context, includeHead bool, v ...interface{}) []int
 }
 
 func Tracef(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, false, format)
-	slog.Tracef(format, v...)
+	//format = formatFromContext(ctx, false, format)
+	xlog.Debugf(ctx, format, v...)
 }
 
 func Traceln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, false, v...)
-	slog.Traceln(v...)
+	//v = vFromContext(ctx, false, v...)
+	xlog.Debug(ctx, v...)
 }
 
 func Debugf(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, false, format)
-	slog.Debugf(format, v...)
+	//format = formatFromContext(ctx, false, format)
+	xlog.Debugf(ctx, format, v...)
 }
 
 func Debugln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, false, v...)
-	slog.Debugln(v...)
+	//v = vFromContext(ctx, false, v...)
+	xlog.Debug(ctx, v...)
 }
 
 func Infof(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, false, format)
-	slog.Infof(format, v...)
+	//format = formatFromContext(ctx, false, format)
+	xlog.Infof(ctx, format, v...)
 }
 
 func Infoln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, false, v...)
-	slog.Infoln(v...)
+	//v = vFromContext(ctx, false, v...)
+	xlog.Info(ctx, v...)
 }
 
 func Warnf(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, false, format)
-	slog.Warnf(format, v...)
+	//format = formatFromContext(ctx, false, format)
+	xlog.Warnf(ctx, format, v...)
 }
 
 func Warnln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, false, v...)
-	slog.Warnln(v...)
+	//v = vFromContext(ctx, false, v...)
+	xlog.Warn(ctx, v...)
 }
 
 func Errorf(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, true, format)
-	slog.Errorf(format, v...)
+	//format = formatFromContext(ctx, true, format)
+	xlog.Errorf(ctx, format, v...)
 }
 
 func Errorln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, true, v...)
-	slog.Errorln(v...)
+	//v = vFromContext(ctx, true, v...)
+	xlog.Error(ctx, v...)
 }
 
 func Fatalf(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, true, format)
-	slog.Fatalf(format, v...)
+	//format = formatFromContext(ctx, true, format)
+	xlog.Fatalf(ctx, format, v...)
 }
 
 func Fatalln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, true, v...)
-	slog.Fatalln(v...)
+	//v = vFromContext(ctx, true, v...)
+	xlog.Fatal(ctx, v...)
 }
 
 func Panicf(ctx context.Context, format string, v ...interface{}) {
-	format = formatFromContext(ctx, true, format)
-	slog.Panicf(format, v...)
+	//format = formatFromContext(ctx, true, format)
+	xlog.Panicf(ctx, format, v...)
 }
 
 func Panicln(ctx context.Context, v ...interface{}) {
-	v = vFromContext(ctx, true, v...)
-	slog.Panicln(v...)
+	//v = vFromContext(ctx, true, v...)
+	xlog.Panic(ctx, v...)
 }
 
 type Logger struct {}
