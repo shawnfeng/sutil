@@ -2,7 +2,6 @@ package center
 
 import (
 	"context"
-	"fmt"
 	"github.com/ZhengHe-MD/agollo/v4"
 	"github.com/ZhengHe-MD/properties"
 	"github.com/opentracing/opentracing-go"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -21,7 +19,6 @@ const (
 	defaultCacheDir             = "/tmp/sconfcenter"
 	defaultNamespaceApplication = "application"
 	defaultChangeEventSize      = 32
-	defaultInitTimeout          = 6 * time.Second
 )
 
 type apolloConfigCenter struct {
@@ -88,22 +85,10 @@ func (ap *apolloConfigCenter) Init(ctx context.Context, serviceName string, name
 
 	slog.Infof(ctx, "%s start agollo with conf:%v", fun, ap.conf)
 
-	startCh := make(chan int, 1)
-
-	go func() {
-		if err := ap.ag.Start(); err != nil {
-			slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
-		} else {
-			slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
-		}
-		startCh <- 1
-	}()
-
-	select {
-	case <-time.After(defaultInitTimeout):
-		err = fmt.Errorf("%s init agollo timeout after %v", fun, defaultInitTimeout)
-		slog.Errorf(ctx, err.Error())
-	case <-startCh:
+	if err = ap.ag.Start(); err != nil {
+		slog.Errorf(ctx, "%s agollo starts err:%v", fun, err)
+	} else {
+		slog.Infof(ctx, "%s agollo starts succeed:%v", fun, err)
 	}
 
 	return
