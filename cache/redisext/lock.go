@@ -20,10 +20,7 @@ func (m *RedisExt) Lock(ctx context.Context, key string, value interface{}, expi
 	if err != nil {
 		return false, err
 	}
-	if !r {
-		return false, nil
-	}
-	return true, nil
+	return r, nil
 }
 
 // LockWithTimeout will retry get lock in timeout every retryTimeGap

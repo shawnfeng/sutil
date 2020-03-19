@@ -37,12 +37,12 @@ func (m *RedisExt) ScriptLoad(ctx context.Context, script *Script) (r string, er
 	defer func() {
 		span.Finish()
 		statReqDuration(m.namespace, command, st.Millisecond())
+		statReqErr(m.namespace, command, err)
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		r, err = client.ScriptLoad(ctx, script.src).Result()
 	}
-	statReqErr(m.namespace, command, err)
 	return r, err
 }
 
@@ -54,6 +54,7 @@ func (m *RedisExt) ScriptExists(ctx context.Context, script *Script) (r bool, er
 	defer func() {
 		span.Finish()
 		statReqDuration(m.namespace, command, st.Millisecond())
+		statReqErr(m.namespace, command, err)
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -76,6 +77,7 @@ func (m *RedisExt) Eval(ctx context.Context, script *Script, keys []string, args
 	defer func() {
 		span.Finish()
 		statReqDuration(m.namespace, command, st.Millisecond())
+		statReqErr(m.namespace,command, err)
 	}()
 	for i, key := range keys {
 		keys[i] = m.prefixKey(key)
@@ -95,6 +97,7 @@ func (m *RedisExt) EvalSha(ctx context.Context, script *Script, keys []string, a
 	defer func() {
 		span.Finish()
 		statReqDuration(m.namespace, command, st.Millisecond())
+		statReqErr(m.namespace,command, err)
 	}()
 	for i, key := range keys {
 		keys[i] = m.prefixKey(key)
