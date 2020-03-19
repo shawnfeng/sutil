@@ -3,12 +3,12 @@ package redisext
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/cache"
 	"time"
 
 	redis2 "github.com/go-redis/redis"
-	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/opentracing/opentracing-go"
+	"github.com/shawnfeng/sutil/cache"
+	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/cache/redis"
 	"github.com/shawnfeng/sutil/scontext"
 	"github.com/shawnfeng/sutil/slog/slog"
