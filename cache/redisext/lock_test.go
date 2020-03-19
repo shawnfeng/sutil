@@ -59,32 +59,32 @@ func TestTryAcquire(t *testing.T) {
 	m.Del(ctx, orderID)
 
 	// Acquired first time
-	canHandle, state, err := m.TryAcquire(ctx, orderID, time.Second*2, time.Hour*24)
+	canHandle, state, err := m.TryAcquire(ctx, orderID, time.Hour*24, time.Second*2)
 	assert.Nil(t, err)
 	assert.Equal(t, true, canHandle)
-	assert.Equal(t, initState, state)
+	assert.Equal(t, InitState, state)
 
 	// reject cause by other processor
-	canHandle1, state1, err := m.TryAcquire(ctx, orderID, time.Second*3, time.Hour*24)
+	canHandle1, state1, err := m.TryAcquire(ctx, orderID, time.Hour*24, time.Second*3)
 	assert.Nil(t, err)
 	assert.Equal(t, false, canHandle1)
-	assert.Equal(t, doing, state1)
+	assert.Equal(t, Doing, state1)
 
 	time.Sleep(time.Second * 2)
 
 	// Acquired cause by other processor timeout
-	canHandle2, state2, err := m.TryAcquire(ctx, orderID, time.Second*3, time.Hour*24)
+	canHandle2, state2, err := m.TryAcquire(ctx, orderID, time.Hour*24, time.Second*3)
 	assert.Nil(t, err)
 	assert.Equal(t, true, canHandle2)
-	assert.Equal(t, doing, state2)
+	assert.Equal(t, Doing, state2)
 
 	// confirm the record
 	err = m.Confirm(ctx, orderID)
 	assert.Nil(t, err)
 
 	// idempotent
-	canHandle3, state3, err := m.TryAcquire(ctx, orderID, time.Second*3, time.Hour*24)
+	canHandle3, state3, err := m.TryAcquire(ctx, orderID, time.Hour*24, time.Second*3)
 	assert.Nil(t, err)
 	assert.Equal(t, false, canHandle3)
-	assert.Equal(t, done, state3)
+	assert.Equal(t, Done, state3)
 }
