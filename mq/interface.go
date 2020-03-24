@@ -461,7 +461,7 @@ func init() {
 
 func wrapTopicFromContext(ctx context.Context, topic string) string {
 	group, ok := scontext.GetControlRouteGroup(ctx)
-	if !ok {
+	if !ok || group == ""{
 		return topic
 	}
 	return fmt.Sprintf("%s_%s", topic, group)
