@@ -136,7 +136,6 @@ func (m *EtcdConfig) init(ctx context.Context, dbChangeChan chan dbConfigChange)
 	initCh := make(chan error)
 	var initOnce sync.Once
 	etcdInstance.Watch(ctx, "/roc/db/route", func(response *client.Response) {
-		slog.Infof(ctx, "get db conf: %s", response.Node.Value)
 		parser, er := NewParser([]byte(response.Node.Value))
 
 		if er != nil {
