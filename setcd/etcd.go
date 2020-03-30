@@ -2,12 +2,12 @@ package setcd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/coreos/etcd/client"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
-	"time"
 )
 
 type EtcdInstance struct {
