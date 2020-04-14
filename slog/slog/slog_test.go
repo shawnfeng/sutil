@@ -7,11 +7,12 @@ package slog
 import (
 	"context"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
+	//"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"github.com/shawnfeng/sutil/scontext"
-	"github.com/shawnfeng/sutil/trace"
+//	"github.com/shawnfeng/sutil/trace"
 	"testing"
+    "gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
 )
 
 type testHead struct {
@@ -37,11 +38,11 @@ func (th *testHead) ToKV() map[string]interface{} {
 var ctx, lctx context.Context
 
 func init() {
-	_ = trace.InitDefaultTracer("slog test")
-	tracer := opentracing.GlobalTracer()
-	span := tracer.StartSpan("testlog")
+	//_ = trace.InitDefaultTracer("slog test")
+	//tracer := opentracing.GlobalTracer()
+	//span := tracer.StartSpan("testlog")
 	ctx = context.Background()
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	//ctx = opentracing.ContextWithSpan(ctx, span)
 	ctx = context.WithValue(ctx, scontext.ContextKeyHead, &testHead{
 		uid:     1234,
 		source:  5678,
@@ -52,9 +53,9 @@ func init() {
 	})
 
 	// ctx with large uid
-	lspan := tracer.StartSpan("ltestlog")
+	//lspan := tracer.StartSpan("ltestlog")
 	lctx = context.Background()
-	lctx = opentracing.ContextWithSpan(lctx, lspan)
+	//lctx = opentracing.ContextWithSpan(lctx, lspan)
 	lctx = context.WithValue(lctx, scontext.ContextKeyHead, &testHead{
 		uid:     1234567890,
 		source:  5678,
@@ -71,6 +72,7 @@ func TestLog(t *testing.T) {
 }
 
 func startTestSuite(name string, t *testing.T) {
+    xlog.SetAppLogSkip(6)
 	printBar(name)
 	lnCases := []struct {
 		ctx context.Context
