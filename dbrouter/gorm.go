@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/shawnfeng/sutil/slog/slog"
+	"time"
 )
 
 type GormDB struct {
@@ -27,8 +28,8 @@ func dialByGorm(info *Sql) (db *gorm.DB, err error) {
 	fun := "dialByGorm -->"
 
 	var dataSourceName string
-	if info.dbType == DB_TYPE_MYSQL {
-		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=True&loc=Local", info.userName, info.passWord, info.dbAddr, info.dbName)
+	if info.dbType == DB_TYPE_MYSQL { // timeout: 3s readTimeout: 5s writeTimeout: 5s, TODO: dynamic config
+		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=True&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci&timeout=3s&readTimeout=5s&writeTimeout=5s", info.userName, info.passWord, info.dbAddr, info.dbName)
 
 	} else if info.dbType == DB_TYPE_POSTGRES {
 		dataSourceName = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
@@ -40,6 +41,7 @@ func dialByGorm(info *Sql) (db *gorm.DB, err error) {
 	if err == nil {
 		gormdb.DB().SetMaxIdleConns(8)
 		gormdb.DB().SetMaxOpenConns(128)
+		gormdb.DB().SetConnMaxLifetime(time.Hour*6)
 	}
 
 	return gormdb, err

@@ -6,7 +6,9 @@ package dbrouter
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/slog/slog"
@@ -94,6 +96,12 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 		log.String(spanLogKeyCluster, cluster),
 		log.String(spanLogKeyTable, table))
 
+	// check breaker
+	if !Entry(cluster, table){
+		slog.Errorf(ctx, "%s trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", fun, cluster, table)
+		return errors.New("sql cause breaker, because too many timeout")
+	}
+
 	db, err := m.sqlPrepare(ctx, cluster, table)
 	if err != nil {
 		return err
@@ -109,8 +117,11 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	for _, item := range tables {
 		tmptables = append(tmptables, item)
 	}
-
-	return query(db, tmptables)
+	err = query(db, tmptables)
+	statReqErr(cluster, table, err)
+	// record breaker
+	statBreaker(cluster, table, err)
+	return err
 }
 
 func (m *Router) ormPrepare(ctx context.Context, cluster, table string) (db *GormDB, err error) {
@@ -151,6 +162,12 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 		log.String(spanLogKeyCluster, cluster),
 		log.String(spanLogKeyTable, table))
 
+	// check breaker
+	if !Entry(cluster, table){
+		slog.Errorf(ctx, "%s trigger tidb breaker, because too many timeout sqls, cluster: %s, table: %s", fun, cluster, table)
+		return errors.New("sql cause breaker, because too many timeout")
+	}
+
 	db, err := m.ormPrepare(ctx, cluster, table)
 	if err != nil {
 		return err
@@ -166,8 +183,11 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 	for _, item := range tables {
 		tmptables = append(tmptables, item)
 	}
-
-	return query(db, tmptables)
+	err = query(db, tmptables)
+	statReqErr(cluster, table, err)
+	// stat breaker
+	statBreaker(cluster, table, err)
+	return err
 }
 
 func (m *Router) MongoExecEventual(ctx context.Context, cluster, table string, query func(*mgo.Collection) error) error {
@@ -215,6 +235,10 @@ func (m *Router) mongoPrepare(ctx context.Context, consistency mode, cluster, ta
 
 func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table string, query func(*mgo.Collection) error) error {
 	fun := "Router.mongoExec -->"
+	if !Entry(cluster, table){
+		slog.Errorf(ctx, "%s trigger mongodb breaker, because too many timeout query, cluster: %s, table: %s", fun, cluster, table)
+		return errors.New("mongo query cause breaker, because too many timeout")
+	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "dbrouter.mongoExec")
 	defer span.Finish()
@@ -236,6 +260,8 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 		m.report.IncQuery(cluster, table, st.Duration())
 		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
-
-	return query(coll)
+	err = query(coll)
+	statReqErr(cluster, table, err)
+	statBreaker(cluster, table, err)
+	return err
 }

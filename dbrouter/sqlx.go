@@ -30,8 +30,8 @@ func dialBySqlx(info *Sql) (db *sqlx.DB, err error) {
 	fun := "dialBySqlx -->"
 
 	var dataSourceName string
-	if info.dbType == DB_TYPE_MYSQL {
-		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s", info.userName, info.passWord, info.dbAddr, info.dbName)
+	if info.dbType == DB_TYPE_MYSQL { // timeout: 3s readTimeout: 5s writeTimeout: 5s, TODO: dynamic config
+		dataSourceName = fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&collation=utf8mb4_unicode_ci&timeout=3s&readTimeout=5s&writeTimeout=5s", info.userName, info.passWord, info.dbAddr, info.dbName)
 
 	} else if info.dbType == DB_TYPE_POSTGRES {
 		dataSourceName = fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",

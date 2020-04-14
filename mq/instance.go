@@ -8,11 +8,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shawnfeng/sutil/sconf/center"
-	"github.com/shawnfeng/sutil/slog/slog"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/shawnfeng/sutil/sconf/center"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 var defaultInstanceManager = NewInstanceManager()
@@ -22,6 +24,7 @@ type MQRoleType int
 const (
 	RoleTypeReader MQRoleType = iota
 	RoleTypeWriter
+	RoleTypeDelayClient
 )
 
 var (
@@ -34,6 +37,8 @@ func (t MQRoleType) String() string {
 		return "reader"
 	case RoleTypeWriter:
 		return "writer"
+	case RoleTypeDelayClient:
+		return "delay"
 	}
 	// unreachable
 	return ""
@@ -45,6 +50,8 @@ func MQRoleTypeFromInt(it int) (t MQRoleType, err error) {
 		t = RoleTypeReader
 	case 1:
 		t = RoleTypeWriter
+	case 2:
+		t = RoleTypeDelayClient
 	default:
 		err = InvalidMqRoleTypeStringErr
 	}
@@ -126,6 +133,9 @@ func (m *InstanceManager) newInstance(ctx context.Context, conf *instanceConf) (
 
 	case RoleTypeWriter:
 		return NewWriter(ctx, conf.topic)
+
+	case RoleTypeDelayClient:
+		return NewDefaultDelayClient(ctx, conf.topic)
 
 	default:
 		return nil, fmt.Errorf("role %d error", conf.role)
@@ -223,6 +233,13 @@ func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.Chang
 
 func (m *InstanceManager) watch(ctx context.Context) {
 	fun := "InstanceManager.watch-->"
+	defer func() {
+		if err := recover(); err != nil {
+			buf := make([]byte, 4096)
+			buf = buf[:runtime.Stack(buf, false)]
+			slog.Errorf(ctx, "%s recover err: %v, stack: %s", fun, err, string(buf))
+		}
+	}()
 	m.watchOnce.Do(func() {
 		slog.Infof(ctx, "%s start watching updates", fun)
 		ceChan := DefaultConfiger.Watch(ctx)
@@ -258,6 +275,22 @@ func (m *InstanceManager) getReader(ctx context.Context, conf *instanceConf) Rea
 	}
 
 	return reader
+}
+
+func (m *InstanceManager) getDelayClient(ctx context.Context, conf *instanceConf) *DelayClient {
+	fun := "InstanceManager.getDelayClient"
+
+	in := m.get(ctx, conf)
+	if in == nil {
+		return nil
+	}
+
+	client, ok := in.(*DelayClient)
+	if ok == false {
+		slog.Errorf(ctx, "%s in.(Reader) err, topic: %s", fun, conf.topic)
+		return nil
+	}
+	return client
 }
 
 func (m *InstanceManager) getWriter(ctx context.Context, conf *instanceConf) Writer {

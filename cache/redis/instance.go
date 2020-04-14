@@ -7,11 +7,13 @@ package redis
 import (
 	"context"
 	"fmt"
-	"github.com/shawnfeng/sutil/cache"
-	"github.com/shawnfeng/sutil/sconf/center"
-	"github.com/shawnfeng/sutil/slog/slog"
+	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/shawnfeng/sutil/cache/constants"
+	"github.com/shawnfeng/sutil/sconf/center"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 const (
@@ -125,7 +127,7 @@ func (m *InstanceManager) applyChange(ctx context.Context, key string, change *c
 
 		// NOTE: 只要 namespace 和 group 相同，即认为相关的配置发生了变化
 		//       为了逻辑简单，不论什么变化，都重新载入一次 instance，不对不同的 ChangeType 单独处理
-		if (keyParts.Group == conf.Group || keyParts.Group == cache.DefaultRouteGroup) && keyParts.Namespace == conf.Namespace {
+		if (keyParts.Group == conf.Group || keyParts.Group == constants.DefaultRouteGroup) && keyParts.Namespace == conf.Namespace {
 			slog.Infof(ctx, "%s update instance:%v", fun, v)
 			// NOTE: 关闭旧实例，重新载入新实例，若旧实例关闭失败打印日志
 			if err = m.closeInstance(ctx, v); err != nil {
@@ -159,6 +161,13 @@ func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.Chang
 
 func (m *InstanceManager) Watch(ctx context.Context) {
 	fun := "InstanceManager.Watch-->"
+	defer func() {
+		if err := recover(); err != nil {
+			buf := make([]byte, 4096)
+			buf = buf[:runtime.Stack(buf, false)]
+			slog.Errorf(ctx, "%s recover err: %v, stack: %s", fun, err, string(buf))
+		}
+	}()
 	m.watchOnce.Do(func() {
 		slog.Infof(ctx, "%s start watching updates", fun)
 		ceChan := DefaultConfiger.Watch(ctx)
