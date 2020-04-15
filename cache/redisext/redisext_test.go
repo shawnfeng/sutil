@@ -249,3 +249,15 @@ func TestRedisExt_MGet(t *testing.T) {
 	assert.Contains(t, []string{"getvalue1", "getvalue2"}, resp[0])
 	assert.Contains(t, []string{"getvalue1", "getvalue2"}, resp[1])
 }
+
+func TestRedisExt_HSetNX(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	b, err := re.HSetNX(ctx, "hkey1", "field1", "value1")
+	assert.NoError(t, err)
+	assert.Equal(t, true, b)
+	b, err = re.HSetNX(ctx, "hkey1", "field1", "value1")
+	assert.NoError(t, err)
+	assert.Equal(t, false, b)
+	re.Del(ctx, "hkey1")
+}
