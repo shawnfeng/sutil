@@ -117,8 +117,8 @@ func (m *Router) SqlExec(ctx context.Context, cluster string, query func(*DB, []
 	for _, item := range tables {
 		tmptables = append(tmptables, item)
 	}
-
 	err = query(db, tmptables)
+	statReqErr(cluster, table, err)
 	// record breaker
 	statBreaker(cluster, table, err)
 	return err
@@ -183,8 +183,8 @@ func (m *Router) OrmExec(ctx context.Context, cluster string, query func(*GormDB
 	for _, item := range tables {
 		tmptables = append(tmptables, item)
 	}
-
 	err = query(db, tmptables)
+	statReqErr(cluster, table, err)
 	// stat breaker
 	statBreaker(cluster, table, err)
 	return err
@@ -260,8 +260,8 @@ func (m *Router) mongoExec(ctx context.Context, consistency mode, cluster, table
 		m.report.IncQuery(cluster, table, st.Duration())
 		slog.Tracef(ctx, "%s const:%d cls:%s table:%s dur:%d", fun, consistency, cluster, table, dur)
 	}()
-
 	err = query(coll)
+	statReqErr(cluster, table, err)
 	statBreaker(cluster, table, err)
 	return err
 }

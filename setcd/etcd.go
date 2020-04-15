@@ -2,12 +2,12 @@ package setcd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/coreos/etcd/client"
 	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/stime"
-	"time"
 )
 
 type EtcdInstance struct {
@@ -193,8 +193,7 @@ func (m *EtcdInstance) startWatch(ctx context.Context, chg chan *client.Response
 		index := uint64(0)
 		if r != nil {
 			index = r.Index
-			sresp, _ := json.Marshal(r)
-			slog.Infof(ctx, "%s init get action:%s nodes:%d index:%d path:%s resp:%s", fun, r.Action, len(r.Node.Nodes), r.Index, path, sresp)
+			slog.Infof(ctx, "%s init get action:%s nodes:%d index:%d path:%s", fun, r.Action, len(r.Node.Nodes), r.Index, path)
 		}
 
 		wop := &client.WatcherOptions{

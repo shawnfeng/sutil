@@ -3,13 +3,14 @@ package redis
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/go-redis/redis"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/shawnfeng/sutil/slog/slog"
-	"strings"
-	"time"
 )
 
 var RedisNil = fmt.Sprintf("redis: nil")
@@ -55,12 +56,12 @@ func NewDefaultClient(ctx context.Context, namespace, addr, wrapper string, pool
 	fun := "NewDefaultClient -->"
 
 	client := redis.NewClient(&redis.Options{
-		Addr:               addr,
-		DialTimeout:        3 * timeout,
-		ReadTimeout:        timeout,
-		WriteTimeout:       timeout,
-		PoolSize:           poolSize,
-		PoolTimeout:        2 * timeout,
+		Addr:         addr,
+		DialTimeout:  3 * timeout,
+		ReadTimeout:  timeout,
+		WriteTimeout: timeout,
+		PoolSize:     poolSize,
+		PoolTimeout:  2 * timeout,
 	})
 
 	pong, err := client.Ping().Result()
@@ -494,6 +495,32 @@ func (m *Client) TTL(ctx context.Context, key string) *redis.DurationCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "TTL", k)
 	return m.client.TTL(k)
+}
+
+func (m *Client) ScriptLoad(ctx context.Context, script string) *redis.StringCmd {
+	m.logSpan(ctx, "ScriptLoad", script)
+	return m.client.ScriptLoad(script)
+}
+
+func (m *Client) ScriptExists(ctx context.Context, scriptHash string) *redis.BoolSliceCmd {
+	m.logSpan(ctx, "ScriptExists", scriptHash)
+	return m.client.ScriptExists(scriptHash)
+}
+
+func (m *Client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *redis.Cmd {
+	m.logSpan(ctx, "Eval", script)
+	for i, key := range keys {
+		keys[i] = m.fixKey(key)
+	}
+	return m.client.Eval(script, keys, args...)
+}
+
+func (m *Client) EvalSha(ctx context.Context, scriptHash string, keys []string, args ...interface{}) *redis.Cmd {
+	m.logSpan(ctx, "EvalSha", scriptHash)
+	for i, key := range keys {
+		keys[i] = m.fixKey(key)
+	}
+	return m.client.EvalSha(scriptHash, keys, args...)
 }
 
 func (m *Client) Close(ctx context.Context) error {
