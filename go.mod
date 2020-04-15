@@ -27,7 +27,7 @@ require (
 	github.com/ugorji/go v1.1.7 // indirect
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec
 	gitlab.pri.ibanyu.com/middleware/delayqueue v0.0.0-20200213090847-cd24af2bd1f2
-	gitlab.pri.ibanyu.com/middleware/seaweed v1.1.5
+	gitlab.pri.ibanyu.com/middleware/seaweed v1.1.6
 	golang.org/x/tools v0.0.0-20191120001058-ad01d5993d97 // indirect
 
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
