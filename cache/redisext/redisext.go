@@ -514,7 +514,7 @@ func (m *RedisExt) HSetNX(ctx context.Context, key string, field string, val int
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
-		b, err = client.HSet(ctx, m.prefixKey(key), field, val).Result()
+		b, err = client.HSetNX(ctx, m.prefixKey(key), field, val).Result()
 	}
 	statReqErr(m.namespace, command, err)
 	return
