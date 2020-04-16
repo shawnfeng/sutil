@@ -149,7 +149,7 @@ func (p *DelayClient) Write(ctx context.Context, value interface{}, ttlSeconds, 
 
 // Read 消费任务
 func (p *DelayClient) Read(ctx context.Context, ttrSeconds uint32) (job *Job, err error) {
-
+	fun := "DelayClient.Read -->"
 	span := opentracing.SpanFromContext(ctx)
 	if span != nil {
 		p.logConfigToSpan(span)
@@ -170,6 +170,7 @@ func (p *DelayClient) Read(ctx context.Context, ttrSeconds uint32) (job *Job, er
 			continue
 		}
 		if res.Ret == -1 {
+			err = fmt.Errorf("%s httpInvoke, path = %s, err = %s", fun, path, res.Msg)
 			break
 		}
 		if res.Data.Ent.Job == nil {
@@ -216,7 +217,7 @@ func (p *DelayClient) httpInvoke(ctx context.Context, path string, req interface
 		return err
 	}
 	if code != http.StatusOK {
-		return fmt.Errorf("http request, url = %s, code = %d", url, code)
+		return fmt.Errorf("http request, url = %s, code = %d, data = %s", url, code, string(resData))
 	}
 	err = json.Unmarshal(resData, &res)
 	return err
