@@ -261,3 +261,21 @@ func TestRedisExt_HSetNX(t *testing.T) {
 	assert.Equal(t, false, b)
 	re.Del(ctx, "hkey1")
 }
+
+func TestRedisExt_TTL(t *testing.T) {
+	ctx := context.Background()
+	ttl := 10 * time.Second
+	re := NewRedisExt("base/report", "test")
+	re.Set(ctx,"getttl1", "test", ttl)
+	d, err := re.TTL(ctx, "getttl1")
+	assert.NoError(t, err)
+	assert.Equal(t, ttl, d)
+	d, err = re.TTL(ctx, "getttl2")
+	assert.NoError(t, err)
+	assert.Equal(t, -2 * time.Second, d)
+	re.Set(ctx, "getttl3", "test", 0)
+	d, err = re.TTL(ctx, "getttl3")
+	assert.NoError(t, err)
+	assert.Equal(t, -1 * time.Second, d)
+	re.Del(ctx, "getttl3")
+}
