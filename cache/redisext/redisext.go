@@ -893,6 +893,21 @@ func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f flo
 	return
 }
 
+func (m *RedisExt) TTL(ctx context.Context, key string) (d time.Duration, err error) {
+	command := "redisext.TTL"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		d, err =  client.TTL(ctx, m.prefixKey(key)).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
 func SetConfiger(ctx context.Context, configerType constants.ConfigerType) error {
 	fun := "Cache.SetConfiger-->"
 	configer, err := redis.NewConfiger(configerType)
