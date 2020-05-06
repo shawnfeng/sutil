@@ -73,3 +73,44 @@ func TestLog(t *testing.T) {
 			"k2", 1)
 	})
 }
+
+func TestLogKVWithMap(t *testing.T) {
+	Init("", "", "testservice")
+	t.Run("context without head", func(t *testing.T) {
+		LogKVWithMap(context.TODO(), "method1", map[string]interface{}{
+			"k1": 0,
+			"k2": "hello",
+			"k3": true,
+			"k4": []int{1, 2, 3},
+			"k5": &sa{"world", 0},
+		})
+	})
+
+	t.Run("context without head LogKV", func(t *testing.T) {
+		LogKV(context.TODO(), "method1",
+			"k1", 0,
+			"k2", "hello",
+			"k3", true,
+			"k4", []int{1, 2, 3},
+			"k5", &sa{"world", 0})
+	})
+
+	t.Run("context with head", func(t *testing.T) {
+		ctx := context.TODO()
+		ctx = context.WithValue(ctx, scontext.ContextKeyHead, &testHead{
+			uid:     1234,
+			source:  0,
+			ip:      "192.168.0.1",
+			region:  "asia",
+			dt:      0,
+			unionid: "unionid",
+		})
+		LogKVWithMap(ctx, "method2", map[string]interface{}{
+			"k1": 0,
+			"k2": "hello",
+			"k3": true,
+			"k4": []int{1, 2, 3},
+			"k5": &sa{"world", 0},
+		})
+	})
+}

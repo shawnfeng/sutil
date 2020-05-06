@@ -53,4 +53,9 @@ func (c ConfigerType) String() string {
 	}
 }
 
-const DefaultRouteGroup = "default"
+const (
+	DefaultRouteGroup = "default"
+
+	// CacheNoPrefix set value is true, cache and redis key will not fix
+	ContextCacheNoPrefix = "no_prefix"
+)

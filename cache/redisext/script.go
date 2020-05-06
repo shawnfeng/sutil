@@ -80,7 +80,7 @@ func (m *RedisExt) Eval(ctx context.Context, script *Script, keys []string, args
 		statReqErr(m.namespace,command, err)
 	}()
 	for i, key := range keys {
-		keys[i] = m.prefixKey(key)
+		keys[i] = m.prefixKeyWithContext(ctx, key)
 	}
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
@@ -100,7 +100,7 @@ func (m *RedisExt) EvalSha(ctx context.Context, script *Script, keys []string, a
 		statReqErr(m.namespace,command, err)
 	}()
 	for i, key := range keys {
-		keys[i] = m.prefixKey(key)
+		keys[i] = m.prefixKeyWithContext(ctx, key)
 	}
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {

@@ -1,6 +1,7 @@
 package redisext
 
 import (
+	go_redis "github.com/go-redis/redis"
 	"gitlab.pri.ibanyu.com/middleware/seaweed/xstat/xmetric/xprometheus"
 )
 
@@ -35,7 +36,7 @@ func statReqDuration(namespace, command string, durationMS int64) {
 }
 
 func statReqErr(namespace, command string, err error) {
-	if err != nil {
+	if err != nil && err != go_redis.Nil {
 		_metricReqErr.With("namespace", namespace, "command", command).Inc()
 	}
 	return
