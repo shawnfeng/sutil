@@ -2,7 +2,6 @@ package redisext
 
 import (
 	"context"
-	"github.com/shawnfeng/sutil/cache/constants"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -75,9 +74,8 @@ func TestPipelineExt_MGet(t *testing.T) {
 
 func TestPipelineExt_NoPrefix(t *testing.T) {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, constants.ContextCacheNoPrefix, false)
 
-	redis := NewRedisExt("base/test", "test")
+	redis := NewRedisExtNoPrefix("base/test")
 	redis.Set(ctx, "testPipeline", "success", 15 * time.Second)
 	pipe, err := redis.Pipeline(ctx)
 	assert.NoError(t, err)

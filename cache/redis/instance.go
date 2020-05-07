@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -25,22 +26,27 @@ type InstanceConf struct {
 	Group     string
 	Namespace string
 	Wrapper   string
+	NoFixKey  bool
 }
 
 func (m *InstanceConf) String() string {
-	return fmt.Sprintf("group:%s namespace:%s wrapper:%s", m.Group, m.Namespace, m.Wrapper)
+	return fmt.Sprintf("group:%s namespace:%s wrapper:%s no_fix:%v", m.Group, m.Namespace, m.Wrapper, m.NoFixKey)
 }
 
 func instanceConfFromString(s string) (conf *InstanceConf, err error) {
 	items := strings.Split(s, keySep)
-	if len(items) != 3 {
+	if len(items) != 4 {
 		return nil, fmt.Errorf("invalid instance conf string:%s", s)
 	}
-
+	noFix, err := strconv.ParseBool(items[3])
+	if err != nil {
+		return nil, fmt.Errorf("instance conf parse no_prefix:%s, err: %v", s, err)
+	}
 	conf = &InstanceConf{
 		Group:     items[0],
 		Namespace: items[1],
 		Wrapper:   items[2],
+		NoFixKey:  noFix,
 	}
 	return conf, nil
 }
@@ -61,6 +67,7 @@ func (m *InstanceManager) buildKey(conf *InstanceConf) string {
 		conf.Group,
 		conf.Namespace,
 		conf.Wrapper,
+		fmt.Sprint(conf.NoFixKey),
 	}, keySep)
 }
 
@@ -69,7 +76,7 @@ func (m *InstanceManager) add(key string, client *Client) {
 }
 
 func (m *InstanceManager) newInstance(ctx context.Context, conf *InstanceConf) (*Client, error) {
-	return NewClient(ctx, conf.Namespace, conf.Wrapper)
+	return NewClientWithOptions(ctx, conf.Namespace, WithWrapper(conf.Wrapper), WithNoFixKey(conf.NoFixKey))
 }
 
 func (m *InstanceManager) GetInstance(ctx context.Context, conf *InstanceConf) (*Client, error) {

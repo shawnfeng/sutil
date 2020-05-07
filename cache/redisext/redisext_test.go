@@ -279,3 +279,24 @@ func TestRedisExt_TTL(t *testing.T) {
 	assert.Equal(t, -1 * time.Second, d)
 	re.Del(ctx, "getttl3")
 }
+
+func TestNewRedisExtNoPrefix(t *testing.T) {
+	ctx := context.Background()
+	val := "val"
+	re := NewRedisExtNoPrefix("base/report")
+	preRedis := NewRedisExt("base/report", "test")
+
+	_, err := re.Set(ctx, "set", val, 10 * time.Second)
+	assert.NoError(t, err)
+
+	_, err = preRedis.Set(ctx, "set", val+"prefix", 10 * time.Second)
+	assert.NoError(t, err)
+
+	s, err := re.Get(ctx, "set")
+	assert.NoError(t, err)
+	assert.Equal(t, s, val)
+
+	s, err = preRedis.Get(ctx, "set")
+	assert.NoError(t, err)
+	assert.Equal(t, s, val+"prefix")
+}
