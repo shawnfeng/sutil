@@ -412,7 +412,7 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 	}
 	err = client.Ack(ctx, job.ID)
 	if err != nil {
-		slog.Errorf(ctx, "%s, delay Ack err: %v, jobID", fun, err, job.ID)
+		slog.Errorf(ctx, "%s, delay Ack err: %v, jobID: %s", fun, err, job.ID)
 		return ctx, err
 	}
 	if len(payload.Value) == 0 {
