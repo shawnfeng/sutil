@@ -105,7 +105,7 @@ func NewDefaultDelayClient(ctx context.Context, topic string) (*DelayClient, err
 	if err != nil {
 		return nil, err
 	}
-	namespace, queue, err := parseTopic(topic)
+	namespace, queue, err := parseTopic(wrapTopicFromContext(ctx, topic))
 	if err != nil {
 		return nil, err
 	}
