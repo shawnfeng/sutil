@@ -18,10 +18,20 @@ import (
 type RedisExt struct {
 	namespace string
 	prefix    string
+	noFixKey  bool // redis client no fix key
 }
 
 func NewRedisExt(namespace, prefix string) *RedisExt {
-	return &RedisExt{namespace, prefix}
+	return &RedisExt{
+		namespace: namespace,
+		prefix:    prefix}
+}
+
+// NewRedisExtNoPrefix not fix redis key
+func NewRedisExtNoPrefix(namespace string) *RedisExt {
+	return &RedisExt{
+		namespace: namespace,
+		noFixKey:  true}
 }
 
 type Z struct {
@@ -88,6 +98,7 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 		Group:     scontext.GetControlRouteGroupWithDefault(ctx, constants.DefaultRouteGroup),
 		Namespace: m.namespace,
 		Wrapper:   cache.WrapperTypeRedisExt,
+		NoFixKey:  m.noFixKey,
 	}
 }
 
@@ -903,7 +914,24 @@ func (m *RedisExt) TTL(ctx context.Context, key string) (d time.Duration, err er
 	}()
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
-		d, err =  client.TTL(ctx, m.prefixKey(key)).Result()
+		d, err = client.TTL(ctx, m.prefixKey(key)).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) Pipeline(ctx context.Context) (pipe *PipelineExt, err error) {
+	command := "redisExt.Pipeline"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		p := client.Pipeline()
+		pipe = &PipelineExt{namespace: m.namespace, prefix: m.prefix, pipe: p}
 	}
 	statReqErr(m.namespace, command, err)
 	return

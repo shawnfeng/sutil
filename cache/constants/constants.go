@@ -53,4 +53,8 @@ func (c ConfigerType) String() string {
 	}
 }
 
-const DefaultRouteGroup = "default"
+const (
+	DefaultRouteGroup = "default"
+
+	DefaultRedisWrapper = ""
+)
