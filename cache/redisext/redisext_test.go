@@ -300,3 +300,29 @@ func TestNewRedisExtNoPrefix(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, s, val+"prefix")
 }
+
+func TestRedisExt_SScan(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+
+	i, err := re.SAdd(ctx, "sscantest", 1, 2, 3, 4)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(4) , i)
+
+	b, err := re.SIsMember(ctx, "sscantest", 1)
+	assert.NoError(t, err)
+	assert.True(t, b)
+
+	i ,err = re.SRem(ctx, "sscantest", 1)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1) , i)
+
+	vals, cursor, err := re.SScan(ctx, "sscantest", 0, "", 4)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(vals))
+	assert.Equal(t, uint64(0), cursor)
+
+	s, err := re.SPopN(ctx, "sscantest", 4)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(s))
+}
