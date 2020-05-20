@@ -313,6 +313,10 @@ func TestRedisExt_SScan(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, b)
 
+	i, err = re.SCard(ctx, "sscantest")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(4) , i)
+
 	i ,err = re.SRem(ctx, "sscantest", 1)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1) , i)
