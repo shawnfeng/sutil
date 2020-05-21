@@ -567,6 +567,48 @@ func (m *Client) EvalSha(ctx context.Context, scriptHash string, keys []string, 
 	return m.client.EvalSha(scriptHash, keys, args...)
 }
 
+func (m *Client) SScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SScan", k)
+	return m.client.SScan(k, cursor, match, count)
+}
+
+func (m *Client) SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SAdd", k)
+	return m.client.SAdd(k, members...)
+}
+
+func (m *Client) SPop(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SPop", k)
+	return m.client.SPop(k)
+}
+
+func (m *Client) SPopN(ctx context.Context, key string, count int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SPopN", k)
+	return m.client.SPopN(k, count)
+}
+
+func (m *Client) SRem(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SRem", k)
+	return m.client.SRem(k, members...)
+}
+
+func (m *Client) SCard(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SCard", k)
+	return m.client.SCard(k)
+}
+
+func (m *Client) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SIsMember", k)
+	return m.client.SIsMember(k, member)
+}
+
 func (m *Client) Close(ctx context.Context) error {
 	return m.client.Close()
 }
