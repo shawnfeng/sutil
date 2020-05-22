@@ -824,6 +824,38 @@ func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) 
 	return
 }
 
+func (m *RedisExt) ZRemRangeByScore(ctx context.Context, key, min, max string) (i int64, err error) {
+	command := "redisext.ZRemRangeByScore"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.ZRemRangeByScore(ctx, m.prefixKey(key), min, max).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) ZRemRangeByRank(ctx context.Context, key string, start int64, stop int64) (i int64, err error) {
+	command := "redisext.ZRemRangeByRank"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.ZRemRangeByRank(ctx, m.prefixKey(key), start, stop).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
 func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, err error) {
 	command := "redisext.ZIncr"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)

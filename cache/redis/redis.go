@@ -427,6 +427,19 @@ func (m *Client) ZRem(ctx context.Context, key string, members []interface{}) *r
 	return m.client.ZRem(k, members...)
 }
 
+func (m *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRemRangeByScore", k)
+	return m.client.ZRemRangeByScore(k, min, max)
+}
+
+func (m *Client) ZRemRangeByRank(ctx context.Context, key string, start int64, stop int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRemRangeByRank", k)
+	return m.client.ZRemRangeByRank(k, start, stop)
+}
+
+
 func (m *Client) ZIncr(ctx context.Context, key string, member redis.Z) *redis.FloatCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZIncr", k)
