@@ -266,17 +266,17 @@ func TestRedisExt_TTL(t *testing.T) {
 	ctx := context.Background()
 	ttl := 10 * time.Second
 	re := NewRedisExt("base/report", "test")
-	re.Set(ctx,"getttl1", "test", ttl)
+	re.Set(ctx, "getttl1", "test", ttl)
 	d, err := re.TTL(ctx, "getttl1")
 	assert.NoError(t, err)
 	assert.Equal(t, ttl, d)
 	d, err = re.TTL(ctx, "getttl2")
 	assert.NoError(t, err)
-	assert.Equal(t, -2 * time.Second, d)
+	assert.Equal(t, -2*time.Second, d)
 	re.Set(ctx, "getttl3", "test", 0)
 	d, err = re.TTL(ctx, "getttl3")
 	assert.NoError(t, err)
-	assert.Equal(t, -1 * time.Second, d)
+	assert.Equal(t, -1*time.Second, d)
 	re.Del(ctx, "getttl3")
 }
 
@@ -286,10 +286,10 @@ func TestNewRedisExtNoPrefix(t *testing.T) {
 	re := NewRedisExtNoPrefix("base/report")
 	preRedis := NewRedisExt("base/report", "test")
 
-	_, err := re.Set(ctx, "set", val, 10 * time.Second)
+	_, err := re.Set(ctx, "set", val, 10*time.Second)
 	assert.NoError(t, err)
 
-	_, err = preRedis.Set(ctx, "set", val+"prefix", 10 * time.Second)
+	_, err = preRedis.Set(ctx, "set", val+"prefix", 10*time.Second)
 	assert.NoError(t, err)
 
 	s, err := re.Get(ctx, "set")
@@ -307,7 +307,7 @@ func TestRedisExt_SScan(t *testing.T) {
 
 	i, err := re.SAdd(ctx, "sscantest", 1, 2, 3, 4)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(4) , i)
+	assert.Equal(t, int64(4), i)
 
 	b, err := re.SIsMember(ctx, "sscantest", 1)
 	assert.NoError(t, err)
@@ -315,11 +315,11 @@ func TestRedisExt_SScan(t *testing.T) {
 
 	i, err = re.SCard(ctx, "sscantest")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(4) , i)
+	assert.Equal(t, int64(4), i)
 
-	i ,err = re.SRem(ctx, "sscantest", 1)
+	i, err = re.SRem(ctx, "sscantest", 1)
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1) , i)
+	assert.Equal(t, int64(1), i)
 
 	vals, cursor, err := re.SScan(ctx, "sscantest", 0, "", 4)
 	assert.NoError(t, err)
@@ -329,4 +329,39 @@ func TestRedisExt_SScan(t *testing.T) {
 	s, err := re.SPopN(ctx, "sscantest", 4)
 	assert.NoError(t, err)
 	assert.Equal(t, 3, len(s))
+}
+
+func TestRedisExt_ZRem(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+
+	key := "zremtest"
+	members := []Z{
+		{Score: 2000, Member: "jack"},
+		{Score: 3000, Member: "tom"},
+		{Score: 5000, Member: "peter"},
+	}
+	n, err := re.ZAdd(ctx, key, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), n)
+
+	n, err = re.ZRemRangeByRank(ctx, key, 0, 2)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), n)
+
+	n, err = re.ZAdd(ctx, key, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), n)
+
+	n, err = re.ZRemRangeByScore(ctx, key, "1500", "3500")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), n)
+
+	ss, err := re.ZRange(ctx, key, 0, -1)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(ss))
+	assert.Equal(t, "peter", ss[0])
+
+	_, err = re.ZRem(ctx, "zremtest", []interface{}{ss[0]})
+	assert.NoError(t, err)
 }
