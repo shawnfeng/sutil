@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+const (
+	defaultBatchSize = 1
+)
+
 type KafkaHandler struct {
 	msg    kafka.Message
 	reader *kafka.Reader
@@ -130,19 +134,24 @@ type KafkaWriter struct {
 }
 
 func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
-	config := kafka.WriterConfig{
+	kafkaConfig := kafka.WriterConfig{
 		Brokers:   brokers,
 		Topic:     topic,
 		Balancer:  &kafka.Hash{},
-		BatchSize: 1,
+		BatchSize: defaultBatchSize,
 		//RequiredAcks: 1,
 		//Async:        true,
 	}
-	writer := kafka.NewWriter(config)
+	// TODO should optimize this, too dumb, double get, reset batchsize
+	config, _ := DefaultConfiger.GetConfig(context.TODO(), topic, MQTypeKafka)
+	if config != nil && config.BatchSize > defaultBatchSize {
+		kafkaConfig.BatchSize = config.BatchSize
+	}
+	writer := kafka.NewWriter(kafkaConfig)
 
 	return &KafkaWriter{
 		Writer: writer,
-		config: config,
+		config: kafkaConfig,
 	}
 }
 
