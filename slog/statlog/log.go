@@ -30,6 +30,11 @@ func LogKV(ctx context.Context, name string, keysAndValues ...interface{}) {
 	atomic.AddInt64(&counter, 1)
 }
 
+func LogKVWithMap(ctx context.Context, name string, kvMap map[string]interface{})  {
+	xlog.StatLogWithMap(ctx, name, kvMap)
+	atomic.AddInt64(&counter, 1)
+}
+
 func init() {
 	atomic.StoreInt64(&fromTimeStamp, time.Now().Unix())
 }

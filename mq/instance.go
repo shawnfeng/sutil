@@ -219,7 +219,7 @@ func (m *InstanceManager) applyChange(ctx context.Context, k string, change *cen
 }
 
 func (m *InstanceManager) applyChangeEvent(ctx context.Context, ce *center.ChangeEvent) {
-	slog.Infoln(ctx, "got new change event:%v", ce)
+	slog.Infof(ctx, "got new change event:%v", ce)
 
 	for key, change := range ce.Changes {
 		// NOTE: 只需关心 MODIFY 与 DELETE 类型改变

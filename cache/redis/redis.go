@@ -16,10 +16,9 @@ import (
 var RedisNil = fmt.Sprintf("redis: nil")
 
 type Client struct {
-	client     *redis.Client
-	namespace  string
-	wrapper    string
-	useWrapper bool
+	client    *redis.Client
+	namespace string
+	opts      *options
 }
 
 func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, error) {
@@ -43,12 +42,51 @@ func NewClient(ctx context.Context, namespace string, wrapper string) (*Client, 
 	if err != nil {
 		slog.Errorf(ctx, "%s ping:%s err:%s", fun, pong, err)
 	}
-
-	return &Client{
-		client:     client,
-		namespace:  namespace,
+	opts := &options{
 		wrapper:    wrapper,
+		noFixKey:   false,
 		useWrapper: config.useWrapper,
+	}
+	return &Client{
+		client:    client,
+		namespace: namespace,
+		opts:      opts,
+	}, err
+}
+
+func NewClientWithOptions(ctx context.Context, namespace string, opts ...Option) (*Client, error) {
+	fun := "NewClient -->"
+
+	config, err := DefaultConfiger.GetConfig(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr:         config.addr,
+		DialTimeout:  3 * config.timeout,
+		ReadTimeout:  config.timeout,
+		WriteTimeout: config.timeout,
+		PoolSize:     config.poolSize,
+		PoolTimeout:  2 * config.timeout,
+	})
+
+	pong, err := client.Ping().Result()
+	if err != nil {
+		slog.Errorf(ctx, "%s ping:%s err:%s", fun, pong, err)
+	}
+	opt := &options{
+		wrapper:    constants.DefaultRedisWrapper,
+		noFixKey:   false,
+		useWrapper: config.useWrapper,
+	}
+	for _, o := range opts {
+		o.apply(opt)
+	}
+	return &Client{
+		namespace: namespace,
+		opts:      opt,
+		client:    client,
 	}, err
 }
 
@@ -70,20 +108,26 @@ func NewDefaultClient(ctx context.Context, namespace, addr, wrapper string, pool
 	}
 
 	return &Client{
-		client:     client,
-		namespace:  namespace,
-		wrapper:    wrapper,
-		useWrapper: useWrapper,
+		client:    client,
+		namespace: namespace,
+		opts: &options{
+			wrapper:    wrapper,
+			noFixKey:   false,
+			useWrapper: useWrapper,
+		},
 	}, err
 }
 
 func (m *Client) fixKey(key string) string {
+	if m.opts.noFixKey {
+		return key
+	}
 	parts := []string{
 		m.namespace,
-		m.wrapper,
+		m.opts.wrapper,
 		key,
 	}
-	if !m.useWrapper {
+	if !m.opts.useWrapper {
 		parts = []string{
 			m.namespace,
 			key,
@@ -383,6 +427,19 @@ func (m *Client) ZRem(ctx context.Context, key string, members []interface{}) *r
 	return m.client.ZRem(k, members...)
 }
 
+func (m *Client) ZRemRangeByScore(ctx context.Context, key, min, max string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRemRangeByScore", k)
+	return m.client.ZRemRangeByScore(k, min, max)
+}
+
+func (m *Client) ZRemRangeByRank(ctx context.Context, key string, start int64, stop int64) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZRemRangeByRank", k)
+	return m.client.ZRemRangeByRank(k, start, stop)
+}
+
+
 func (m *Client) ZIncr(ctx context.Context, key string, member redis.Z) *redis.FloatCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZIncr", k)
@@ -523,6 +580,56 @@ func (m *Client) EvalSha(ctx context.Context, scriptHash string, keys []string, 
 	return m.client.EvalSha(scriptHash, keys, args...)
 }
 
+func (m *Client) SScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SScan", k)
+	return m.client.SScan(k, cursor, match, count)
+}
+
+func (m *Client) SAdd(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SAdd", k)
+	return m.client.SAdd(k, members...)
+}
+
+func (m *Client) SPop(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SPop", k)
+	return m.client.SPop(k)
+}
+
+func (m *Client) SPopN(ctx context.Context, key string, count int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SPopN", k)
+	return m.client.SPopN(k, count)
+}
+
+func (m *Client) SRem(ctx context.Context, key string, members ...interface{}) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SRem", k)
+	return m.client.SRem(k, members...)
+}
+
+func (m *Client) SCard(ctx context.Context, key string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SCard", k)
+	return m.client.SCard(k)
+}
+
+func (m *Client) SIsMember(ctx context.Context, key string, member interface{}) *redis.BoolCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SIsMember", k)
+	return m.client.SIsMember(k, member)
+}
+
 func (m *Client) Close(ctx context.Context) error {
 	return m.client.Close()
+}
+
+func (m *Client) Pipeline() *Pipeline {
+	return &Pipeline{
+		namespace: m.namespace,
+		pipeline:  m.client.Pipeline(),
+		opts:      m.opts,
+	}
 }

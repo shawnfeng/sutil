@@ -2,6 +2,7 @@ package redisext
 
 import (
 	"context"
+	go_redis "github.com/go-redis/redis"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/stime"
@@ -23,6 +24,10 @@ func (m *RedisExt) LIndex(ctx context.Context, key string, index int64) (element
 	return
 }
 
+func (p *PipelineExt) LIndex(ctx context.Context, key string, index int64) *go_redis.StringCmd {
+	return p.pipe.LIndex(ctx, p.prefixKey(key), index)
+}
+
 func (m *RedisExt) LInsert(ctx context.Context, key, op string, pivot, value interface{}) (n int64, err error) {
 	command := "redisext.LInsert"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -37,6 +42,10 @@ func (m *RedisExt) LInsert(ctx context.Context, key, op string, pivot, value int
 	}
 	statReqErr(m.namespace, command, err)
 	return
+}
+
+func (p *PipelineExt) LInsert(ctx context.Context, key, op string, pivot, value interface{}) *go_redis.IntCmd {
+	return p.pipe.LInsert(ctx, p.prefixKey(key), op, pivot, value)
 }
 
 func (m *RedisExt) LLen(ctx context.Context, key string) (n int64, err error) {
@@ -55,6 +64,10 @@ func (m *RedisExt) LLen(ctx context.Context, key string) (n int64, err error) {
 	return
 }
 
+func (p *PipelineExt) LLen(ctx context.Context, key string) *go_redis.IntCmd {
+	return p.pipe.LLen(ctx, p.prefixKey(key))
+}
+
 func (m *RedisExt) LPop(ctx context.Context, key string) (element string, err error) {
 	command := "redisext.LPop"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -69,6 +82,10 @@ func (m *RedisExt) LPop(ctx context.Context, key string) (element string, err er
 	}
 	statReqErr(m.namespace, command, err)
 	return
+}
+
+func (p *PipelineExt) LPop(ctx context.Context, key string) *go_redis.StringCmd {
+	return p.pipe.LPop(ctx, p.prefixKey(key))
 }
 
 func (m *RedisExt) LPush(ctx context.Context, key string, values ...interface{}) (n int64, err error) {
@@ -87,6 +104,10 @@ func (m *RedisExt) LPush(ctx context.Context, key string, values ...interface{})
 	return
 }
 
+func (p *PipelineExt) LPush(ctx context.Context, key string, values ...interface{}) *go_redis.IntCmd {
+	return p.pipe.LPush(ctx, p.prefixKey(key), values)
+}
+
 func (m *RedisExt) LPushX(ctx context.Context, key string, value interface{}) (n int64, err error) {
 	command := "redisext.LPushX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -101,6 +122,10 @@ func (m *RedisExt) LPushX(ctx context.Context, key string, value interface{}) (n
 	}
 	statReqErr(m.namespace, command, err)
 	return
+}
+
+func (p *PipelineExt) LPushX(ctx context.Context, key string, value interface{}) *go_redis.IntCmd {
+	return p.pipe.LPushX(ctx, p.prefixKey(key), value)
 }
 
 func (m *RedisExt) LRange(ctx context.Context, key string, start, stop int64) (r []string, err error) {
@@ -119,6 +144,10 @@ func (m *RedisExt) LRange(ctx context.Context, key string, start, stop int64) (r
 	return
 }
 
+func (p *PipelineExt) LRange(ctx context.Context, key string, start, stop int64) *go_redis.StringSliceCmd {
+	return p.pipe.LRange(ctx, p.prefixKey(key), start, stop)
+}
+
 func (m *RedisExt) LRem(ctx context.Context, key string, count int64, value interface{}) (n int64, err error) {
 	command := "redisext.LRem"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -133,6 +162,10 @@ func (m *RedisExt) LRem(ctx context.Context, key string, count int64, value inte
 	}
 	statReqErr(m.namespace, command, err)
 	return
+}
+
+func (p *PipelineExt) LRem(ctx context.Context, key string, count int64, value interface{}) *go_redis.IntCmd {
+	return p.pipe.LRem(ctx, p.prefixKey(key), count, value)
 }
 
 func (m *RedisExt) LSet(ctx context.Context, key string, index int64, value interface{}) (r string, err error) {
@@ -151,6 +184,10 @@ func (m *RedisExt) LSet(ctx context.Context, key string, index int64, value inte
 	return
 }
 
+func (p *PipelineExt) LSet(ctx context.Context, key string, count int64, value interface{}) *go_redis.StatusCmd {
+	return p.pipe.LSet(ctx, p.prefixKey(key), count, value)
+}
+
 func (m *RedisExt) LTrim(ctx context.Context, key string, start, stop int64) (r string, err error) {
 	command := "redisext.LTrim"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -165,6 +202,10 @@ func (m *RedisExt) LTrim(ctx context.Context, key string, start, stop int64) (r 
 	}
 	statReqErr(m.namespace, command, err)
 	return
+}
+
+func (p *PipelineExt) LTrim(ctx context.Context, key string, start, stop int64) *go_redis.StatusCmd {
+	return p.pipe.LTrim(ctx, p.prefixKey(key), start, stop)
 }
 
 func (m *RedisExt) RPop(ctx context.Context, key string) (element string, err error) {
@@ -183,6 +224,10 @@ func (m *RedisExt) RPop(ctx context.Context, key string) (element string, err er
 	return
 }
 
+func (p *PipelineExt) RPop(ctx context.Context, key string) *go_redis.StringCmd {
+	return p.pipe.RPop(ctx, p.prefixKey(key))
+}
+
 func (m *RedisExt) RPush(ctx context.Context, key string, values ...interface{}) (n int64, err error) {
 	command := "redisext.RPush"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -199,6 +244,10 @@ func (m *RedisExt) RPush(ctx context.Context, key string, values ...interface{})
 	return
 }
 
+func (p *PipelineExt) RPush(ctx context.Context, key string, values ...interface{}) *go_redis.IntCmd {
+	return p.pipe.RPush(ctx, p.prefixKey(key), values)
+}
+
 func (m *RedisExt) RPushX(ctx context.Context, key string, value interface{}) (n int64, err error) {
 	command := "redisext.RPushX"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -213,4 +262,8 @@ func (m *RedisExt) RPushX(ctx context.Context, key string, value interface{}) (n
 	}
 	statReqErr(m.namespace, command, err)
 	return
+}
+
+func (p *PipelineExt) RPushX(ctx context.Context, key string, value interface{}) *go_redis.IntCmd {
+	return p.pipe.RPushX(ctx, p.prefixKey(key), value)
 }

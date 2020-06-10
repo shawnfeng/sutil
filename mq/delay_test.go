@@ -44,6 +44,13 @@ func Test_parseTopic(t *testing.T) {
 			wantQueue:     "",
 			wantErr:       true,
 		},
+		{
+			name:   "group topic",
+			args:args{topic: "base.changeboard.event_t1"},
+			wantNamespace: "base.changeboard",
+			wantQueue:     "event_t1",
+			wantErr:       false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

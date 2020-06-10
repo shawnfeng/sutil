@@ -18,10 +18,20 @@ import (
 type RedisExt struct {
 	namespace string
 	prefix    string
+	noFixKey  bool // redis client no fix key
 }
 
 func NewRedisExt(namespace, prefix string) *RedisExt {
-	return &RedisExt{namespace, prefix}
+	return &RedisExt{
+		namespace: namespace,
+		prefix:    prefix}
+}
+
+// NewRedisExtNoPrefix not fix redis key
+func NewRedisExtNoPrefix(namespace string) *RedisExt {
+	return &RedisExt{
+		namespace: namespace,
+		noFixKey:  true}
 }
 
 type Z struct {
@@ -88,6 +98,7 @@ func (m *RedisExt) getInstanceConf(ctx context.Context) *redis.InstanceConf {
 		Group:     scontext.GetControlRouteGroupWithDefault(ctx, constants.DefaultRouteGroup),
 		Namespace: m.namespace,
 		Wrapper:   cache.WrapperTypeRedisExt,
+		NoFixKey:  m.noFixKey,
 	}
 }
 
@@ -813,6 +824,38 @@ func (m *RedisExt) ZRem(ctx context.Context, key string, members []interface{}) 
 	return
 }
 
+func (m *RedisExt) ZRemRangeByScore(ctx context.Context, key, min, max string) (i int64, err error) {
+	command := "redisext.ZRemRangeByScore"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.ZRemRangeByScore(ctx, m.prefixKey(key), min, max).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) ZRemRangeByRank(ctx context.Context, key string, start int64, stop int64) (i int64, err error) {
+	command := "redisext.ZRemRangeByRank"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.ZRemRangeByRank(ctx, m.prefixKey(key), start, stop).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
 func (m *RedisExt) ZIncr(ctx context.Context, key string, member Z) (f float64, err error) {
 	command := "redisext.ZIncr"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -888,6 +931,151 @@ func (m *RedisExt) ZScore(ctx context.Context, key string, member string) (f flo
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		f, err = client.ZScore(ctx, m.prefixKey(key), member).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) TTL(ctx context.Context, key string) (d time.Duration, err error) {
+	command := "redisext.TTL"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		d, err = client.TTL(ctx, m.prefixKey(key)).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) Pipeline(ctx context.Context) (pipe *PipelineExt, err error) {
+	command := "redisExt.Pipeline"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		p := client.Pipeline()
+		pipe = &PipelineExt{namespace: m.namespace, prefix: m.prefix, pipe: p}
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SScan(ctx context.Context, key string, cursor uint64, match string, count int64) (keys []string, rcursor uint64, err error) {
+	command := "redisext.SScan"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		keys, rcursor, err = client.SScan(ctx, m.prefixKey(key), cursor, match, count).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SAdd(ctx context.Context, key string, members ...interface{}) (i int64, err error) {
+	command := "redisext.SAdd"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.SAdd(ctx, m.prefixKey(key), members...).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SPop(ctx context.Context, key string) (s string, err error) {
+	command := "redisext.SPop"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.SPop(ctx, m.prefixKey(key)).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SPopN(ctx context.Context, key string, count int64) (s []string, err error) {
+	command := "redisext.SPopN"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.SPopN(ctx, m.prefixKey(key), count).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SRem(ctx context.Context, key string, members ...interface{}) (i int64, err error) {
+	command := "redisext.SRem"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.SRem(ctx, m.prefixKey(key), members...).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SCard(ctx context.Context, key string) (i int64, err error) {
+	command := "redisext.SCard"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		i, err = client.SCard(ctx, m.prefixKey(key)).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SIsMember(ctx context.Context, key string, member interface{}) (b bool, err error) {
+	command := "redisext.SIsMember"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		b, err = client.SIsMember(ctx, m.prefixKey(key), member).Result()
 	}
 	statReqErr(m.namespace, command, err)
 	return

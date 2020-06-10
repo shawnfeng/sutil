@@ -20,14 +20,28 @@ type Msg struct {
 	Body string
 }
 
+type simpleContextControlRouter struct {
+	group string
+}
+
+func (s simpleContextControlRouter) GetControlRouteGroup() (string, bool) {
+	return s.group, true
+}
+
+func (s simpleContextControlRouter) SetControlRouteGroup(group string) error {
+	s.group = group
+	return nil
+}
+
 func main() {
 
 	_ = trace.InitDefaultTracer("mq.test")
 	topic := "palfish.test.test"
 
 	ctx := context.Background()
+	sc := &simpleContextControlRouter{group: "t1"}
 	ctx = context.WithValue(ctx, scontext.ContextKeyHead, "hahahaha")
-	ctx = context.WithValue(ctx, scontext.ContextKeyControl, "{\"group\": \"g1\"}")
+	ctx = context.WithValue(ctx, scontext.ContextKeyControl, sc)
 	span, ctx := opentracing.StartSpanFromContext(ctx, "main")
 	if span != nil {
 		defer span.Finish()
@@ -66,7 +80,7 @@ func main() {
 		slog.Infof(ctx, "write delay msg, jobID = %s, err = %v", jobID, err)
 	}()
 
-	ctx1 := context.Background()
+	//ctx1 := context.Background()
 	/*
 		//err := mq.SetOffsetAt(ctx1, topic, 1, time.Date(2019, time.December, 4, 0, 0, 0, 0, time.UTC))
 		//err := mq.SetOffset(ctx1, topic, 1, -2)
@@ -85,7 +99,7 @@ func main() {
 	go func() {
 		for i := 0; i < 10; i ++ {
 			var msg Msg
-			ctx, ack, err := mq.FetchDelayMsg(ctx1, topic, &msg)
+			ctx, ack, err := mq.FetchDelayMsg(ctx, topic, &msg)
 			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
 			err = ack.Ack(ctx)
 			slog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)

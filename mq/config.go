@@ -74,6 +74,7 @@ type Config struct {
 	TTR            uint32 // time to run
 	TTL            uint32 // time to live
 	Tries          uint16 // delay tries
+	BatchSize      int
 }
 
 type KeyParts struct {
@@ -183,13 +184,14 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 }
 
 const (
-	apolloConfigSep   = "."
-	apolloBrokersSep  = ","
-	apolloBrokersKey  = "brokers"
-	apolloOffsetAtKey = "offsetat"
-	apolloTTRKey      = "ttr"
-	apolloTTLKey      = "ttl"
-	apolloTriesKey    = "tries"
+	apolloConfigSep    = "."
+	apolloBrokersSep   = ","
+	apolloBrokersKey   = "brokers"
+	apolloOffsetAtKey  = "offsetat"
+	apolloTTRKey       = "ttr"
+	apolloTTLKey       = "ttl"
+	apolloTriesKey     = "tries"
+	apolloBatchSizeKey = "batchsize"
 )
 
 type ApolloConfig struct {
@@ -298,6 +300,21 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 	}
 	slog.Infof(ctx, "%s got config triesVal:%s", fun, triesVal)
 
+	batchSize := defaultBatchSize
+	batchSizeVal, ok := m.getConfigItemWithFallback(ctx, topic, apolloBatchSizeKey, mqType)
+	if !ok {
+		// do nothing
+		slog.Infof(ctx, "%s has no batchsize config", fun)
+	} else {
+		t, err := strconv.Atoi(batchSizeVal)
+		if err != nil {
+			slog.Errorf(ctx, "%s got invalid batchsize config, batchsize: %s", fun, batchSizeVal)
+		} else {
+			batchSize = t
+		}
+	}
+	slog.Infof(ctx, "%s got config batchSize: %d", fun, batchSize)
+
 	return &Config{
 		MQType:         mqType,
 		MQAddr:         brokers,
@@ -309,6 +326,7 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 		TTR:            uint32(ttr),
 		TTL:            uint32(ttl),
 		Tries:          uint16(tries),
+		BatchSize:      batchSize,
 	}, nil
 }
 

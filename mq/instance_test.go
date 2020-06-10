@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/shawnfeng/sutil/sconf/center"
+	"github.com/shawnfeng/sutil/scontext"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
@@ -181,6 +182,28 @@ func TestInstanceManager_getDelayClient(t *testing.T) {
 
 		assert.Equal(t, "palfish.test", client.namespace)
 		assert.Equal(t, "test", client.queue)
+	})
+
+}
+
+func TestInstanceManager_getDelayClientGroup(t *testing.T) {
+	ctx := context.TODO()
+	sc := &simpleContextControlRouter{group: "t1"}
+	ctx = context.WithValue(context.Background(), scontext.ContextKeyControl, sc)
+	_ = SetConfiger(ctx, ConfigerTypeApollo)
+	t.Run("test get delay client", func(t *testing.T) {
+		m := NewInstanceManager()
+		conf := &instanceConf{
+			group:     "unknown",
+			role:      RoleTypeDelayClient,
+			topic:     defaultTestTopic,
+			groupId:   "g1",
+			partition: 0,
+		}
+		client := m.getDelayClient(ctx, conf)
+
+		assert.Equal(t, "palfish.test", client.namespace)
+		assert.Equal(t, "test_t1", client.queue)
 	})
 
 }

@@ -218,14 +218,14 @@ func (m *Cache) loadValueToCache(ctx context.Context, key interface{}) (data []b
 	value, err := m.load(ctx, key)
 	if err != nil {
 		slog.Warnf(ctx, "%s load err, cache key:%v err:%v", fun, key, err)
-		data = []byte(err.Error())
+		data = []byte(`{}`)
 		expire = constants.CacheDirtyExpireTime
 
 	} else {
 		data, err = json.Marshal(value)
 		if err != nil {
 			slog.Errorf(ctx, "%s marshal err, cache key:%v err:%v", fun, key, err)
-			data = []byte(err.Error())
+			data = []byte(`{}`)
 			expire = constants.CacheDirtyExpireTime
 		}
 	}
