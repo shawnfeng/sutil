@@ -184,14 +184,15 @@ func (m *EtcdConfig) Watch(ctx context.Context) <-chan *center.ChangeEvent {
 }
 
 const (
-	apolloConfigSep    = "."
-	apolloBrokersSep   = ","
-	apolloBrokersKey   = "brokers"
-	apolloOffsetAtKey  = "offsetat"
-	apolloTTRKey       = "ttr"
-	apolloTTLKey       = "ttl"
-	apolloTriesKey     = "tries"
-	apolloBatchSizeKey = "batchsize"
+	apolloConfigSep         = "."
+	apolloBrokersSep        = ","
+	apolloBrokersKey        = "brokers"
+	apolloOffsetAtKey       = "offsetat"
+	apolloTTRKey            = "ttr"
+	apolloTTLKey            = "ttl"
+	apolloTriesKey          = "tries"
+	apolloBatchSizeKey      = "batchsize"
+	apolloBatchTimeoutMsKey = "batchtimeoutms"
 )
 
 type ApolloConfig struct {
@@ -314,13 +315,22 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 		}
 	}
 	slog.Infof(ctx, "%s got config batchSize: %d", fun, batchSize)
+	batchTimeoutMs, ok := m.getConfigItemWithFallback(ctx, topic, apolloBatchTimeoutMsKey, mqType)
+	if !ok {
+		slog.Infof(ctx, "%s no batchTimeout config founds", fun)
+	}
+	batchTimeoutMsVal, err := strconv.ParseUint(batchTimeoutMs, 10, 32)
+	if err != nil {
+		batchTimeoutMsVal = 0
+	}
+	slog.Infof(ctx, "%s got config batchTimeout:%d", fun, ttl)
 
 	return &Config{
 		MQType:         mqType,
 		MQAddr:         brokers,
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
-		CommitInterval: 1 * time.Second,
+		CommitInterval: time.Duration(batchTimeoutMsVal * 1000000),
 		Offset:         FirstOffset,
 		OffsetAt:       offsetAtVal,
 		TTR:            uint32(ttr),

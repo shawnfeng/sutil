@@ -147,6 +147,9 @@ func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
 	if config != nil && config.BatchSize > defaultBatchSize {
 		kafkaConfig.BatchSize = config.BatchSize
 	}
+	if config != nil && config.CommitInterval > 0 {
+		kafkaConfig.BatchTimeout = config.CommitInterval
+	}
 	writer := kafka.NewWriter(kafkaConfig)
 
 	return &KafkaWriter{
