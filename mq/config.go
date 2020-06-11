@@ -335,7 +335,7 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
 		CommitInterval: 1 * time.Second,
-		BatchTimeout:   time.Duration(batchTimeoutMsVal * 1000000),
+		BatchTimeout:   time.Duration(batchTimeoutMsVal) * time.Millisecond,
 		Offset:         FirstOffset,
 		OffsetAt:       offsetAtVal,
 		TTR:            uint32(ttr),
