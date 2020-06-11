@@ -58,9 +58,11 @@ func (c ConfigerType) String() string {
 
 const (
 	defaultTimeout = 3 * time.Second
-	defaultTTR     = 3600      // 1 hour
-	defaultTTL     = 3600 * 24 // 1 day
-	defaultTries   = 1
+	//默认1000毫秒
+	defaultBatchTimeoutMs = 1000
+	defaultTTR            = 3600      // 1 hour
+	defaultTTL            = 3600 * 24 // 1 day
+	defaultTries          = 1
 )
 
 type Config struct {
@@ -69,12 +71,14 @@ type Config struct {
 	Topic          string
 	TimeOut        time.Duration
 	CommitInterval time.Duration
-	Offset         int64
-	OffsetAt       string
-	TTR            uint32 // time to run
-	TTL            uint32 // time to live
-	Tries          uint16 // delay tries
-	BatchSize      int
+	// time interval to flush msg to broker default is 1 second
+	BatchTimeout time.Duration
+	Offset       int64
+	OffsetAt     string
+	TTR          uint32 // time to run
+	TTL          uint32 // time to live
+	Tries        uint16 // delay tries
+	BatchSize    int
 }
 
 type KeyParts struct {
@@ -321,7 +325,7 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 	}
 	batchTimeoutMsVal, err := strconv.ParseUint(batchTimeoutMs, 10, 32)
 	if err != nil {
-		batchTimeoutMsVal = 0
+		batchTimeoutMsVal = defaultBatchTimeoutMs
 	}
 	slog.Infof(ctx, "%s got config batchTimeout:%d", fun, ttl)
 
@@ -330,7 +334,8 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 		MQAddr:         brokers,
 		Topic:          topic,
 		TimeOut:        defaultTimeout,
-		CommitInterval: time.Duration(batchTimeoutMsVal * 1000000),
+		CommitInterval: 1 * time.Second,
+		BatchTimeout:   time.Duration(batchTimeoutMsVal * 1000000),
 		Offset:         FirstOffset,
 		OffsetAt:       offsetAtVal,
 		TTR:            uint32(ttr),
