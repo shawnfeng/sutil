@@ -1081,6 +1081,38 @@ func (m *RedisExt) SIsMember(ctx context.Context, key string, member interface{}
 	return
 }
 
+func (m *RedisExt) ZScan(ctx context.Context, key string, cursor uint64, match string, count int64) (keys []string, rcursor uint64, err error) {
+	command := "redisext.ZScan"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		keys, rcursor, err = client.ZScan(ctx, m.prefixKey(key), cursor, match, count).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) HScan(ctx context.Context, key string, cursor uint64, match string, count int64) (keys []string, rcursor uint64, err error) {
+	command := "redisext.HScan"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		keys, rcursor, err = client.HScan(ctx, m.prefixKey(key), cursor, match, count).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
 func SetConfiger(ctx context.Context, configerType constants.ConfigerType) error {
 	fun := "Cache.SetConfiger-->"
 	configer, err := redis.NewConfiger(configerType)

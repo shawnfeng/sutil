@@ -325,6 +325,12 @@ func (m *Client) HVals(ctx context.Context, key string) *redis.StringSliceCmd {
 	return m.client.HVals(k)
 }
 
+func (m *Client) HScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HScan", k)
+	return m.client.HScan(k, cursor, match, count)
+}
+
 func (m *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZAdd", k)
@@ -468,6 +474,12 @@ func (m *Client) ZScore(ctx context.Context, key string, member string) *redis.F
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZScore", k)
 	return m.client.ZScore(k, member)
+}
+
+func (m *Client) ZScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZScan", k)
+	return m.client.ZScan(k, cursor, match, count)
 }
 
 func (m *Client) LIndex(ctx context.Context, key string, index int64) *redis.StringCmd {
