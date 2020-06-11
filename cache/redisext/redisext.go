@@ -154,6 +154,22 @@ func (m *RedisExt) Set(ctx context.Context, key string, val interface{}, exp tim
 	return
 }
 
+func (m *RedisExt) Append(ctx context.Context, key, val string) (n int64, err error) {
+	command := "redisext.Append"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		n, err = client.Append(ctx, m.prefixKey(key), val).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
 func (m *RedisExt) MSet(ctx context.Context, pairs ...interface{}) (s string, err error) {
 	command := "redisext.MSet"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)
@@ -1076,6 +1092,22 @@ func (m *RedisExt) SIsMember(ctx context.Context, key string, member interface{}
 	client, err := m.getRedisInstance(ctx)
 	if err == nil {
 		b, err = client.SIsMember(ctx, m.prefixKey(key), member).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SMembers(ctx context.Context, key string) (s []string, err error) {
+	command := "redisext.SMembers"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.SMembers(ctx, m.prefixKey(key)).Result()
 	}
 	statReqErr(m.namespace, command, err)
 	return

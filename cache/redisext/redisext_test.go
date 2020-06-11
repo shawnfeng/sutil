@@ -410,3 +410,40 @@ func TestRedisExt_ZRem(t *testing.T) {
 	_, err = re.ZRem(ctx, "zremtest", []interface{}{ss[0]})
 	assert.NoError(t, err)
 }
+
+func TestRedisExt_Append(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	key := "appendtest"
+
+	s, err := re.Set(ctx, key, "Hello,", 30 * time.Second)
+	assert.NoError(t, err)
+	assert.Equal(t, "OK", s)
+
+	n, err := re.Append(ctx, key, "World")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(11), n)
+
+	s, err = re.Get(ctx, key)
+	assert.NoError(t, err)
+	assert.Equal(t, "Hello,World", s)
+}
+
+func TestRedisExt_SMembers(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	key := "smemberstest"
+	members := []string{"m1", "m2", "m3"}
+
+	i, err := re.SAdd(ctx, key, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), i)
+
+	arr, err := re.SMembers(ctx, key)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(arr))
+
+	b, err := re.Expire(ctx, key, 5 * time.Second)
+	assert.NoError(t, err)
+	assert.True(t, b)
+}

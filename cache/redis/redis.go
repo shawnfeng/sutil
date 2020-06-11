@@ -211,6 +211,12 @@ func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	return m.client.Del(tkeys...)
 }
 
+func (m *Client) Append(ctx context.Context, key, value string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Append", k)
+	return m.client.Append(k, value)
+}
+
 func (m *Client) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Expire", k)
@@ -632,6 +638,12 @@ func (m *Client) SIsMember(ctx context.Context, key string, member interface{}) 
 	k := m.fixKey(key)
 	m.logSpan(ctx, "SIsMember", k)
 	return m.client.SIsMember(k, member)
+}
+
+func (m *Client) SMembers(ctx context.Context, key string) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SMembers", k)
+	return m.client.SMembers(k)
 }
 
 func (m *Client) Close(ctx context.Context) error {
