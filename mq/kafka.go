@@ -144,8 +144,13 @@ func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
 	}
 	// TODO should optimize this, too dumb, double get, reset batchsize
 	config, _ := DefaultConfiger.GetConfig(context.TODO(), topic, MQTypeKafka)
-	if config != nil && config.BatchSize > defaultBatchSize {
-		kafkaConfig.BatchSize = config.BatchSize
+	if config != nil {
+		if config.BatchSize > defaultBatchSize {
+			kafkaConfig.BatchSize = config.BatchSize
+		}
+		if config.BatchTimeout > 0 {
+			kafkaConfig.BatchTimeout = config.BatchTimeout
+		}
 	}
 	writer := kafka.NewWriter(kafkaConfig)
 
