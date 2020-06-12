@@ -211,6 +211,12 @@ func (m *Client) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	return m.client.Del(tkeys...)
 }
 
+func (m *Client) Append(ctx context.Context, key, value string) *redis.IntCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "Append", k)
+	return m.client.Append(k, value)
+}
+
 func (m *Client) Expire(ctx context.Context, key string, expiration time.Duration) *redis.BoolCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "Expire", k)
@@ -323,6 +329,12 @@ func (m *Client) HVals(ctx context.Context, key string) *redis.StringSliceCmd {
 	k := m.fixKey(key)
 	m.logSpan(ctx, "HVals", k)
 	return m.client.HVals(k)
+}
+
+func (m *Client) HScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "HScan", k)
+	return m.client.HScan(k, cursor, match, count)
 }
 
 func (m *Client) ZAdd(ctx context.Context, key string, members ...redis.Z) *redis.IntCmd {
@@ -468,6 +480,12 @@ func (m *Client) ZScore(ctx context.Context, key string, member string) *redis.F
 	k := m.fixKey(key)
 	m.logSpan(ctx, "ZScore", k)
 	return m.client.ZScore(k, member)
+}
+
+func (m *Client) ZScan(ctx context.Context, key string, cursor uint64, match string, count int64) *redis.ScanCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "ZScan", k)
+	return m.client.ZScan(k, cursor, match, count)
 }
 
 func (m *Client) LIndex(ctx context.Context, key string, index int64) *redis.StringCmd {
@@ -620,6 +638,12 @@ func (m *Client) SIsMember(ctx context.Context, key string, member interface{}) 
 	k := m.fixKey(key)
 	m.logSpan(ctx, "SIsMember", k)
 	return m.client.SIsMember(k, member)
+}
+
+func (m *Client) SMembers(ctx context.Context, key string) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SMembers", k)
+	return m.client.SMembers(k)
 }
 
 func (m *Client) Close(ctx context.Context) error {
