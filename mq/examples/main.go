@@ -6,6 +6,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+
 	//"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
@@ -50,7 +52,7 @@ func main() {
 	//_ = mq.SetConfiger(ctx, mq.ConfigerTypeApollo)
 	//mq.WatchUpdate(ctx)
 
-	/*
+
 		go func() {
 			var msgs []mq.Message
 			for i := 0; i < 3; i++ {
@@ -69,16 +71,16 @@ func main() {
 			err := mq.WriteMsgs(ctx, topic, msgs...)
 			slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
 		}()
-	*/
 
-	go func() {
-		msg := &Msg{
-			Id:   1,
-			Body: "test",
-		}
-		jobID, err := mq.WriteDelayMsg(ctx, topic, msg, 5)
-		slog.Infof(ctx, "write delay msg, jobID = %s, err = %v", jobID, err)
-	}()
+
+	//go func() {
+	//	msg := &Msg{
+	//		Id:   1,
+	//		Body: "test",
+	//	}
+	//	jobID, err := mq.WriteDelayMsg(ctx, topic, msg, 5)
+	//	slog.Infof(ctx, "write delay msg, jobID = %s, err = %v", jobID, err)
+	//}()
 
 	//ctx1 := context.Background()
 	/*
@@ -88,24 +90,24 @@ func main() {
 			slog.Infof(ctx, "2222222222222222,err:%v", err)
 		}
 	*/
-	//go func() {
-	//	for i := 0; i < 10000; i++ {
-	//		var msg Msg
-	//		ctx, err := mq.ReadMsgByGroup(ctx1, topic, "group3", &msg)
-	//		slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-	//	}
-	//}()
-
 	go func() {
-		for i := 0; i < 10; i ++ {
+		for i := 0; i < 10000; i++ {
 			var msg Msg
-			ctx, ack, err := mq.FetchDelayMsg(ctx, topic, &msg)
+			ctx, err := mq.ReadMsgByGroup(ctx, topic, "group3", &msg)
 			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-			err = ack.Ack(ctx)
-			slog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-			time.Sleep(1 * time.Second)
 		}
 	}()
+
+	//go func() {
+	//	for i := 0; i < 10; i ++ {
+	//		var msg Msg
+	//		ctx, ack, err := mq.FetchDelayMsg(ctx, topic, &msg)
+	//		slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+	//		err = ack.Ack(ctx)
+	//		slog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+	//		time.Sleep(1 * time.Second)
+	//	}
+	//}()
 
 	time.Sleep(15 * time.Second)
 	defer mq.Close()
