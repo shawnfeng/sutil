@@ -646,6 +646,18 @@ func (m *Client) SMembers(ctx context.Context, key string) *redis.StringSliceCmd
 	return m.client.SMembers(k)
 }
 
+func (m *Client) SRandMember(ctx context.Context, key string) *redis.StringCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SRandMember", k)
+	return m.client.SRandMember(k)
+}
+
+func (m *Client) SRandMemberN(ctx context.Context, key string, count int64) *redis.StringSliceCmd {
+	k := m.fixKey(key)
+	m.logSpan(ctx, "SRandMemberN", k)
+	return m.client.SRandMemberN(k, count)
+}
+
 func (m *Client) Close(ctx context.Context) error {
 	return m.client.Close()
 }
