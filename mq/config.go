@@ -8,13 +8,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/shawnfeng/sutil/sconf/center"
-	"github.com/shawnfeng/sutil/scontext"
-	"github.com/shawnfeng/sutil/slog/slog"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/shawnfeng/sutil/sconf/center"
+	"github.com/shawnfeng/sutil/scontext"
+	"github.com/shawnfeng/sutil/slog/slog"
 )
 
 type MQType int
@@ -59,11 +60,11 @@ func (c ConfigerType) String() string {
 const (
 	defaultTimeout = 3 * time.Second
 	//默认1000毫秒
-	defaultBatchTimeoutMs = 1000
-	defaultTTR            = 3600      // 1 hour
-	defaultTTL            = 3600 * 24 // 1 day
-	defaultTries          = 1
-	defaultRequestSleepMS = 300
+	defaultBatchTimeoutMs    = 1000
+	defaultTTR               = 3600      // 1 hour
+	defaultTTL               = 3600 * 24 // 1 day
+	defaultTries             = 1
+	defaultRequestIntervalMS = 300
 )
 
 type Config struct {
@@ -81,7 +82,7 @@ type Config struct {
 	Tries        uint16 // delay tries
 	BatchSize    int
 
-	RequestSleep time.Duration
+	RequestInterval time.Duration
 }
 
 type KeyParts struct {
@@ -200,7 +201,7 @@ const (
 	apolloTriesKey          = "tries"
 	apolloBatchSizeKey      = "batchsize"
 	apolloBatchTimeoutMsKey = "batchtimeoutms"
-	apolloRequestSleepMS    = "sleep"
+	apolloRequestIntervalMS = "interval"
 )
 
 type ApolloConfig struct {
@@ -333,30 +334,30 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 	}
 	slog.Infof(ctx, "%s got config batchTimeout:%d", fun, batchTimeoutMsVal)
 
-	requestSleepMs, ok := m.getConfigItemWithFallback(ctx, topic, apolloRequestSleepMS, mqType)
+	requestIntervalMs, ok := m.getConfigItemWithFallback(ctx, topic, apolloRequestIntervalMS, mqType)
 	if !ok {
 		slog.Infof(ctx, "%s no requestSleep config founds", fun)
 	}
-	requestSleepMsVal, err := strconv.ParseUint(requestSleepMs, 10, 32)
+	requestIntervalMsVal, err := strconv.ParseUint(requestIntervalMs, 10, 32)
 	if err != nil {
-		requestSleepMsVal = defaultRequestSleepMS
+		requestIntervalMsVal = defaultRequestIntervalMS
 	}
-	slog.Infof(ctx, "%s got config requestSleepMs:%d", fun, requestSleepMsVal)
+	slog.Infof(ctx, "%s got config requestSleepMs:%d", fun, requestIntervalMsVal)
 
 	return &Config{
-		MQType:         mqType,
-		MQAddr:         brokers,
-		Topic:          topic,
-		TimeOut:        defaultTimeout,
-		CommitInterval: 1 * time.Second,
-		BatchTimeout:   time.Duration(batchTimeoutMsVal) * time.Millisecond,
-		Offset:         FirstOffset,
-		OffsetAt:       offsetAtVal,
-		TTR:            uint32(ttr),
-		TTL:            uint32(ttl),
-		Tries:          uint16(tries),
-		BatchSize:      batchSize,
-		RequestSleep:   time.Duration(requestSleepMsVal) * time.Millisecond,
+		MQType:          mqType,
+		MQAddr:          brokers,
+		Topic:           topic,
+		TimeOut:         defaultTimeout,
+		CommitInterval:  1 * time.Second,
+		BatchTimeout:    time.Duration(batchTimeoutMsVal) * time.Millisecond,
+		Offset:          FirstOffset,
+		OffsetAt:        offsetAtVal,
+		TTR:             uint32(ttr),
+		TTL:             uint32(ttl),
+		Tries:           uint16(tries),
+		BatchSize:       batchSize,
+		RequestInterval: time.Duration(requestIntervalMsVal) * time.Millisecond,
 	}, nil
 }
 

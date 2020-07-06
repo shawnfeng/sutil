@@ -3,15 +3,16 @@ package mq
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var delayCli *DelayClient
 
 func init() {
-	delayCli = NewDelayClient("http://0.0.0.0:7777", "base.test", "test", 100, 50, 1, 100 * time.Second)
+	delayCli = NewDelayClient("http://0.0.0.0:7777", "base.test", "test", 100, 50, 1, 100*time.Second)
 }
 
 func Test_parseTopic(t *testing.T) {
@@ -47,8 +48,8 @@ func Test_parseTopic(t *testing.T) {
 			wantErr:       true,
 		},
 		{
-			name:   "group topic",
-			args:args{topic: "base.changeboard.event_t1"},
+			name:          "group topic",
+			args:          args{topic: "base.changeboard.event_t1"},
 			wantNamespace: "base.changeboard",
 			wantQueue:     "event_t1",
 			wantErr:       false,
@@ -97,9 +98,9 @@ func TestDelayClient_Read(t *testing.T) {
 func TestNewDefaultDelayClient(t *testing.T) {
 	client, err := NewDefaultDelayClient(context.Background(), "palfish.test.test")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(100), client.requestSleep.Milliseconds())
+	assert.Equal(t, int64(100), client.requestInterval.Milliseconds())
 
 	client, err = NewDefaultDelayClient(context.Background(), "delay.test.test")
 	assert.NoError(t, err)
-	assert.Equal(t, int64(300), client.requestSleep.Milliseconds())
+	assert.Equal(t, int64(300), client.requestInterval.Milliseconds())
 }
