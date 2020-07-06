@@ -6,13 +6,12 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"gitlab.pri.ibanyu.com/middleware/seaweed/xlog"
 
 	//"fmt"
 	"github.com/opentracing/opentracing-go"
 	"github.com/shawnfeng/sutil/mq"
 	"github.com/shawnfeng/sutil/scontext"
-	"github.com/shawnfeng/sutil/slog/slog"
 	"github.com/shawnfeng/sutil/trace"
 	"time"
 )
@@ -53,34 +52,34 @@ func main() {
 	//mq.WatchUpdate(ctx)
 
 
-		go func() {
-			var msgs []mq.Message
-			for i := 0; i < 3; i++ {
-				value := &Msg{
-					Id:   1,
-					Body: fmt.Sprintf("%d", i),
-				}
+		//go func() {
+		//	var msgs []mq.Message
+		//	for i := 0; i < 3; i++ {
+		//		value := &Msg{
+		//			Id:   1,
+		//			Body: fmt.Sprintf("%d", i),
+		//		}
+		//
+		//		msgs = append(msgs, mq.Message{
+		//			Key:   value.Body,
+		//			Value: value,
+		//		})
+		//		err := mq.WriteMsg(ctx, topic, value.Body, value)
+		//		slog.Infof(ctx, "in msg: %v, err:%v", value, err)
+		//	}
+		//	err := mq.WriteMsgs(ctx, topic, msgs...)
+		//	slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
+		//}()
 
-				msgs = append(msgs, mq.Message{
-					Key:   value.Body,
-					Value: value,
-				})
-				err := mq.WriteMsg(ctx, topic, value.Body, value)
-				slog.Infof(ctx, "in msg: %v, err:%v", value, err)
-			}
-			err := mq.WriteMsgs(ctx, topic, msgs...)
-			slog.Infof(ctx, "in msgs: %v, err:%v", msgs, err)
-		}()
 
-
-	//go func() {
-	//	msg := &Msg{
-	//		Id:   1,
-	//		Body: "test",
-	//	}
-	//	jobID, err := mq.WriteDelayMsg(ctx, topic, msg, 5)
-	//	slog.Infof(ctx, "write delay msg, jobID = %s, err = %v", jobID, err)
-	//}()
+	go func() {
+		msg := &Msg{
+			Id:   2,
+			Body: "test2",
+		}
+		jobID, err := mq.WriteDelayMsg(ctx, topic, msg, 5)
+		xlog.Infof(ctx, "write delay msg, jobID = %s, err = %v", jobID, err)
+	}()
 
 	//ctx1 := context.Background()
 	/*
@@ -90,24 +89,24 @@ func main() {
 			slog.Infof(ctx, "2222222222222222,err:%v", err)
 		}
 	*/
-	go func() {
-		for i := 0; i < 10000; i++ {
-			var msg Msg
-			ctx, err := mq.ReadMsgByGroup(ctx, topic, "group3", &msg)
-			slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-		}
-	}()
-
 	//go func() {
-	//	for i := 0; i < 10; i ++ {
+	//	for i := 0; i < 10000; i++ {
 	//		var msg Msg
-	//		ctx, ack, err := mq.FetchDelayMsg(ctx, topic, &msg)
+	//		ctx, err := mq.ReadMsgByGroup(ctx, topic, "group3", &msg)
 	//		slog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-	//		err = ack.Ack(ctx)
-	//		slog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)
-	//		time.Sleep(1 * time.Second)
 	//	}
 	//}()
+
+	go func() {
+		for i := 0; i < 10; i ++ {
+			var msg Msg
+			ctx, ack, err := mq.FetchDelayMsg(ctx, topic, &msg)
+			xlog.Infof(ctx, "1111111111111111out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			err = ack.Ack(ctx)
+			xlog.Infof(ctx, "2222222222222222out msg: %v, ctx:%v, err:%v", msg, ctx, err)
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
 	time.Sleep(15 * time.Second)
 	defer mq.Close()

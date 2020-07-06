@@ -63,6 +63,7 @@ const (
 	defaultTTR            = 3600      // 1 hour
 	defaultTTL            = 3600 * 24 // 1 day
 	defaultTries          = 1
+	defaultRequestSleepMS = 300
 )
 
 type Config struct {
@@ -79,6 +80,8 @@ type Config struct {
 	TTL          uint32 // time to live
 	Tries        uint16 // delay tries
 	BatchSize    int
+
+	RequestSleep time.Duration
 }
 
 type KeyParts struct {
@@ -197,6 +200,7 @@ const (
 	apolloTriesKey          = "tries"
 	apolloBatchSizeKey      = "batchsize"
 	apolloBatchTimeoutMsKey = "batchtimeoutms"
+	apolloRequestSleepMS    = "sleep"
 )
 
 type ApolloConfig struct {
@@ -327,7 +331,17 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 	if err != nil {
 		batchTimeoutMsVal = defaultBatchTimeoutMs
 	}
-	slog.Infof(ctx, "%s got config batchTimeout:%d", fun, ttl)
+	slog.Infof(ctx, "%s got config batchTimeout:%d", fun, batchTimeoutMsVal)
+
+	requestSleepMs, ok := m.getConfigItemWithFallback(ctx, topic, apolloRequestSleepMS, mqType)
+	if !ok {
+		slog.Infof(ctx, "%s no requestSleep config founds", fun)
+	}
+	requestSleepMsVal, err := strconv.ParseUint(requestSleepMs, 10, 32)
+	if err != nil {
+		requestSleepMsVal = defaultRequestSleepMS
+	}
+	slog.Infof(ctx, "%s got config requestSleepMs:%d", fun, requestSleepMsVal)
 
 	return &Config{
 		MQType:         mqType,
@@ -342,6 +356,7 @@ func (m *ApolloConfig) GetConfig(ctx context.Context, topic string, mqType MQTyp
 		TTL:            uint32(ttl),
 		Tries:          uint16(tries),
 		BatchSize:      batchSize,
+		RequestSleep:   time.Duration(requestSleepMsVal) * time.Millisecond,
 	}, nil
 }
 

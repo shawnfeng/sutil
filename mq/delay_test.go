@@ -3,13 +3,15 @@ package mq
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 var delayCli *DelayClient
 
 func init() {
-	delayCli = NewDelayClient("http://0.0.0.0:7777", "base.test", "test", 100, 50, 1)
+	delayCli = NewDelayClient("http://0.0.0.0:7777", "base.test", "test", 100, 50, 1, 100 * time.Second)
 }
 
 func Test_parseTopic(t *testing.T) {
@@ -79,7 +81,6 @@ func TestDelayClient_Write(t *testing.T) {
 
 }
 
-// 01E0WTH8TCWT6Q2J2HQ0500000  01E0WTPYNE33SHMHSYW0500000 01E0WTT12VCRFWXXWNS4500000  01E0WVCSVE7TZZHFGRWC000000
 func TestDelayClient_Read(t *testing.T) {
 	ctx := context.Background()
 	job, err := delayCli.Read(ctx, 5)
@@ -91,4 +92,14 @@ func TestDelayClient_Read(t *testing.T) {
 	fmt.Println("success")
 	//return
 
+}
+
+func TestNewDefaultDelayClient(t *testing.T) {
+	client, err := NewDefaultDelayClient(context.Background(), "palfish.test.test")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(100), client.requestSleep.Milliseconds())
+
+	client, err = NewDefaultDelayClient(context.Background(), "delay.test.test")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(300), client.requestSleep.Milliseconds())
 }
