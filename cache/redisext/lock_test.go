@@ -30,8 +30,11 @@ func TestLockWithTimeout(t *testing.T) {
 	value := "76c8c07d15c32fa90dd2b89f141246e8"
 	ctx := context.Background()
 	m := NewRedisExt("test/test", "test")
-	m.Lock(ctx, key, value, time.Second*5)
-	r, err := m.LockWithTimeout(ctx, key, value, time.Second, time.Second*1)
+	m.Del(ctx, key)
+	r, err := m.LockWithTimeout(ctx, key, value, time.Second*100, time.Second*1)
+	assert.Nil(t, err)
+	assert.Equal(t, true, r)
+	r, err = m.LockWithTimeout(ctx, key, value, time.Second, time.Second*3)
 	assert.Nil(t, err)
 	assert.Equal(t, false, r)
 }

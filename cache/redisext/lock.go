@@ -30,6 +30,8 @@ func (m *RedisExt) LockWithTimeout(ctx context.Context, key string, value interf
 		if err != nil || !r {
 			time.Sleep(retryTimeGap)
 			timeout = timeout - retryTimeGap
+		} else {
+			return r, err
 		}
 	}
 	return r, err
