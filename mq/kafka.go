@@ -11,6 +11,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	kafka "github.com/segmentio/kafka-go"
+	"github.com/shawnfeng/sutil/slog"
 	"strings"
 	"time"
 )
@@ -50,6 +51,8 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 		CommitInterval: commitInterval,
 		StartOffset:    kafka.LastOffset,
 		//MaxWait:        30 * time.Second,
+		Logger:         slog.GetInfoLogger(),
+		ErrorLogger:    slog.GetLogger(),
 	})
 
 	return &KafkaReader{
@@ -141,6 +144,8 @@ func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
 		BatchSize: defaultBatchSize,
 		//RequiredAcks: 1,
 		//Async:        true,
+		Logger:      slog.GetInfoLogger(),
+		ErrorLogger: slog.GetLogger(),
 	}
 	// TODO should optimize this, too dumb, double get, reset batchsize
 	config, _ := DefaultConfiger.GetConfig(context.TODO(), topic, MQTypeKafka)

@@ -447,3 +447,52 @@ func TestRedisExt_SMembers(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, b)
 }
+
+func TestRedisExt_SRandMembers(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	key := "smemberstest"
+	members := []string{"m1", "m2", "m3"}
+
+	i, err := re.SAdd(ctx, key, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), i)
+
+	s, err := re.SRandMember(ctx, key)
+	assert.NoError(t, err)
+	assert.Equal(t, true, isContain(members, s))
+
+	b, err := re.Expire(ctx, key, 5 * time.Second)
+	assert.NoError(t, err)
+	assert.True(t, b)
+}
+
+func TestRedisExt_SRandMembersN(t *testing.T) {
+	ctx := context.Background()
+	re := NewRedisExt("base/report", "test")
+	key := "smemberstest"
+	members := []string{"m1", "m2", "m3"}
+
+	i, err := re.SAdd(ctx, key, members)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3), i)
+
+	arr, err := re.SRandMemberN(ctx, key, 2)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(arr))
+	assert.Equal(t, true, isContain(members, arr[0]))
+	assert.Equal(t, true, isContain(members, arr[1]))
+
+	b, err := re.Expire(ctx, key, 5 * time.Second)
+	assert.NoError(t, err)
+	assert.True(t, b)
+}
+
+func isContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}

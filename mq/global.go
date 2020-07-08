@@ -53,13 +53,11 @@ func WriteMsg(ctx context.Context, topic string, key string, value interface{}) 
 	}
 	writer := defaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
-		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
 	}
 
 	payload, err := generatePayload(ctx, value)
 	if err != nil {
-		slog.Errorf(ctx, "%s generatePayload err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, generatePayload err, topic: %s", fun, topic)
 	}
 
@@ -90,13 +88,11 @@ func WriteMsgs(ctx context.Context, topic string, msgs ...Message) error {
 	}
 	writer := defaultInstanceManager.getWriter(ctx, conf)
 	if writer == nil {
-		slog.Errorf(ctx, "%s getWriter err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, getWriter err, topic: %s", fun, topic)
 	}
 
 	nmsgs, err := generateMsgsPayload(ctx, msgs...)
 	if err != nil {
-		slog.Errorf(ctx, "%s generateMsgsPayload err, topic: %s", fun, topic)
 		return fmt.Errorf("%s, generateMsgsPayload err, topic: %s", fun, topic)
 	}
 
@@ -129,7 +125,6 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	}
 	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
-		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return ctx, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
@@ -144,7 +139,6 @@ func ReadMsgByGroup(ctx context.Context, topic, groupId string, value interface{
 	}
 
 	if err != nil {
-		slog.Errorf(ctx, "%s ReadMsg err: %v, topic: %s", fun, err, topic)
 		return ctx, fmt.Errorf("%s, ReadMsg err: %v, topic: %s", fun, err, topic)
 	}
 
@@ -180,7 +174,6 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	}
 	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
-		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return ctx, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
@@ -195,7 +188,6 @@ func ReadMsgByPartition(ctx context.Context, topic string, partition int, value 
 	}
 
 	if err != nil {
-		slog.Errorf(ctx, "%s ReadMsg err: %v, topic: %s", fun, err, topic)
 		return ctx, fmt.Errorf("%s, ReadMsg err: %v, topic: %s", fun, err, topic)
 	}
 
@@ -231,7 +223,6 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	}
 	reader := defaultInstanceManager.getReader(ctx, conf)
 	if reader == nil {
-		slog.Errorf(ctx, "%s getReader err, topic: %s", fun, topic)
 		return ctx, nil, fmt.Errorf("%s, getReader err, topic: %s", fun, topic)
 	}
 
@@ -246,7 +237,6 @@ func FetchMsgByGroup(ctx context.Context, topic, groupId string, value interface
 	}
 
 	if err != nil {
-		slog.Errorf(ctx, "%s ReadMsg err: %v, topic: %s", fun, err, topic)
 		return ctx, nil, fmt.Errorf("%s, ReadMsg err: %v, topic: %s", fun, err, topic)
 	}
 
@@ -281,14 +271,12 @@ func WriteDelayMsg(ctx context.Context, topic string, value interface{}, delaySe
 	}
 	client := defaultInstanceManager.getDelayClient(ctx, conf)
 	if client == nil {
-		slog.Errorf(ctx, "%s getDelayClient nil, topic: %s", fun, topic)
 		err = fmt.Errorf("%s, getDelayClient nil, topic: %s", fun, topic)
 		return
 	}
 
 	payload, err := generatePayload(ctx, value)
 	if err != nil {
-		slog.Errorf(ctx, "%s generatePayload err, topic: %s", fun, topic)
 		err = fmt.Errorf("%s, generatePayload err, topic: %s", fun, topic)
 		return
 	}
@@ -322,7 +310,6 @@ func FetchDelayMsg(ctx context.Context, topic string, value interface{}) (contex
 	}
 	client := defaultInstanceManager.getDelayClient(ctx, conf)
 	if client == nil {
-		slog.Errorf(ctx, "%s getDelayClient nil, topic: %s", fun, topic)
 		err := fmt.Errorf("%s, getDelayClient nil, topic: %s", fun, topic)
 		return ctx, nil, err
 	}
@@ -332,12 +319,10 @@ func FetchDelayMsg(ctx context.Context, topic string, value interface{}) (contex
 
 	job, err := client.Read(ctx, client.ttrSeconds)
 	if err != nil {
-		slog.Errorf(ctx, "%s Read err: %v, topic: %s", fun, err, topic)
 		return ctx, nil, fmt.Errorf("%s, Read err: %v, topic: %s", fun, err, topic)
 	}
 	err = json.Unmarshal(job.Body, &payload)
 	if err != nil {
-		slog.Errorf(ctx, "%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
 		return ctx, nil, fmt.Errorf("%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
 	}
 	err = json.Unmarshal(job.Body, &value)
@@ -383,7 +368,6 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 	}
 	client := defaultInstanceManager.getDelayClient(ctx, conf)
 	if client == nil {
-		slog.Errorf(ctx, "%s getDelayClient nil, topic: %s", fun, topic)
 		err := fmt.Errorf("%s, getDelayClient nil, topic: %s", fun, topic)
 		return ctx, err
 	}
@@ -393,12 +377,10 @@ func ReadDelayMsg(ctx context.Context, topic string, value interface{}) (context
 
 	job, err := client.Read(ctx, client.ttrSeconds)
 	if err != nil {
-		slog.Errorf(ctx, "%s Read err: %v, topic: %s", fun, err, topic)
 		return ctx, fmt.Errorf("%s, Read err: %v, topic: %s", fun, err, topic)
 	}
 	err = json.Unmarshal(job.Body, &payload)
 	if err != nil {
-		slog.Errorf(ctx, "%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
 		return ctx, fmt.Errorf("%s, Unmarshal payload err: %v, topic: %s", fun, err, topic)
 	}
 	err = json.Unmarshal(job.Body, &value)

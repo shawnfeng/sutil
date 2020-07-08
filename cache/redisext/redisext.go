@@ -1113,6 +1113,38 @@ func (m *RedisExt) SMembers(ctx context.Context, key string) (s []string, err er
 	return
 }
 
+func (m *RedisExt) SRandMember(ctx context.Context, key string) (s string, err error) {
+	command := "redisext.SRandMember"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.SRandMember(ctx, m.prefixKey(key)).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
+func (m *RedisExt) SRandMemberN(ctx context.Context, key string, count int64) (s []string, err error) {
+	command := "redisext.SRandMemberN"
+	span, ctx := opentracing.StartSpanFromContext(ctx, command)
+	st := stime.NewTimeStat()
+	defer func() {
+		span.Finish()
+		statReqDuration(m.namespace, command, st.Millisecond())
+	}()
+	client, err := m.getRedisInstance(ctx)
+	if err == nil {
+		s, err = client.SRandMemberN(ctx, m.prefixKey(key), count).Result()
+	}
+	statReqErr(m.namespace, command, err)
+	return
+}
+
 func (m *RedisExt) ZScan(ctx context.Context, key string, cursor uint64, match string, count int64) (keys []string, rcursor uint64, err error) {
 	command := "redisext.ZScan"
 	span, ctx := opentracing.StartSpanFromContext(ctx, command)

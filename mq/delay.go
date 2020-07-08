@@ -4,19 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"github.com/shawnfeng/sutil/snetutil"
 	"gitlab.pri.ibanyu.com/middleware/delayqueue/model"
 	"gitlab.pri.ibanyu.com/middleware/delayqueue/processor"
-	"net/http"
-	"strings"
-	"time"
 )
 
 const (
-	defaultToken        = "01E0SSK0DJ9XX4PDFJCD3DN7WX"
-	defaultRequestSleep = 300 * time.Millisecond
+	defaultToken = "01E0SSK0DJ9XX4PDFJCD3DN7WX"
 )
 
 type AckHandler interface {
@@ -51,6 +51,8 @@ type DelayClient struct {
 	ttlSeconds uint32
 	tries      uint16
 	ttrSeconds uint32
+
+	requestInterval time.Duration
 }
 
 // 延迟队列任务
@@ -88,14 +90,15 @@ type ackRes struct {
 	Data struct{} `json:"data,omitempty"`
 }
 
-func NewDelayClient(endpoint, namespace, queue string, ttlSeconds, ttrSeconds uint32, tries uint16) *DelayClient {
+func NewDelayClient(endpoint, namespace, queue string, ttlSeconds, ttrSeconds uint32, tries uint16, requestInterval time.Duration) *DelayClient {
 	return &DelayClient{
-		endpoint:   endpoint,
-		namespace:  namespace,
-		queue:      queue,
-		ttlSeconds: ttlSeconds,
-		ttrSeconds: ttrSeconds,
-		tries:      tries,
+		endpoint:        endpoint,
+		namespace:       namespace,
+		queue:           queue,
+		ttlSeconds:      ttlSeconds,
+		ttrSeconds:      ttrSeconds,
+		tries:           tries,
+		requestInterval: requestInterval,
 	}
 }
 
@@ -109,7 +112,7 @@ func NewDefaultDelayClient(ctx context.Context, topic string) (*DelayClient, err
 	if err != nil {
 		return nil, err
 	}
-	client := NewDelayClient(Config.MQAddr[0], namespace, queue, Config.TTL, Config.TTR, Config.Tries)
+	client := NewDelayClient(Config.MQAddr[0], namespace, queue, Config.TTL, Config.TTR, Config.Tries, Config.RequestInterval)
 	return client, nil
 }
 
@@ -161,7 +164,7 @@ func (p *DelayClient) Read(ctx context.Context, ttrSeconds uint32) (job *Job, er
 	}
 	path := fmt.Sprintf("/base/delayqueue/%s/job/consume", p.namespace)
 	for {
-		time.Sleep(defaultRequestSleep)
+		time.Sleep(p.requestInterval)
 		err = p.httpInvoke(ctx, path, req, res)
 		if err != nil {
 			break
@@ -242,7 +245,7 @@ func parseTopic(topic string) (namespace, queue string, err error) {
 	return
 }
 
-func init()  {
+func init() {
 	setHttpDefaultClient()
 }
 

@@ -123,3 +123,14 @@ func GetLogger() *Logger {
 func (m *Logger) Printf(format string, items ...interface{}) {
 	Errorf(format, items...)
 }
+
+type InfoLogger struct {
+}
+
+func GetInfoLogger() *InfoLogger {
+	return &InfoLogger{}
+}
+
+func (m *InfoLogger) Printf(format string, items ...interface{}) {
+	Infof(format, items...)
+}

@@ -20,7 +20,7 @@ require (
 	github.com/prometheus/client_golang v1.2.1
 	github.com/prometheus/common v0.7.0
 	github.com/sdming/gosnow v0.0.0-20130403030620-3a05c415e886
-	github.com/segmentio/kafka-go v0.3.4
+	github.com/segmentio/kafka-go v0.3.7
 	github.com/shawnfeng/lumberjack.v2 v0.0.0-20181226094728-63d76296ede8
 	github.com/stretchr/testify v1.4.0
 	github.com/uber/jaeger-client-go v2.20.1+incompatible
