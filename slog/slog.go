@@ -134,14 +134,3 @@ func GetInfoLogger() *InfoLogger {
 func (m *InfoLogger) Printf(format string, items ...interface{}) {
 	Infof(format, items...)
 }
-
-type WarnLogger struct {
-}
-
-func GetWarnLogger() *WarnLogger {
-	return &WarnLogger{}
-}
-
-func (m *WarnLogger) Printf(format string, items ...interface{}) {
-	Warnf(format, items...)
-}
