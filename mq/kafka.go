@@ -19,6 +19,9 @@ import (
 
 const (
 	defaultBatchSize = 1
+
+	// REBALANCE_IN_PROGRESS
+	ErrorMsgRebalanceInProgress = "Rebalance In Progress"
 )
 
 type KafkaHandler struct {
@@ -53,7 +56,7 @@ func NewKafkaReader(brokers []string, topic, groupId string, partition, minBytes
 		StartOffset:    kafka.LastOffset,
 		//MaxWait:        30 * time.Second,
 		Logger:      slog.GetInfoLogger(),
-		ErrorLogger: slog.GetWarnLogger(),
+		ErrorLogger: getErrorLogger(),
 	})
 
 	return &KafkaReader{
@@ -146,7 +149,7 @@ func NewKafkaWriter(brokers []string, topic string) *KafkaWriter {
 		//RequiredAcks: 1,
 		//Async:        true,
 		Logger:      slog.GetInfoLogger(),
-		ErrorLogger: slog.GetWarnLogger(),
+		ErrorLogger: getErrorLogger(),
 	}
 	// TODO should optimize this, too dumb, double get, reset batchsize
 	config, _ := DefaultConfiger.GetConfig(context.TODO(), topic, MQTypeKafka)
@@ -214,4 +217,20 @@ func (m *KafkaWriter) WriteMsgs(ctx context.Context, msgs ...Message) error {
 
 func (m *KafkaWriter) Close() error {
 	return m.Writer.Close()
+}
+
+type errorLogger struct {
+}
+
+func getErrorLogger() *errorLogger {
+	return &errorLogger{}
+}
+
+func (m *errorLogger) Printf(format string, items ...interface{}) {
+	errMsg := fmt.Sprintf(format, items...)
+	if strings.Contains(errMsg, ErrorMsgRebalanceInProgress) {
+		slog.Warnf(errMsg)
+		return
+	}
+	slog.Errorf(format, items...)
 }
