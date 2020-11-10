@@ -3,6 +3,7 @@ package scontext
 import (
 	"context"
 	"errors"
+	"reflect"
 )
 
 // 由于请求的上下文信息的 thrift 定义在 util 项目中，本模块主要为了避免循环依赖
@@ -17,7 +18,7 @@ const (
 	ContextKeyHeadDt      = "dt"
 	ContextKeyHeadUnionId = "unionid"
 
-	ContextKeyControl       = "Control"
+	ContextKeyControl = "Control"
 )
 
 const DefaultGroup = ""
@@ -44,7 +45,7 @@ type ContextControlCaller interface {
 
 func GetControlRouteGroup(ctx context.Context) (group string, ok bool) {
 	value := ctx.Value(ContextKeyControl)
-	if value == nil {
+	if isNil(value) {
 		ok = false
 		return
 	}
@@ -57,7 +58,7 @@ func GetControlRouteGroup(ctx context.Context) (group string, ok bool) {
 
 func SetControlRouteGroup(ctx context.Context, group string) (context.Context, error) {
 	value := ctx.Value(ContextKeyControl)
-	if value == nil {
+	if isNil(value) {
 		return ctx, ErrInvalidContext
 	}
 	control, ok := value.(ContextControlRouter)
@@ -81,7 +82,7 @@ func GetControlRouteGroupWithDefault(ctx context.Context, dv string) string {
 
 func getHeaderByKey(ctx context.Context, key string) (val interface{}, ok bool) {
 	head := ctx.Value(ContextKeyHead)
-	if head == nil {
+	if isNil(head) {
 		ok = false
 		return
 	}
@@ -143,7 +144,7 @@ func GetUnionId(ctx context.Context) (unionId string, ok bool) {
 
 func getControlCaller(ctx context.Context) (ContextControlCaller, error) {
 	value := ctx.Value(ContextKeyControl)
-	if value == nil {
+	if isNil(value) {
 		return nil, ErrInvalidContext
 	}
 	caller, ok := value.(ContextControlCaller)
@@ -210,3 +211,11 @@ func SetControlCallerMethod(ctx context.Context, method string) (context.Context
 	return context.WithValue(ctx, ContextKeyControl, caller), nil
 }
 
+// 判断是否为空指针
+func isNil(i interface{}) bool {
+	vi := reflect.ValueOf(i)
+	if vi.Kind() == reflect.Ptr {
+		return vi.IsNil()
+	}
+	return false
+}
