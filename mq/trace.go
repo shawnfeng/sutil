@@ -7,6 +7,7 @@ package mq
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/shawnfeng/sutil/scontext"
@@ -16,7 +17,20 @@ type Payload struct {
 	Carrier opentracing.TextMapCarrier `json:"c"`
 	Value   string                     `json:"v"`
 	Head    interface{}                `json:"h"`
-	Control interface{}                `json:"t"`
+	Control *mqPayloadControl          `json:"t"`
+}
+
+type mqPayloadControl struct {
+	Group string `json:"group"`
+}
+
+func (s *mqPayloadControl) GetControlRouteGroup() (string, bool) {
+	return s.Group, true
+}
+
+func (s *mqPayloadControl) SetControlRouteGroup(group string) error {
+	s.Group = group
+	return nil
 }
 
 func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {
@@ -34,8 +48,11 @@ func generatePayload(ctx context.Context, value interface{}) (*Payload, error) {
 		return nil, err
 	}
 	head := ctx.Value(scontext.ContextKeyHead)
-	control := ctx.Value(scontext.ContextKeyControl)
-
+	control := new(mqPayloadControl)
+	group, ok := scontext.GetControlRouteGroup(ctx)
+	if ok {
+		control.Group = group
+	}
 	return &Payload{
 		Carrier: carrier,
 		Value:   string(msg),
@@ -54,8 +71,11 @@ func generateMsgsPayload(ctx context.Context, msgs ...Message) ([]Message, error
 			carrier)
 	}
 	head := ctx.Value(scontext.ContextKeyHead)
-	control := ctx.Value(scontext.ContextKeyControl)
-
+	control := new(mqPayloadControl)
+	group, ok := scontext.GetControlRouteGroup(ctx)
+	if ok {
+		control.Group = group
+	}
 	var nmsgs []Message
 	for _, msg := range msgs {
 		body, err := json.Marshal(msg.Value)
