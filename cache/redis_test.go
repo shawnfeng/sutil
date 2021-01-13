@@ -1,9 +1,10 @@
 package cache
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var client, _ = NewCommonRedis("test/test", 1024)

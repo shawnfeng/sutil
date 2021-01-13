@@ -22,6 +22,11 @@ func NewCoreRedis(serverName string, poolSize int) (*RedisClient, error) {
 	return newRedisClient("core.codis.pri.ibanyu.com:19000", serverName, poolSize)
 }
 
+// NewRedisByAddr ...
+func NewRedisByAddr(addr, serverName string, poolSize int) (*RedisClient, error) {
+	return newRedisClient(addr, serverName, poolSize)
+}
+
 func NewRedisByNamespace(ctx context.Context, namespace string) (*RedisClient, error) {
 	fun := "NewRedisByNamespace -->"
 	client, err := redis.DefaultInstanceManager.GetInstance(ctx, getInstanceConf(ctx, namespace))
