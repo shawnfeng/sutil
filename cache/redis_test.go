@@ -31,17 +31,3 @@ func TestGet(t *testing.T) {
 	get := client.Get(key)
 	t.Log(get.Val())
 }
-
-func TestNewRedisByAddr(t *testing.T) {
-	// 对比和同样参数的common是否一致
-	key := "aaa"
-	val := "bbb"
-	addrClient, err := NewRedisByAddr("common.codis.pri.ibanyu.com:19000", "test/test", 1024)
-	assert.NoError(t, err)
-	addrClient.Set(key, val, 10*time.Second)
-
-	strCmd := client.Get(key)
-	str, err := strCmd.Result()
-	assert.NoError(t, err)
-	assert.Equal(t, str, val)
-}
